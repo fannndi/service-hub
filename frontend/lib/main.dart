@@ -1,11 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'auth/demo_account.dart';
-import 'auth/demo_auth_controller.dart';
-import 'screens/customer_shell_screen.dart';
-import 'screens/demo_login_screen.dart';
-import 'screens/store_admin_shell_screen.dart';
+import 'features/customer/presentation/routing/customer_router.dart';
 
 void main() {
   runApp(const ProviderScope(child: ServisGadgetApp()));
@@ -16,16 +12,13 @@ class ServisGadgetApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(demoAuthProvider);
-    return MaterialApp(
+    final router = ref.watch(customerRouterProvider);
+    return MaterialApp.router(
       title: 'ServisGadget',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: switch (auth.account?.role) {
-        DemoRole.customer => const CustomerShellScreen(),
-        DemoRole.storeAdmin => const StoreAdminShellScreen(),
-        null => const DemoLoginScreen(),
-      },
+      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
+      darkTheme: ThemeData(colorSchemeSeed: Colors.teal, brightness: Brightness.dark, useMaterial3: true),
+      routerConfig: router,
     );
   }
 }
