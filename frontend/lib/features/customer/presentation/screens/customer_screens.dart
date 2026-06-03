@@ -81,9 +81,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       context.go(result.isFirstLogin ? '/change-password' : '/home');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -183,9 +184,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           .changePassword(_old.text, _next.text);
       if (mounted) context.go('/home');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -222,8 +224,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       labelText: 'Password Baru', border: OutlineInputBorder()),
                   validator: (v) {
                     if (v == null || v.length < 8) return 'Minimal 8 karakter.';
-                    if (v == _old.text)
+                    if (v == _old.text) {
                       return 'Password baru tidak boleh sama.';
+                    }
                     return null;
                   }),
               const SizedBox(height: 12),
@@ -599,9 +602,10 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       context.go('/booking-success/${result.orderNumber}',
           extra: result.isNewCustomer);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -667,7 +671,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                   validator: _required),
               const SectionTitle('Kerusakan'),
               DropdownButtonFormField(
-                  value: _serviceType,
+                  initialValue: _serviceType,
                   decoration: const InputDecoration(
                       labelText: 'Jenis Servis', border: OutlineInputBorder()),
                   items: const [
@@ -922,9 +926,10 @@ class _DiagnosisApprovalCardState extends ConsumerState<DiagnosisApprovalCard> {
       }
       ref.invalidate(orderDetailProvider(widget.order.id));
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1059,9 +1064,10 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
         context.pop();
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1079,8 +1085,9 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
               .where((p) => p.status == 'confirmed')
               .fold<double>(0, (sum, p) => sum + p.amount);
           final due = (order.finalPrice ?? order.totalEstimasi) - confirmed;
-          if (_amount.text.isEmpty)
+          if (_amount.text.isEmpty) {
             _amount.text = due.clamp(0, double.infinity).toStringAsFixed(0);
+          }
           return ListView(padding: const EdgeInsets.all(16), children: [
             _InfoCard(title: 'Tagihan', rows: {
               'Order': order.orderNumber,
@@ -1162,9 +1169,10 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
       ref.invalidate(orderDetailProvider(widget.orderId));
       if (mounted) context.go('/review-success', extra: result);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1275,9 +1283,10 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
         context.pop();
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1329,8 +1338,9 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
                               source: ImageSource.gallery,
                               imageQuality: 72,
                               maxWidth: 1600);
-                          if (picked != null)
+                          if (picked != null) {
                             setState(() => _files.add(picked));
+                          }
                         },
                   icon: const Icon(Icons.add_a_photo),
                   label: const Text('Tambah Foto')),
@@ -1371,9 +1381,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           .updateProfile(fullName: _name.text, address: _address.text);
       setState(() => _dirty = false);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

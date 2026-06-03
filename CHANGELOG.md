@@ -9,6 +9,39 @@
 
 
 
+
+
+## 2026-06-03 — Phase 01 Backend Logic Completed
+
+### Implemented
+- **Prisma & DB Module**: Created functional `PrismaService` handling module lifecycle connections and transactions.
+- **Global Config**: Wired NestJS ConfigModule to read `.env` and configure port, database (Supabase Cloud), and JWT.
+- **Auth Separation**:
+  - `CustomerAuthModule` for user registration (stealth accounts), login limits (5x lockout), password hashing (bcrypt), and Customer JWT tokens.
+  - `StoreAuthModule` for store admin logins with storeId inside JWT payloads.
+- **Orders & Inventory**:
+  - `OrderService` with all PRD bug fixes: `itemPrice` sourced from sparepart, `qtyReserved` incremented on booking, decremented on approve/reject, and `nanoid` order numbers.
+  - Replaced sparepart validation enforced when item status is set to `replaced`.
+- **Payments, Reviews & Disputes**:
+  - `confirmPayment` sets `warrantyDays` based on store configs and updates store total completed count.
+  - `createReview` updates store `ratingAvg` and creates reward coupons atomically.
+  - Coupon validation checks user ownership and expiration before utilization.
+  - Dispute respond validation requires rejection reason length >= 10.
+- **Presigned URLs**: Added S3 Mocking endpoint `/v1/uploads/presign` for Flutter testing.
+- **BullMQ Workers**: Added processors and connected NestJS to Redis.
+## 2026-06-03 — Phase 01 / Phase 02 Synchronization Audit
+
+### Re-Audit
+- Re-read PRD 01 and PRD 02 to establish baseline gaps.
+- The `phase-02` integration by teammates accurately mirrors the data models, repository shapes, and UI routes specified in PRD 02.
+- **Critical Blocker Identified**: The majority of ACs from PRD 02 (polling, S3 presigned uploads, auth locks, state transitions) cannot be fully verified locally because **Phase 01 Backend Foundation is currently incomplete** (only contains Prisma schemas and healthcheck shell).
+
+### Next Action Priority
+- Halt further Phase 02 frontend updates.
+- Resume Phase 01 Backend implementation immediately:
+  - Generate Prisma Client from successfully migrated Supabase DB.
+  - Implement full NestJS domain modules (`orders`, `auth`, `uploads`).
+  - Wire Redis & BullMQ jobs for SLA deadlines.
 ## 2026-06-03 — Phase 02 Audit
 
 ### Audited
@@ -187,6 +220,8 @@
 - Implement repository/service/controller layers per domain.
 - Generate Prisma migration from schema.
 - Fill `docs/integration-guide.md` with final contracts after endpoints are implemented.
+
+
 
 
 

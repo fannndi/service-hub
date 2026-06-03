@@ -18,7 +18,7 @@ void main() {
       brand: 'Samsung',
       deviceModel: 'Galaxy S24',
       deliveryMethod: 'walk_in',
-      items: const [
+      items: [
         CreateOrderItemInput(
             serviceType: 'screen_replacement',
             complaint: 'Layar retak cukup parah',
