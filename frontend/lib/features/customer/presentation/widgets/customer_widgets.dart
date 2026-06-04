@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -72,9 +72,9 @@ class StatusPill extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withOpacity(0.4))),
+          border: Border.all(color: color.withValues(alpha: 0.4))),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Text(status.label,
@@ -254,8 +254,9 @@ class SkeletonList extends StatelessWidget {
                   color: Theme.of(context)
                       .colorScheme
                       .surfaceContainerHighest
-                      .withOpacity(0.45),
+                      .withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(12))),
         ),
       );
 }
+

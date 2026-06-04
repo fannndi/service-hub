@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -162,7 +162,7 @@ class CustomerAuthRepository {
   Future<void> logout() async {
     final refresh = await _session.readRefreshToken();
     if (refresh != null) {
-      await _api.authDio.post('/auth/logout', data: {'refresh_token': refresh}).catchError((_) {});
+      await _api.authDio.post('/auth/logout', data: {'refresh_token': refresh}).catchError((_) => Response(requestOptions: RequestOptions(), statusCode: 500));
     }
     await _session.clearAll();
   }
@@ -288,3 +288,4 @@ class NotificationRepository {
     return CustomerApiClient.unwrapList(response.data).map(NotificationItem.fromJson).toList();
   }
 }
+
