@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -202,7 +201,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               Material(
-                  color: Colors.amber.withOpacity(0.18),
+                  color: Colors.amber.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(12),
                   child: const Padding(
                       padding: EdgeInsets.all(16),
@@ -647,8 +646,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                       labelText: 'Nomor HP', border: OutlineInputBorder()),
                   validator: _required),
               const SectionTitle('Info Perangkat'),
-              SegmentedButton(
-                  value: {
+              SegmentedButton(selected: {
                     _deviceType
                   },
                   segments: const [
@@ -703,8 +701,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                   icon: const Icon(Icons.inventory),
                   label: Text(_selectedPart?.partName ?? 'Pilih Sparepart')),
               const SectionTitle('Pengiriman'),
-              SegmentedButton(
-                  value: {
+              SegmentedButton(selected: {
                     _delivery
                   },
                   segments: const [
@@ -1607,3 +1604,4 @@ class _InfoCard extends StatelessWidget {
         ),
       );
 }
+
