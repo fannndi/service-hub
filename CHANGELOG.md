@@ -1,5 +1,46 @@
 ﻿# Changelog
 
+## 2026-06-06 — Phase 3 Store Admin Merge + API Alignment
+
+### Added (Phase 3 — Flutter Frontend)
+- `frontend/lib/features/store_admin/` — complete store admin app:
+  - GoRouter with auth guard, store login/change-password, dashboard (60s polling)
+  - Screens: StoreLogin, StoreChangePassword, Dashboard, OrderList, OrderDetail, Diagnosis, Tracking, Inventory, SparepartForm, PaymentConfirmation, DisputeList, DisputeDetail, Settings
+  - Providers: StoreAuthController, DashboardSummary (Stream), StoreOrderDetail, InventoryList
+  - Repositories: StoreAuthRepository, StoreOrderRepository, StoreInventoryRepository, StoreDisputeRepository
+  - Widgets: CredentialPanelCard, DiagnosisItemRow, InventoryItemCard, SlaCountdownBadge, PaymentProofViewer
+  - Models: ServiceOrder, Sparepart, DisputeCase, DashboardSummary, CredentialPanel, StoreSession, ReviewItem, AnalyticsData
+  - Tests: store_admin_model_test, updated widget_test for store admin login
+
+### Added (Backend for Store Admin)
+- `POST /v1/store/auth/logout` — store admin logout
+- `POST /v1/store/orders/:id/actions/:action` — dynamic action endpoint (maps action → status)
+- `GET /v1/store/orders/:id/tracking` — store admin tracking timeline
+- `POST /v1/store/orders/:id/tracking` — add manual tracking entry
+- `GET /v1/store/customers` — customer list per store
+- `GET /v1/store/payments` — payment list per store
+- `GET /v1/store/reviews` — review list per store
+- `POST /v1/store/reviews/:id/response` — respond to review
+- `GET /v1/store/notifications` — store notification feed
+- `GET /v1/store/profile` — store admin profile + store info
+- `PATCH /v1/store/profile` — update store admin profile
+- `GET /v1/store/analytics` — 30-day analytics (orders, revenue, rating)
+- `POST /v1/store/orders/:id/payments/:paymentId/confirm` — payment confirm (nested path)
+- `PATCH /v1/store/orders/:id/diagnosis` — diagnosis update (Patch variant alongside Post)
+- Combined main.dart: role-based splash router that checks customer vs store admin auth
+
+### Changed
+- API path alignment for Store Admin to match frontend contract
+- StoreOrdersController: Post + Patch for diagnosis/status, action endpoint mapping
+- StoresService: extended with customers, payments, reviews, notifications, profile, analytics methods
+- OrdersService: added getStoreOrderTracking + addStoreOrderTracking
+
+### Scope
+- Phase 1 Foundation: complete backend
+- Phase 2 Customer: complete app
+- Phase 3 Store Admin: complete app
+- All 3 phases merged into main with full API alignment
+
 ## 2026-06-06 — Phase 1 Foundation Complete + Phase 2 Customer Merge
 
 ### Added (Phase 1 Foundation — Backend)

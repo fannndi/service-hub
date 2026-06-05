@@ -23,4 +23,12 @@ export class StoreAuthController {
   async changePassword(@GetUser('id') adminId: string, @Body() dto: StoreChangePasswordDto) {
     return this.storeAuthService.changePassword(adminId, dto.oldPassword, dto.newPassword);
   }
+
+  @Post('logout')
+  @UseGuards(StoreJwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  async logout(@GetUser('id') adminId: string) {
+    return { message: 'Logout berhasil.' };
+  }
 }

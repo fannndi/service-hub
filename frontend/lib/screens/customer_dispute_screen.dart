@@ -29,9 +29,9 @@ class CustomerDisputeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const TextField(minLines: 4, maxLines: 6, decoration: InputDecoration(labelText: 'Deskripsi masalah', border: OutlineInputBorder())),
           const SizedBox(height: 12),
-          OutlinedButton.icon(onPressed: null, icon: Icon(Icons.image_outlined), label: Text('Tambah foto bukti')),
-          SizedBox(height: 20),
-          FilledButton(onPressed: null, child: Text('Kirim klaim dummy belum aktif')),
+          OutlinedButton.icon(onPressed: null, icon: const Icon(Icons.image_outlined), label: const Text('Tambah foto bukti')),
+          const SizedBox(height: 20),
+          const FilledButton(onPressed: null, child: Text('Kirim klaim dummy belum aktif')),
         ],
       ),
     );
