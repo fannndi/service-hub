@@ -1,4 +1,4 @@
-﻿generator client {
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -7,11 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// â”€â”€â”€ ENUMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ENUMS ───
 
-enum AccountStatus       { active suspended deleted }
-enum DeviceType          { android ios }
-enum DeliveryMethod      { walk_in courier_pickup }
+enum AccountStatus {
+  active
+  suspended
+  deleted
+}
+
+enum DeviceType {
+  android
+  ios
+}
+
+enum DeliveryMethod {
+  walk_in
+  courier_pickup
+}
+
 enum OrderStatus {
   waiting_device
   device_received
@@ -25,49 +38,125 @@ enum OrderStatus {
   cancelled
   disputed
 }
-enum PaymentStatus       { unpaid partially_paid paid refunded }
-enum PaymentMethod       { transfer_bank qris cash ewallet }
-enum PaymentType         { deposit final_payment refund }
-enum PaymentRecordStatus { pending confirmed failed refunded }
-enum SparePartStatus     { available preorder discontinued }
-enum OrderItemStatus     { pending confirmed replaced cancelled }
-enum ShipmentType        { pickup return warranty_pickup }
-enum ShipmentStatus      { scheduled picked_up in_transit delivered failed }
-enum DisputeType         { warranty_claim service_quality wrong_diagnosis other }
-enum DisputeStatus       { open store_accepted store_rejected escalated resolved closed }
-enum CreatedByType       { customer store_admin system }
-enum ApplicationStatus   { pending approved rejected }
-enum FeeBearerType       { customer store platform }
 
-// â”€â”€â”€ USERS (Pelanggan) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+enum PaymentStatus {
+  unpaid
+  partially_paid
+  paid
+  refunded
+}
+
+enum PaymentMethod {
+  transfer_bank
+  qris
+  cash
+  ewallet
+}
+
+enum PaymentType {
+  deposit
+  final_payment
+  refund
+}
+
+enum PaymentRecordStatus {
+  pending
+  confirmed
+  failed
+  refunded
+}
+
+enum SparePartStatus {
+  available
+  preorder
+  discontinued
+}
+
+enum OrderItemStatus {
+  pending
+  confirmed
+  replaced
+  cancelled
+}
+
+enum ShipmentType {
+  pickup
+  return
+  warranty_pickup
+}
+
+enum ShipmentStatus {
+  scheduled
+  picked_up
+  in_transit
+  delivered
+  failed
+}
+
+enum DisputeType {
+  warranty_claim
+  service_quality
+  wrong_diagnosis
+  other
+}
+
+enum DisputeStatus {
+  open
+  store_accepted
+  store_rejected
+  escalated
+  resolved
+  closed
+}
+
+enum CreatedByType {
+  customer
+  store_admin
+  system
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum FeeBearerType {
+  customer
+  store
+  platform
+}
+
+// ─── USERS (Pelanggan) ───
 
 model User {
-  id                 String        @id @default(uuid())
-  fullName           String        @map("full_name") @db.VarChar(150)
-  phoneNumber        String        @unique @map("phone_number") @db.VarChar(20)
-  passwordHash       String        @map("password_hash") @db.VarChar(255)
-  avatarUrl          String?       @map("avatar_url") @db.VarChar(255)
-  address            String?       @db.Text
-  accountStatus      AccountStatus @default(active) @map("account_status")
-  isFirstLogin       Boolean       @default(true) @map("is_first_login")
-  isCredentialSent   Boolean       @default(false) @map("is_credential_sent")
-  credentialPlainEnc String?       @map("credential_plain_enc") @db.Text
-  loginAttemptCount  Int           @default(0) @map("login_attempt_count") @db.SmallInt
-  lockedUntil        DateTime?     @map("locked_until") @db.Timestamptz
-  lastLoginAt        DateTime?     @map("last_login_at") @db.Timestamptz
-  passwordChangedAt  DateTime?     @map("password_changed_at") @db.Timestamptz
-  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  id                 String         @id @default(uuid())
+  fullName           String         @map("full_name") @db.VarChar(150)
+  phoneNumber        String         @unique @map("phone_number") @db.VarChar(20)
+  passwordHash       String         @map("password_hash") @db.VarChar(255)
+  avatarUrl          String?        @map("avatar_url") @db.VarChar(255)
+  address            String?        @db.Text
+  accountStatus      AccountStatus  @default(active) @map("account_status")
+  isFirstLogin       Boolean        @default(true) @map("is_first_login")
+  isCredentialSent   Boolean        @default(false) @map("is_credential_sent")
+  credentialPlainEnc String?        @map("credential_plain_enc") @db.Text
+  loginAttemptCount  Int            @default(0) @map("login_attempt_count") @db.SmallInt
+  lockedUntil        DateTime?      @map("locked_until") @db.Timestamptz
+  lastLoginAt        DateTime?      @map("last_login_at") @db.Timestamptz
+  passwordChangedAt  DateTime?      @map("password_changed_at") @db.Timestamptz
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz
   orders             ServiceOrder[]
   payments           Payment[]
   reviews            Review[]
   coupons            Coupon[]
   disputes           Dispute[]
   sessions           UserSession[]
+
   @@map("users")
 }
 
-// â”€â”€â”€ STORE ADMINS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STORE ADMINS ───
 
 model StoreAdmin {
   id           String    @id @default(uuid())
@@ -80,38 +169,37 @@ model StoreAdmin {
   lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   store        Store     @relation(fields: [storeId], references: [id])
+
   @@unique([storeId, phoneNumber])
   @@map("store_admins")
 }
 
-// â”€â”€â”€ STORES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STORES ───
 
 model Store {
-  id               String       @id @default(uuid())
-  storeName        String       @map("store_name") @db.VarChar(150)
-  address          String       @db.Text
-  phoneNumber      String       @map("phone_number") @db.VarChar(20)
-  operationalHours Json         @default("{}") @map("operational_hours")
-  // Shape: { "mon":"08:00-20:00", "tue":"08:00-20:00", ..., "sun":"closed" }
-  config           Json         @default("{}")
-  // Shape: { "service_fee":{"screen_replacement":50000}, "warranty_days":30,
-  //          "diagnosis_fee":20000, "low_stock_threshold":2, "deposit_required":false }
-  isActive         Boolean      @default(false) @map("is_active")
-  ratingAvg        Decimal      @default(0) @map("rating_avg") @db.Decimal(3, 2)
-  totalCompleted   Int          @default(0) @map("total_completed")
-  penaltyPoints    Int          @default(0) @map("penalty_points")
-  verifiedAt       DateTime?    @map("verified_at") @db.Timestamptz
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  id               String          @id @default(uuid())
+  storeName        String          @map("store_name") @db.VarChar(150)
+  address          String          @db.Text
+  phoneNumber      String          @map("phone_number") @db.VarChar(20)
+  operationalHours Json            @default("{}") @map("operational_hours")
+  config           Json            @default("{}")
+  isActive         Boolean         @default(false) @map("is_active")
+  ratingAvg        Decimal         @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  totalCompleted   Int             @default(0) @map("total_completed")
+  penaltyPoints    Int             @default(0) @map("penalty_points")
+  verifiedAt       DateTime?       @map("verified_at") @db.Timestamptz
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz
   admins           StoreAdmin[]
   spareparts       SparePart[]
   orders           ServiceOrder[]
   reviews          Review[]
   disputes         Dispute[]
+
   @@map("stores")
 }
 
-// â”€â”€â”€ STORE APPLICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STORE APPLICATIONS ───
 
 model StoreApplication {
   id                 String            @id @default(uuid())
@@ -126,10 +214,11 @@ model StoreApplication {
   reviewNote         String?           @map("review_note") @db.Text
   appliedAt          DateTime          @default(now()) @map("applied_at") @db.Timestamptz
   reviewedAt         DateTime?         @map("reviewed_at") @db.Timestamptz
+
   @@map("store_applications")
 }
 
-// â”€â”€â”€ SPAREPARTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SPAREPARTS ───
 
 model SparePart {
   id          String          @id @default(uuid())
@@ -137,72 +226,70 @@ model SparePart {
   brand       String          @db.VarChar(80)
   deviceModel String          @map("device_model") @db.VarChar(100)
   partType    String          @map("part_type") @db.VarChar(60)
-  // Nilai valid: screen_replacement | battery_replacement | charging_port | camera | other
   partName    String          @map("part_name") @db.VarChar(150)
   price       Decimal         @db.Decimal(12, 2)
   qty         Int             @default(0)
   qtyReserved Int             @default(0) @map("qty_reserved")
-  // qty_available (computed) = qty - qtyReserved â€” JANGAN simpan di DB
   status      SparePartStatus @default(available)
   createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz
   store       Store           @relation(fields: [storeId], references: [id])
   orderItems  OrderItem[]
+
   @@index([storeId])
   @@index([brand, deviceModel, partType])
   @@map("spareparts")
 }
 
-// â”€â”€â”€ SERVICE ORDERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SERVICE ORDERS ───
 
 model ServiceOrder {
-  id               String        @id @default(uuid())
-  userId           String        @map("user_id")
-  storeId          String        @map("store_id")
-  orderNumber      String        @unique @map("order_number") @db.VarChar(30)
-  // Format: SG-YYYYMMDD-XXXX (generated dengan nanoid, bukan count)
-  deviceType       DeviceType    @map("device_type")
-  brand            String        @db.VarChar(80)
-  deviceModel      String        @map("device_model") @db.VarChar(100)
-  deliveryMethod   DeliveryMethod @map("delivery_method")
-  deliveryAddress  String?       @map("delivery_address") @db.Text
-  status           OrderStatus   @default(waiting_device)
-  paymentStatus    PaymentStatus @default(unpaid) @map("payment_status")
-  totalEstimasi    Decimal       @default(0) @map("total_estimasi") @db.Decimal(12, 2)
-  discountAmount   Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
-  finalPrice       Decimal?      @map("final_price") @db.Decimal(12, 2)
-  // Diisi saat admin submit diagnosis: SUM(finalItemPrice confirmed) + serviceFee
-  serviceFee       Decimal?      @map("service_fee") @db.Decimal(12, 2)
-  diagnosisNote    String?       @map("diagnosis_note") @db.Text
-  warrantyDays     Int?          @map("warranty_days")
-  // Diisi dari store.config.warranty_days saat payment dikonfirmasi
-  warrantyExpiredAt DateTime?    @map("warranty_expired_at") @db.Timestamptz
-  slaDeadline      DateTime?     @map("sla_deadline") @db.Timestamptz
-  slaWarnedAt      DateTime?     @map("sla_warned_at") @db.Timestamptz
-  slaBreachCount   Int           @default(0) @map("sla_breach_count") @db.SmallInt
-  couponId         String?       @map("coupon_id")
-  isWarrantyOrder  Boolean       @default(false) @map("is_warranty_order")
-  parentOrderId    String?       @map("parent_order_id")
-  completedAt      DateTime?     @map("completed_at") @db.Timestamptz
-  cancelledAt      DateTime?     @map("cancelled_at") @db.Timestamptz
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-  user             User          @relation(fields: [userId], references: [id])
-  store            Store         @relation(fields: [storeId], references: [id])
-  coupon           Coupon?       @relation("OrderCoupon", fields: [couponId], references: [id])
-  items            OrderItem[]
-  tracking         ServiceTracking[]
-  payments         Payment[]
-  shipments        Shipment[]
-  review           Review?
-  dispute          Dispute?
+  id                String        @id @default(uuid())
+  userId            String        @map("user_id")
+  storeId           String        @map("store_id")
+  orderNumber       String        @unique @map("order_number") @db.VarChar(30)
+  deviceType        DeviceType    @map("device_type")
+  brand             String        @db.VarChar(80)
+  deviceModel       String        @map("device_model") @db.VarChar(100)
+  deliveryMethod    DeliveryMethod @map("delivery_method")
+  deliveryAddress   String?       @map("delivery_address") @db.Text
+  status            OrderStatus   @default(waiting_device)
+  paymentStatus     PaymentStatus @default(unpaid) @map("payment_status")
+  totalEstimasi     Decimal       @default(0) @map("total_estimasi") @db.Decimal(12, 2)
+  discountAmount    Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  finalPrice        Decimal?      @map("final_price") @db.Decimal(12, 2)
+  serviceFee        Decimal?      @map("service_fee") @db.Decimal(12, 2)
+  diagnosisNote     String?       @map("diagnosis_note") @db.Text
+  warrantyDays      Int?          @map("warranty_days")
+  warrantyExpiredAt DateTime?     @map("warranty_expired_at") @db.Timestamptz
+  slaDeadline       DateTime?     @map("sla_deadline") @db.Timestamptz
+  slaWarnedAt       DateTime?     @map("sla_warned_at") @db.Timestamptz
+  slaBreachCount    Int           @default(0) @map("sla_breach_count") @db.SmallInt
+  couponId          String?       @unique @map("coupon_id")
+  isWarrantyOrder   Boolean       @default(false) @map("is_warranty_order")
+  parentOrderId     String?       @map("parent_order_id")
+  completedAt       DateTime?     @map("completed_at") @db.Timestamptz
+  cancelledAt       DateTime?     @map("cancelled_at") @db.Timestamptz
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  user              User          @relation(fields: [userId], references: [id])
+  store             Store         @relation(fields: [storeId], references: [id])
+  coupon            Coupon?       @relation("OrderCoupon", fields: [couponId], references: [id])
+  items             OrderItem[]
+  tracking          ServiceTracking[]
+  payments          Payment[]
+  shipments         Shipment[]
+  review            Review?
+  dispute           Dispute?
+  couponsUsing      Coupon[]      @relation("CouponUsage")
+
   @@index([userId])
   @@index([storeId])
   @@index([status])
   @@map("service_orders")
 }
 
-// â”€â”€â”€ ORDER ITEMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ORDER ITEMS ───
 
 model OrderItem {
   id             String          @id @default(uuid())
@@ -211,17 +298,16 @@ model OrderItem {
   serviceType    String          @map("service_type") @db.VarChar(100)
   complaint      String          @db.Text
   itemPrice      Decimal         @map("item_price") @db.Decimal(12, 2)
-  // Estimasi dari sparepart.price saat booking. 0 jika tidak ada sparepartId.
   finalItemPrice Decimal?        @map("final_item_price") @db.Decimal(12, 2)
-  // Diisi admin saat submit diagnosis
   status         OrderItemStatus @default(pending)
   technicianNote String?         @map("technician_note") @db.Text
   order          ServiceOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   sparepart      SparePart?      @relation(fields: [sparepartId], references: [id])
+
   @@map("order_items")
 }
 
-// â”€â”€â”€ SERVICE TRACKING (IMMUTABLE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SERVICE TRACKING ───
 
 model ServiceTracking {
   id            String        @id @default(uuid())
@@ -231,12 +317,12 @@ model ServiceTracking {
   createdByType CreatedByType @map("created_by_type")
   createdById   String        @map("created_by_id")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  // âš ï¸ IMMUTABLE â€” JANGAN UPDATE atau DELETE baris di tabel ini
   order         ServiceOrder  @relation(fields: [orderId], references: [id])
+
   @@map("service_tracking")
 }
 
-// â”€â”€â”€ PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PAYMENTS ───
 
 model Payment {
   id            String              @id @default(uuid())
@@ -252,10 +338,11 @@ model Payment {
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
   order         ServiceOrder        @relation(fields: [orderId], references: [id])
   user          User                @relation(fields: [userId], references: [id])
+
   @@map("payments")
 }
 
-// â”€â”€â”€ SHIPMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SHIPMENTS ───
 
 model Shipment {
   id                 String         @id @default(uuid())
@@ -273,17 +360,18 @@ model Shipment {
   notes              String?        @db.Text
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz
   order              ServiceOrder   @relation(fields: [orderId], references: [id])
+
   @@map("shipments")
 }
 
-// â”€â”€â”€ REVIEWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── REVIEWS ───
 
 model Review {
   id        String       @id @default(uuid())
   orderId   String       @unique @map("order_id")
   userId    String       @map("user_id")
   storeId   String       @map("store_id")
-  rating    Int          @db.SmallInt   // 1-5, validated in service layer
+  rating    Int          @db.SmallInt
   comment   String?      @db.Text
   isPublic  Boolean      @default(true) @map("is_public")
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz
@@ -291,10 +379,11 @@ model Review {
   user      User         @relation(fields: [userId], references: [id])
   store     Store        @relation(fields: [storeId], references: [id])
   coupon    Coupon?
+
   @@map("reviews")
 }
 
-// â”€â”€â”€ COUPONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── COUPONS ───
 
 model Coupon {
   id            String        @id @default(uuid())
@@ -304,21 +393,22 @@ model Coupon {
   amount        Decimal       @default(10000) @db.Decimal(12, 2)
   isUsed        Boolean       @default(false) @map("is_used")
   usedAt        DateTime?     @map("used_at") @db.Timestamptz
-  usedOnOrderId String?       @map("used_on_order_id")
+  usedOnOrderId String?       @unique @map("used_on_order_id")
   expiredAt     DateTime      @map("expired_at") @db.Timestamptz
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
   user          User          @relation(fields: [userId], references: [id])
   review        Review        @relation(fields: [reviewId], references: [id])
-  usedOnOrder   ServiceOrder? @relation("OrderCoupon", fields: [usedOnOrderId], references: [id])
+  usedOnOrder   ServiceOrder? @relation("CouponUsage", fields: [usedOnOrderId], references: [id])
+  orders        ServiceOrder[] @relation("OrderCoupon")
+
   @@map("coupons")
 }
 
-// â”€â”€â”€ DISPUTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DISPUTES ───
 
 model Dispute {
   id               String        @id @default(uuid())
   orderId          String        @unique @map("order_id")
-  // UNIQUE: satu order hanya bisa punya satu dispute aktif pada satu waktu
   userId           String        @map("user_id")
   storeId          String        @map("store_id")
   disputeType      DisputeType   @map("dispute_type")
@@ -335,16 +425,16 @@ model Dispute {
   order            ServiceOrder  @relation(fields: [orderId], references: [id])
   user             User          @relation(fields: [userId], references: [id])
   store            Store         @relation(fields: [storeId], references: [id])
+
   @@map("disputes")
 }
 
-// â”€â”€â”€ USER SESSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── USER SESSIONS ───
 
 model UserSession {
   id           String   @id @default(uuid())
   userId       String   @map("user_id")
   tokenHash    String   @unique @map("token_hash") @db.VarChar(64)
-  // tokenHash = SHA-256(refreshToken) dalam hex
   deviceInfo   Json?    @map("device_info")
   ipAddress    String?  @map("ip_address") @db.VarChar(45)
   isActive     Boolean  @default(true) @map("is_active")
@@ -352,11 +442,12 @@ model UserSession {
   lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, isActive])
   @@map("user_sessions")
 }
 
-// â”€â”€â”€ FAILED NOTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── FAILED NOTIFICATIONS ───
 
 model FailedNotification {
   id            String   @id @default(uuid())
@@ -368,5 +459,6 @@ model FailedNotification {
   attemptCount  Int      @default(0) @map("attempt_count") @db.SmallInt
   lastError     String?  @map("last_error") @db.Text
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
   @@map("failed_notifications")
 }
