@@ -7,19 +7,14 @@ import { GetUser } from '../../common/decorators/get-user.decorator';
 
 @ApiTags('Store Spareparts')
 @Controller('store/spareparts')
-@UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
-@ApiBearerAuth()
 export class SparepartsController {
   constructor(private readonly sparepartsService: SparepartsService) {}
 
+  // Public: customer store detail screen (uses JWT but no StoreJwt required)
+  // Also used by store admin for their own inventory (passes storeId from JWT)
   @Get()
-  async findByStore(@GetUser('storeId') storeId: string) {
-    return this.sparepartsService.findByStore(storeId);
-  }
-
-  @Get('available')
   async findAvailable(
-    @GetUser('storeId') storeId: string,
+    @Query('storeId') storeId: string,
     @Query('brand') brand?: string,
     @Query('deviceModel') deviceModel?: string,
     @Query('partType') partType?: string,
@@ -28,6 +23,8 @@ export class SparepartsController {
   }
 
   @Post()
+  @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
+  @ApiBearerAuth()
   async create(
     @GetUser('storeId') storeId: string,
     @Body() dto: { brand: string; deviceModel: string; partType: string; partName: string; price: number; qty: number; status?: string },
@@ -36,6 +33,8 @@ export class SparepartsController {
   }
 
   @Patch(':id')
+  @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
+  @ApiBearerAuth()
   async update(
     @Param('id') id: string,
     @GetUser('storeId') storeId: string,
@@ -45,6 +44,8 @@ export class SparepartsController {
   }
 
   @Delete(':id')
+  @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
+  @ApiBearerAuth()
   async delete(@Param('id') id: string, @GetUser('storeId') storeId: string) {
     return this.sparepartsService.delete(id, storeId);
   }

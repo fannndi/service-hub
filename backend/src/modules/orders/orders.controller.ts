@@ -3,11 +3,19 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { PaymentsService } from '../payments/payments.service';
+import { ReviewsService } from '../reviews/reviews.service';
+import { DisputesService } from '../disputes/disputes.service';
 
 @ApiTags('Orders')
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly paymentsService: PaymentsService,
+    private readonly reviewsService: ReviewsService,
+    private readonly disputesService: DisputesService,
+  ) {}
 
   @Post()
   async createOrder(@Body() dto: any) {
@@ -40,5 +48,41 @@ export class OrdersController {
   @ApiBearerAuth()
   async reject(@GetUser('id') userId: string, @Param('id') orderId: string) {
     return this.ordersService.rejectOrder(orderId, userId);
+  }
+
+  // Payment sub-route: POST /orders/:id/payments
+  @Post(':id/payments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async createPayment(
+    @GetUser('id') userId: string,
+    @Param('id') orderId: string,
+    @Body() dto: any,
+  ) {
+    return this.paymentsService.createPayment(orderId, userId, dto);
+  }
+
+  // Review sub-route: POST /orders/:id/reviews
+  @Post(':id/reviews')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async createReview(
+    @GetUser('id') userId: string,
+    @Param('id') orderId: string,
+    @Body() dto: any,
+  ) {
+    return this.reviewsService.createReview(orderId, userId, dto);
+  }
+
+  // Dispute sub-route: POST /orders/:id/disputes
+  @Post(':id/disputes')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async createDispute(
+    @GetUser('id') userId: string,
+    @Param('id') orderId: string,
+    @Body() dto: any,
+  ) {
+    return this.disputesService.createDispute(orderId, userId, dto);
   }
 }

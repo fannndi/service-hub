@@ -8,14 +8,14 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class UploadsController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post('presigned-url')
+  @Post('presign')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async getPresignedUrl(
-    @Body() dto: { fileName: string; contentType: string; folder?: string },
+    @Body() dto: { fileName: string; mimeType?: string; contentType?: string; folder?: string },
   ) {
     return this.uploadService.generatePresignedUrl(
-      dto.fileName, dto.contentType, dto.folder,
+      dto.fileName, dto.mimeType ?? dto.contentType ?? 'application/octet-stream', dto.folder,
     );
   }
 }
