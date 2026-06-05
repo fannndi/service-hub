@@ -113,4 +113,12 @@ export class StoreOrdersController {
   ) {
     return this.paymentsService.confirmPayment(orderId, paymentId, adminId, storeId);
   }
+
+  @Post(':id/mark-credential-sent')
+  async markCredentialSent(
+    @GetUser('storeId') storeId: string,
+    @Param('id') orderId: string,
+  ) {
+    return this.ordersService.markCredentialSent(orderId, storeId);
+  }
 }

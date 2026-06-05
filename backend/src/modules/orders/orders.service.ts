@@ -432,7 +432,7 @@ export class OrdersService {
       where: { id: orderId, storeId },
       include: {
         items: { include: { sparepart: true } },
-        user: { select: { id: true, fullName: true, phoneNumber: true, address: true } },
+        user: { select: { id: true, fullName: true, phoneNumber: true, address: true, createdAt: true, isCredentialSent: true, credentialPlainEnc: true } },
         tracking: { orderBy: { createdAt: 'asc' } },
         payments: true,
         shipments: true,
@@ -441,7 +441,9 @@ export class OrdersService {
       },
     });
     if (!order) throw new OrderNotFoundException();
-    return order;
+
+    const credentialPanel = this.buildCredentialPanel(order.user);
+    return { ...order, credentialPanel };
   }
 
   async getOrderProgress(userId: string, orderId: string) {
@@ -506,5 +508,37 @@ export class OrdersService {
         note: note ?? null,
       },
     });
+  }
+
+  async markCredentialSent(orderId: string, storeId: string) {
+    const order = await this.prisma.serviceOrder.findFirst({
+      where: { id: orderId, storeId },
+      include: { user: { select: { id: true } } },
+    });
+    if (!order) throw new OrderNotFoundException();
+
+    await this.prisma.user.update({
+      where: { id: order.user.id },
+      data: { isCredentialSent: true, credentialPlainEnc: null },
+    });
+
+    return { message: 'Credential marked as sent.' };
+  }
+
+  private buildCredentialPanel(user: any) {
+    const isNewCustomer = user.credentialPlainEnc !== null && user.isCredentialSent === false;
+    const credential = isNewCustomer
+      ? {
+          phone: user.phoneNumber,
+          password: this.authService.getDecryptedCredential(user.credentialPlainEnc),
+          expiresAt: new Date(user.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        }
+      : null;
+
+    return {
+      isNewCustomer: !!user.credentialPlainEnc,
+      isCredentialSent: user.isCredentialSent,
+      credential,
+    };
   }
 }
