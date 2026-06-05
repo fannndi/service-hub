@@ -29,6 +29,21 @@ export class StoresService {
     });
   }
 
+  async findSpareparts(storeId: string, brand?: string, deviceModel?: string, partType?: string) {
+    const where: any = {
+      storeId,
+      status: { not: 'discontinued' },
+    };
+    if (brand) where.brand = brand;
+    if (deviceModel) where.deviceModel = deviceModel;
+    if (partType) where.partType = partType;
+
+    return this.prisma.sparePart.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getDashboard(storeId: string) {
     const store = await this.prisma.store.findUniqueOrThrow({ where: { id: storeId } });
     const orders = await this.prisma.serviceOrder.findMany({

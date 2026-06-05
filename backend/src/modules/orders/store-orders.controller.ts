@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
@@ -28,7 +28,7 @@ export class StoreOrdersController {
     return this.ordersService.findStoreOrderById(storeId, orderId);
   }
 
-  @Post(':id/status')
+  @Patch(':id/status')
   async updateStatus(
     @GetUser('id') adminId: string,
     @GetUser('storeId') storeId: string,
@@ -38,7 +38,7 @@ export class StoreOrdersController {
     return this.ordersService.updateStatus(orderId, adminId, storeId, dto);
   }
 
-  @Post(':id/diagnosis')
+  @Patch(':id/diagnosis')
   async submitDiagnosis(
     @GetUser('id') adminId: string,
     @GetUser('storeId') storeId: string,

@@ -443,4 +443,27 @@ export class OrdersService {
     if (!order) throw new OrderNotFoundException();
     return order;
   }
+
+  async getOrderProgress(userId: string, orderId: string) {
+    const order = await this.prisma.serviceOrder.findFirst({
+      where: { id: orderId, userId },
+      select: { id: true },
+    });
+    if (!order) throw new OrderNotFoundException();
+
+    const tracking = await this.prisma.serviceTracking.findMany({
+      where: { orderId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      orderId,
+      status: tracking[0]?.status ?? 'waiting_device',
+      timeline: tracking.map((t) => ({
+        status: t.status,
+        note: t.note,
+        createdAt: t.createdAt,
+      })),
+    };
+  }
 }

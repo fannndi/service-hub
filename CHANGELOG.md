@@ -1,5 +1,56 @@
 ﻿# Changelog
 
+## 2026-06-06 — Phase 1 Foundation Complete + Phase 2 Customer Merge
+
+### Added (Phase 1 Foundation — Backend)
+- Orders module: createOrder (stealth account, stock reservation, coupon validation, nanoid), approveOrder (decrement qty+qtyReserved), rejectOrder (rollback qtyReserved), updateStatus (state machine + SLA reset), submitDiagnosis (replaced sparepart swap, finalPrice calc)
+- Payments module: createPayment (proof validation), confirmPayment (warranty assignment from store.config.warranty_days, totalCompleted increment)
+- Reviews module: createReview (duplicate check, ratingAvg recalculation, reward coupon creation in transaction)
+- Disputes module: createDispute (warranty check, active dispute guard), respondDispute (warranty order creation on store_accepted)
+- Notifications module: WA send with 3x exponential retry + FailedNotification logging, sendNewOrderToStore, sendWaitingPayment, sendDiagnosisResult, sendOrderCompleted
+- Uploads module: S3 presigned URL generation via @aws-sdk/s3-request-presigner
+- Jobs module: SlaMonitorJob (30s cron, slaWarnedAt + breach tracking, notify store + customer), CredentialCleanerJob (30min cron, clear credentialPlainEnc after 24h)
+- SLA constants and state-machine utility (assertValidTransition with full transition map)
+- Prisma seed file: store, admin, customers, spareparts sample data
+- Bug fixes per PRD: B1 (itemPrice from sparepart.price), B2 (qtyReserved increment), B3 (decrement both qty+qtyReserved), B4 (POST /v1/orders PUBLIC), B5 (separate store auth), B6 (coupon ownership), B7 (warrantyDays from store.config), B8 (ratingAvg recalculation), B9 (coupon in review transaction), B10 (nanoid order number), B11 (replacedSparepartId validation)
+
+### Added (Phase 2 Customer — Flutter Frontend)
+- `frontend/lib/features/customer/` — complete customer app:
+  - GoRouter configuration with auth guard redirect
+  - Screens: Splash, Login, ChangePassword, Home, StoreList, StoreDetail, BookingForm, BookingSuccess, OrderList, OrderDetail, Tracking, PaymentUpload, ReviewForm, ReviewSuccess, WarrantyClaim, Profile, Sessions
+  - Providers: AuthNotifier (login/logout/session), OrderTracking (30s polling Stream), CustomerOrders (filtered pagination), OrderDetail
+  - Repositories: CustomerAuthRepository, StoreRepository, OrderRepository, PaymentRepository, ReviewRepository, DisputeRepository — all implementing Master PRD API contracts
+  - Session storage: Dio client with interceptor, token refresh, public Dio for booking
+  - Widgets: OrderStatusTimeline, StoreCard, DiagnosisApprovalCard, SparePartSelectorSheet, CouponRewardBanner
+  - Error handler mapping API error codes to user-friendly Bahasa Indonesia messages
+  - Tests: customer provider test, customer repository test, updated widget test
+
+### Changed (API Path Alignment)
+- `POST /v1/payments/:orderId` → `POST /v1/orders/:id/payments` (Master PRD contract)
+- `POST /v1/reviews/:orderId` → `POST /v1/orders/:id/reviews` (Master PRD contract)
+- `POST /v1/disputes/:orderId` → `POST /v1/orders/:id/disputes` (Master PRD contract)
+- `POST /v1/uploads/presigned-url` → `POST /v1/uploads/presign` (frontend contract)
+- `POST /v1/store/orders/:id/status` → `PATCH /v1/store/orders/:id/status` (Master PRD AC-17)
+- `POST /v1/store/orders/:id/diagnosis` → `PATCH /v1/store/orders/:id/diagnosis` (Master PRD AC-15)
+- `GET /v1/store/spareparts` — now PUBLIC for customer store detail screen (takes ?storeId= param)
+- Added `GET /v1/me/orders` (customer orders list alias)
+- Added `GET /v1/me/summary` (home screen: activeOrders, activeCoupons, activeWarranty)
+- Added `GET /v1/me/orders/:id/progress` (tracking timeline for 30s polling)
+- Added `GET /v1/me/notifications` (recent tracking events)
+
+### Fixed
+- Prisma schema: BOM encoding stripped, enums formatted multi-line, named relation OrderCoupon/CouponUsage fixed
+- GetUser decorator: relaxed typing for id/storeId access across all controllers
+- tsconfig: strictPropertyInitialization disabled (class-validator DTOs)
+- .gitignore: added backend/dist/
+- Spareparts controller: GET made public (customer store detail), admin mutations remain StoreJWT-guarded
+
+### Scope
+- Phase 1 Foundation backend: complete with all business rules + bug fixes from PRD
+- Phase 2 Customer Flutter app: complete UI + routing + providers + repositories
+- Phase 3 Store Admin: pending (branch phase-03)
+- All Master PRD API contracts aligned between backend and frontend
+
 
 
 
