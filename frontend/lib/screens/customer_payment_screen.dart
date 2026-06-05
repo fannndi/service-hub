@@ -18,9 +18,9 @@ class CustomerPaymentScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const TextField(decoration: InputDecoration(labelText: 'Metode pembayaran', border: OutlineInputBorder())),
           const SizedBox(height: 12),
-          OutlinedButton.icon(onPressed: null, icon: Icon(Icons.image_outlined), label: Text('Pilih bukti pembayaran')),
+          OutlinedButton.icon(onPressed: null, icon: const Icon(Icons.image_outlined), label: const Text('Pilih bukti pembayaran')),
           const SizedBox(height: 20),
-          FilledButton(onPressed: null, child: Text('Kirim bukti dummy belum aktif')),
+          const FilledButton(onPressed: null, child: Text('Kirim bukti dummy belum aktif')),
         ],
       ),
     );

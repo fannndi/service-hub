@@ -466,4 +466,45 @@ export class OrdersService {
       })),
     };
   }
+
+  async getStoreOrderTracking(storeId: string, orderId: string) {
+    const order = await this.prisma.serviceOrder.findFirst({
+      where: { id: orderId, storeId },
+      select: { id: true },
+    });
+    if (!order) throw new OrderNotFoundException();
+
+    const tracking = await this.prisma.serviceTracking.findMany({
+      where: { orderId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      orderId,
+      status: tracking[0]?.status ?? 'waiting_device',
+      timeline: tracking.map((t) => ({
+        status: t.status,
+        note: t.note,
+        createdAt: t.createdAt,
+        createdByType: t.createdByType,
+      })),
+    };
+  }
+
+  async addStoreOrderTracking(orderId: string, adminId: string, storeId: string, status: string, note?: string) {
+    const order = await this.prisma.serviceOrder.findFirst({
+      where: { id: orderId, storeId },
+    });
+    if (!order) throw new OrderNotFoundException();
+
+    return this.prisma.serviceTracking.create({
+      data: {
+        orderId,
+        status: status as any,
+        createdByType: 'store_admin',
+        createdById: adminId,
+        note: note ?? null,
+      },
+    });
+  }
 }
