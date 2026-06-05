@@ -12,25 +12,15 @@ class CustomerPaymentScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text(orderNumber,
-              style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+          Text(orderNumber, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
-          const Text(
-              'Transfer ke rekening toko / QRIS. Upload bukti nanti disambungkan ke API upload.'),
+          const Text('Transfer ke rekening toko / QRIS. Upload bukti nanti disambungkan ke API upload.'),
           const SizedBox(height: 20),
-          const TextField(
-              decoration: InputDecoration(
-                  labelText: 'Metode pembayaran',
-                  border: OutlineInputBorder())),
+          const TextField(decoration: InputDecoration(labelText: 'Metode pembayaran', border: OutlineInputBorder())),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.image_outlined),
-              label: const Text('Pilih bukti pembayaran')),
+          OutlinedButton.icon(onPressed: null, icon: const Icon(Icons.image_outlined), label: const Text('Pilih bukti pembayaran')),
           const SizedBox(height: 20),
-          const FilledButton(
-              onPressed: null, child: Text('Kirim bukti dummy belum aktif')),
+          const FilledButton(onPressed: null, child: Text('Kirim bukti dummy belum aktif')),
         ],
       ),
     );
