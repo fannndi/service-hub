@@ -9,9 +9,9 @@ import '../domain/customer_models.dart';
 
 String normalizePhone(String value) {
   final digits = value.replaceAll(RegExp(r'\D'), '');
-  if (digits.startsWith('62')) return '+$digits';
-  if (digits.startsWith('0')) return '+62${digits.substring(1)}';
-  return '+62$digits';
+  if (digits.startsWith('62')) return '0${digits.substring(2)}';
+  if (digits.startsWith('0')) return digits;
+  return '0$digits';
 }
 
 String parseApiError(Object error) {

@@ -1,9 +1,12 @@
 ﻿import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { config as loadDotenv } from 'dotenv';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+
+loadDotenv();
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);

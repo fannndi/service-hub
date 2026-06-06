@@ -31,7 +31,7 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                 Text('ServisGadget - Portal Toko', style: Theme.of(context).textTheme.headlineSmall),
                 const Text('Masuk sebagai Admin Toko'),
                 const SizedBox(height: 24),
-                TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Nomor HP', prefixText: '+62 ')),
+                TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Nomor HP', prefixText: '08')),
                 const SizedBox(height: 12),
                 TextField(controller: password, obscureText: obscure, decoration: InputDecoration(labelText: 'Password', suffixIcon: IconButton(onPressed: () => setState(() => obscure = !obscure), icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined)))),
                 const SizedBox(height: 18),

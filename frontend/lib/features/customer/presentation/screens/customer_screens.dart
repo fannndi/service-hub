@@ -105,19 +105,27 @@ class WelcomeScreen extends StatelessWidget {
                         child: OutlinedButton.icon(
                           onPressed: () => context.push('/login'),
                           icon: const Icon(Icons.person_outline, size: 20),
-                          label: const Text('Login Pelanggan'),
+                          label: const Text('Pelanggan'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => context.push('/store-login'),
-                          icon:
-                              const Icon(Icons.store_outlined, size: 20),
-                          label: const Text('Login Admin Toko'),
+                          icon: const Icon(Icons.store_outlined, size: 20),
+                          label: const Text('Toko'),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/admin/login'),
+                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
+                      label: const Text('Admin'),
+                    ),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -981,7 +989,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       const SizedBox(height: 16),
       TextField(
         controller: _phone, keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '+62 ', prefixIcon: Icon(Icons.phone_outlined)),
+        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
       ),
       if (_delivery == 'courier_pickup') ...[
         const SizedBox(height: 16),
