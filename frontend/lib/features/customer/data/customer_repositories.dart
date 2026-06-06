@@ -162,7 +162,9 @@ class CustomerAuthRepository {
   Future<void> logout() async {
     final refresh = await _session.readRefreshToken();
     if (refresh != null) {
-      await _api.authDio.post('/auth/logout', data: {'refresh_token': refresh}).catchError((_) {});
+      try {
+        await _api.authDio.post('/auth/logout', data: {'refresh_token': refresh});
+      } catch (_) {}
     }
     await _session.clearAll();
   }
