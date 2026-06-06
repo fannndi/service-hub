@@ -430,7 +430,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
           const SizedBox(height: 12),
           TextFormField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Nomor HP', border: OutlineInputBorder()), validator: _required),
           const SectionTitle('Info Perangkat'),
-          SegmentedButton(value: {_deviceType}, segments: const [ButtonSegment(value: 'android', label: Text('Android')), ButtonSegment(value: 'ios', label: Text('iOS'))], onSelectionChanged: (v) => setState(() => _deviceType = v.first)),
+          SegmentedButton(selected: {_deviceType}, segments: const [ButtonSegment(value: 'android', label: Text('Android')), ButtonSegment(value: 'ios', label: Text('iOS'))], onSelectionChanged: (v) => setState(() => _deviceType = v.first)),
           const SizedBox(height: 12),
           TextFormField(controller: _brand, decoration: const InputDecoration(labelText: 'Brand', border: OutlineInputBorder()), validator: _required),
           const SizedBox(height: 12),
@@ -448,7 +448,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
           const SizedBox(height: 12),
           OutlinedButton.icon(onPressed: spareparts.isEmpty ? null : () => _selectPart(spareparts), icon: const Icon(Icons.inventory), label: Text(_selectedPart?.partName ?? 'Pilih Sparepart')),
           const SectionTitle('Pengiriman'),
-          SegmentedButton(value: {_delivery}, segments: const [ButtonSegment(value: 'walk_in', label: Text('Antar Sendiri')), ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'))], onSelectionChanged: (v) => setState(() => _delivery = v.first)),
+          SegmentedButton(selected: {_delivery}, segments: const [ButtonSegment(value: 'walk_in', label: Text('Antar Sendiri')), ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'))], onSelectionChanged: (v) => setState(() => _delivery = v.first)),
           if (_delivery == 'courier_pickup') ...[
             const SizedBox(height: 12),
             TextFormField(controller: _address, decoration: const InputDecoration(labelText: 'Alamat Pickup', border: OutlineInputBorder()), validator: _required),

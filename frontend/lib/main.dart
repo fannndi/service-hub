@@ -19,8 +19,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         builder: (_, __) => const _RoleSplash(),
       ),
-      ...customerRouterProvider(ref).routes,
-      ...storeAdminRouterProvider(ref).routes,
+      ...customerRoutes,
+      ...storeAdminRoutes,
     ],
   );
 });
