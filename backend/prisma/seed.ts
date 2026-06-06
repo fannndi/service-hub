@@ -14,7 +14,7 @@ async function main() {
       id: 'store-01',
       storeName: 'ServisGadget Pusat',
       address: 'Jl. Teknologi No. 42, Jakarta Selatan',
-      phoneNumber: '+6281234567890',
+      phoneNumber: '081234567890',
       isActive: true,
       config: {
         service_fee: {
@@ -51,7 +51,7 @@ async function main() {
       id: 'admin-01',
       storeId: store.id,
       fullName: 'Admin Toko Pusat',
-      phoneNumber: '+6281234567890',
+      phoneNumber: '081234567890',
       passwordHash: adminPassword,
       isActive: true,
       isFirstLogin: false,
@@ -67,7 +67,7 @@ async function main() {
     create: {
       id: 'user-01',
       fullName: 'Budi Santoso',
-      phoneNumber: '+6281212345678',
+      phoneNumber: '081212345678',
       passwordHash: customerPassword,
       isFirstLogin: false,
       address: 'Jl. Merdeka No. 10, Jakarta Pusat',
@@ -139,20 +139,20 @@ async function main() {
   console.log(`${spareparts.length} spareparts created`);
 
   // 5. Create Platform Admin
-  const adminPw = process.env.PLATFORM_ADMIN_PASSWORD || 'servisgadget2026';
+  const adminUser = 'admin';
+  const adminPw = process.env.PLATFORM_ADMIN_PASSWORD || 'admin';
   const adminPwHash = await bcrypt.hash(adminPw, 12);
   const platformAdmin = await prisma.platformAdmin.upsert({
-    where: { username: 'admin' },
+    where: { username: adminUser },
     update: {},
     create: {
-      username: 'admin',
+      username: adminUser,
       fullName: 'Platform Admin',
       passwordHash: adminPwHash,
       isActive: true,
     },
   });
   console.log(`Platform admin created: ${platformAdmin.username}`);
-  console.log(`Admin login: username=admin password=${adminPw}`);
 }
 
 main()

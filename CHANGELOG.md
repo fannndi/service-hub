@@ -1,5 +1,58 @@
 ﻿# Changelog
 
+## 2026-06-06 — UI/UX Rework, Admin Platform, Play Store Readiness
+
+### Welcome Page Rework
+- 4-button landing page: Service Now, Pelanggan, Toko, Admin
+- Service Now → multi-step booking flow (5 steps sesuai PRD master)
+- Pelanggan → customer login, Toko → store admin login, Admin → platform admin login
+
+### Multi-Step Booking Flow (PRD Master Alignment)
+- Step 1: Pilih device type (Android/iOS) + brand + model
+- Step 2: Pilih layanan + isi complaint
+- Step 3: Auto-match toko via Matching Engine (`GET /v1/stores/match`)
+- Step 4: Isi data diri + metode pengiriman
+- Step 5: Konfirmasi estimasi + buat booking
+
+### Matching Engine (New)
+- `GET /v1/stores/match?brand=&deviceModel=&partType=` — filter toko by brand, model, part type, stock > 0, isActive
+- Return store info, matched spareparts, estimated cost
+
+### Bug Fixes (Backend)
+- **itemPrice**: sekarang hanya `sparepart.price`, tidak lagi include `service_fee` (PRD AC-11)
+- **Approve stock leak**: `approveOrder` dan `updateStatus` sekarang handle semua item (confirmed + replaced)
+- **DTO**: backend menerima `fullName` dan `customerName` via `@Transform`
+- **Route conflict**: store admin login `/login` → `/store-login`
+
+### Platform Admin (New)
+- Model: `PlatformAdmin` — username, password_hash, full_name
+- `POST /v1/platform/login` — admin login (JWT 12h)
+- `POST /v1/platform/stores` — buat toko + admin toko sekaligus, set device types (Android/iOS)
+- `GET /v1/platform/stores` — daftar semua toko
+- Frontend: `/admin/login`, `/admin/dashboard` — create store form + store list
+- Seed: username `admin` / password `admin`
+
+### Phone Format: +62 → 08
+- Semua `normalizePhone` di backend dan frontend diubah ke format `08xxxxxxxx`
+- UI prefixText diubah dari `+62` ke `08`
+- Seed data diupdate
+
+### Dummy Cleanup
+- 28 file dibersihkan: 24 dummy screens + 4 demo auth/data/widgets
+
+### Deployment Ready
+- Dockerfile optimized untuk cloud deployment (multi-stage build)
+- `render.yaml` untuk one-click Render deploy
+- `app_config.dart` mendukung `--dart-define=API_BASE_URL=` untuk production
+- Tidak ada ketergantungan Docker/Redis untuk development (langsung `npm run start:dev`)
+- `.env.example` lengkap dengan semua required env vars
+
+### Store Registration (New)
+- `POST /v1/store/register` — public endpoint untuk self-registration toko
+- DTO: storeName, address, storePhone, applicantName, applicantPhone, password
+
+---
+
 ## 2026-06-06 — Phase 3 Store Admin Merge + Full API Alignment
 
 ### Backend (15+ Endpoint Baru)

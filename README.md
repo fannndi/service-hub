@@ -10,8 +10,7 @@
   <img src="https://img.shields.io/badge/NestJS-10.x-E0234E?logo=nestjs" alt="NestJS">
   <img src="https://img.shields.io/badge/Flutter-3.4+-02569B?logo=flutter" alt="Flutter">
   <img src="https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql" alt="PostgreSQL">
-  <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis" alt="Redis">
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker" alt="Docker">
+  <img src="https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase" alt="Supabase">
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/status-complete-brightgreen" alt="Status">
 </p>
@@ -26,94 +25,75 @@
 
 ## Dalam Satu Lihat
 
-| | Phase 1 | Phase 2 | Phase 3 |
-|---|:---:|:---:|:---:|
-| **Apa?** | Backend API | Mobile App Customer | Mobile App Admin |
-| **Stack** | NestJS + Prisma | Flutter + Riverpod | Flutter + Riverpod |
-| **Isi** | 12+ modul, 50+ endpoint, 21 model | 17 screen, real-time tracking | 14 screen, analytics dashboard |
-| **Status** | ✅ | ✅ | ✅ |
+| Aktor | Login | Dashboard |
+|---|---|---|
+| **Pelanggan** | `/login` — HP + password | Home: ringkasan order, kupon, garansi |
+| **Admin Toko** | `/store-login` — HP + password | Dashboard: order, inventori, pembayaran, analitik |
+| **Admin Platform** | `/admin/login` — username + password | Buat toko, set device types (Android/iOS), kelola akun toko |
 
 ---
 
 ## Sorotan Teknis
 
-- **Dua sistem auth terpisah** — Customer JWT vs Store Admin JWT, tidak campur
-- **Stealth account** — Pelanggan booking tanpa daftar, akun dibuat otomatis di belakang layar
-- **State machine order** — 9 status transisi dengan validasi ketat, SLA timer per status
-- **Real-time tracking** — Polling 30 detik, pelanggan bisa lihat progress perbaikan kapan saja
-- **Background jobs** — SLA monitor otomatis (warning + breach), credential cleaner tiap 30 menit
-- **Notifikasi WhatsApp** — Dengan exponential retry 3x, failed notification logging
+- **Tiga sistem auth terpisah** — Customer JWT, Store Admin JWT, Platform Admin JWT
+- **Stealth account** — Pelanggan booking tanpa daftar, akun dibuat otomatis
+- **Matching engine** — Auto-filter toko by brand, model, sparepart, stock tersedia
+- **Multi-step booking** — 5 langkah: device → kerusakan → match toko → data diri → booking
+- **State machine order** — 11 status transisi dengan validasi ketat, SLA timer per status
+- **Real-time tracking** — Polling 30 detik, pelanggan lihat progress perbaikan
+- **Background jobs** — SLA monitor auto-cancel, credential cleaner (via `@nestjs/schedule`)
 - **Kupon reward otomatis** — Pelanggan dapat Rp10.000 setiap beri ulasan
 
 ---
 
-## Arsitektur
-
-```
-                    Pelanggan              Admin Toko
-                  (Flutter App)          (Flutter App)
-                       │                      │
-                       └──────────┬───────────┘
-                                  │
-                     REST API (NestJS Monolith)
-                     /v1/auth/*     /v1/store/auth/*
-                     /v1/me/*       /v1/store/*
-                     /v1/orders/*   /v1/store/orders/*
-                                  │
-                    ┌─────────────┼─────────────┐
-                    ▼             ▼             ▼
-              ┌──────────┐ ┌──────────┐ ┌──────────┐
-              │PostgreSQL│ │  Redis   │ │  AWS S3  │
-              └──────────┘ └────┬─────┘ └──────────┘
-                                │
-                         ┌──────┴──────┐
-                         │  BullMQ     │
-                         │  SLA        │
-                         │  Cleaner    │
-                         └─────────────┘
-```
-
----
-
-## Mulai Cepat
+## Mulai Cepat (No Docker)
 
 ### Prasyarat
-- Docker & Docker Compose v2+
-- Node.js 20.11 LTS · Flutter SDK 3.4+
+- Node.js 20+ · Flutter SDK 3.4+ · Database Supabase
 
-### Backend — Satu Perintah
+### Backend
 
 ```bash
-cp .env.example .env
-docker compose up --build
+cd backend
+cp .env .env.example          # edit DATABASE_URL dengan connection string Supabase
+npm install
+npx prisma generate
+npx prisma db push
+npm run start:dev             # jalan di http://localhost:3000
 ```
 
-Buka http://localhost:3000/docs untuk Swagger interaktif.
+Swagger: http://localhost:3000/docs
 
-### Frontend
+### Flutter
 
 ```bash
 cd frontend
 flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
-flutter run
+flutter run                    # emulator otomatis konek ke localhost
 ```
 
-### Akun Demo
+### Build APK Release
 
-| Role | No. HP | Password |
-|------|--------|----------|
-| Pelanggan | `081234567890` | `customer123` |
-| Admin Toko | `081298765432` | `admin123` |
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://api-domainmu.com/v1
+```
+
+### Akun Default
+
+| Role | Login | Password |
+|------|-------|----------|
+| Admin Platform | `admin` | `admin` |
+| Pelanggan | `081212345678` | `customer123` |
 
 ---
 
 ## Jelajah Fitur
 
 ### Sisi Pelanggan
-- **Beranda** — Ringkasan order aktif, kupon, garansi
+- **Welcome** — 4 tombol: Service Now, Pelanggan, Toko, Admin
+- **Service Now** — Multi-step booking: device type → kerusakan → match toko → data diri → booking
 - **Cari Toko** — Browsing daftar toko servis + sparepart tersedia
-- **Booking** — Pilih sparepart, isi nomor HP, langsung masuk — tanpa daftar
 - **Lacak Order** — Timeline real-time, update tiap 30 detik
 - **Bayar** — Upload bukti transfer langsung dari app
 - **Ulas** — Rating bintang + komentar, otomatis dapat kupon Rp10.000
@@ -122,68 +102,94 @@ flutter run
 ### Sisi Admin Toko
 - **Dashboard** — Analitik 30 hari: total order, pendapatan, rating rata-rata
 - **Order** — Terima, diagnosa, ganti sparepart, update status per langkah
-- **Tracking** — Timeline progress yang dilihat pelanggan, tambah entry manual
+- **Tracking** — Timeline progress, tambah entry manual
 - **Pembayaran** — Konfirmasi pembayaran + lihat bukti transfer
 - **Inventori** — Kelola stok sparepart, tambah/edit/hapus
 - **Pelanggan** — Lihat daftar pelanggan + panel kredensial akun baru
 - **Dispute** — Tangani klaim garansi, setujui/tolak
 
+### Sisi Admin Platform
+- **Buat Toko** — Input nama, alamat, admin toko, password, pilih Android/iOS
+- **Daftar Toko** — Lihat semua toko dengan chip Android/iOS
+
 ---
 
 ## Endpoint API
 
-### Prefix `/v1` — Customer
+### Prefix `/v1` — Public & Customer
 
 ```
-POST   /auth/login                    PUBLIC
-POST   /auth/change-password          Customer
-POST   /auth/logout                   Customer
-GET    /me/summary                    Customer
-GET    /me/orders                     Customer
-GET    /me/orders/:id/progress        Customer
-GET    /me/notifications              Customer
-GET    /stores                        PUBLIC
-GET    /stores/:id                    PUBLIC
-GET    /spareparts?storeId=           PUBLIC
-POST   /orders                        PUBLIC
-POST   /orders/:id/payments           Customer
-POST   /orders/:id/reviews            Customer
-POST   /orders/:id/disputes           Customer
-POST   /uploads/presign               Customer
+POST   /auth/login                      PUBLIC
+POST   /auth/change-password            Customer
+POST   /auth/logout                     Customer
+GET    /me                              Customer
+PATCH  /me                              Customer
+GET    /me/summary                      Customer
+GET    /me/orders                       Customer
+GET    /me/orders/:id/progress          Customer
+GET    /me/coupons                      Customer
+GET    /me/notifications                Customer
+GET    /stores                          PUBLIC
+GET    /stores/:id                      PUBLIC
+GET    /stores/match                    PUBLIC    ← Matching Engine
+GET    /stores/:id/spareparts           PUBLIC
+POST   /orders                          PUBLIC    ← No auth (stealth account)
+GET    /orders/:id                      Customer
+POST   /orders/:id/approve              Customer
+POST   /orders/:id/reject               Customer
+POST   /orders/:id/payments             Customer
+POST   /orders/:id/reviews              Customer
+POST   /orders/:id/disputes             Customer
+POST   /uploads/presign                 Customer
 ```
 
 ### Prefix `/v1/store` — Admin Toko
 
 ```
-POST   /auth/login                    PUBLIC
-POST   /auth/logout                   Store
-POST   /auth/change-password          Store
-GET    /profile                       Store
-PATCH  /profile                       Store
-GET    /analytics                     Store
-GET    /orders                        Store
-GET    /orders/:id                    Store
-PATCH  /orders/:id/status             Store
-PATCH  /orders/:id/diagnosis          Store
-POST   /orders/:id/actions/:action    Store
-GET    /orders/:id/tracking           Store
-POST   /orders/:id/tracking           Store
-POST   /orders/:id/payments/:pid/confirm  Store
-GET    /customers                     Store
-GET    /payments                      Store
-GET    /reviews                       Store
-POST   /reviews/:id/response          Store
-GET    /notifications                 Store
-GET    /spareparts                    Store
-POST   /spareparts                    Store
-PUT    /spareparts/:id                Store
-DELETE /spareparts/:id                Store
-GET    /disputes                      Store
-GET    /disputes/:id                  Store
-POST   /disputes/:id/respond          Store
+POST   /auth/login                      PUBLIC
+POST   /auth/change-password            Store
+POST   /auth/logout                     Store
+GET    /profile                         Store
+PATCH  /profile                         Store
+GET    /analytics                       Store
+GET    /orders                          Store
+GET    /orders/:id                      Store
+PATCH  /orders/:id/status               Store
+POST   /orders/:id/diagnosis            Store
+PATCH  /orders/:id/diagnosis            Store
+POST   /orders/:id/actions/:action      Store
+GET    /orders/:id/tracking             Store
+POST   /orders/:id/tracking             Store
+POST   /orders/:id/payments/:pid/confirm Store
+POST   /orders/:id/mark-credential-sent Store
+GET    /customers                       Store
+GET    /payments                        Store
+GET    /reviews                         Store
+POST   /reviews/:id/response            Store
+GET    /notifications                   Store
+GET    /spareparts                      Store
+POST   /spareparts                      Store
+PATCH  /spareparts/:id                  Store
+DELETE /spareparts/:id                  Store
+GET    /dashboard/summary               Store
+PATCH  /settings                        Store
+GET    /disputes                        Store
+POST   /disputes/:id/respond            Store
 ```
 
-> Dokumentasi lengkap & interaktif di **Swagger** → http://localhost:3000/docs
+### Prefix `/v1/platform` — Admin Platform
+
+```
+POST   /login                           PUBLIC
+POST   /stores                          Admin
+GET    /stores                          Admin
+```
+
+### Prefix `/v1/store` — Registrasi
+
+```
+POST   /register                        PUBLIC    ← Self-registration toko
+```
 
 ---
 
@@ -191,36 +197,48 @@ POST   /disputes/:id/respond          Store
 
 ```
 service-hub/
-├── backend/                  NestJS API (68 file .ts)
-│   ├── src/
-│   │   ├── modules/          auth, store-auth, users, stores, orders,
-│   │   │   payments, reviews, disputes, notifications, uploads, jobs
-│   │   ├── common/           guards, decorators, filters, pipes
-│   │   └── config/           typed environment
-│   └── prisma/               schema (21 model) + seed
+├── backend/                     NestJS API
+│   ├── src/modules/
+│   │   ├── auth/                Customer auth + stealth account
+│   │   ├── store-auth/          Store admin auth
+│   │   ├── platform-admin/      Platform admin auth + store creation
+│   │   ├── users/               /me endpoints
+│   │   ├── stores/              Store listing + matching engine
+│   │   ├── store-register/      Store self-registration
+│   │   ├── orders/              Order CRUD + state machine + diagnosis
+│   │   ├── spareparts/          Sparepart inventory
+│   │   ├── payments/            Payment + confirmation
+│   │   ├── reviews/             Reviews + coupon rewards
+│   │   ├── disputes/            Dispute + warranty claims
+│   │   ├── notifications/       WhatsApp notifications
+│   │   ├── uploads/             S3 presigned uploads
+│   │   └── jobs/                SLA monitor + credential cleaner
+│   ├── prisma/                  Schema + seed
+│   └── Dockerfile               Multi-stage production build
 │
-├── frontend/                 Flutter (57 file .dart)
-│   └── lib/
-│       ├── features/
-│       │   ├── customer/     17 screen, Riverpod, GoRouter
-│       │   └── store_admin/  14 screen, Riverpod, GoRouter
-│       ├── network/          Dio interceptors, token refresh
-│       └── shared_widgets/   StatusBadge, SearchFilterBar, dll
+├── frontend/                    Flutter
+│   └── lib/features/
+│       ├── customer/            Pelanggan (17 screens)
+│       ├── store_admin/         Admin Toko (14 screens)
+│       └── platform_admin/     Admin Platform (2 screens)
 │
-├── docs/                     PRD, arsitektur, integrasi, task-list
-├── docker-compose.yml        PostgreSQL 16 + Redis 7 + Backend
-└── CHANGELOG.md
-```
+├── docs/                        PRD, arsitektur, run-guide
+├── render.yaml                  One-click Render deployment
+└── CHANGELOG.md                 Riwayat perubahan lengkap
 
 ---
 
-## Tim
+## Deployment
 
-1. **Fandi** — Phase 1 · Backend Foundation (NestJS API)
-2. **Andriyan** — Phase 2 · Customer Mobile App (Flutter)
-3. **Nissa** — Phase 3 · Store Admin App + Backend Extension
+### Production (Play Store)
+1. Deploy backend ke Render (via `render.yaml`) atau VPS
+2. Build Flutter dengan production URL:
+   ```bash
+   flutter build appbundle --release --dart-define=API_BASE_URL=https://api.yourdomain.com/v1
+   ```
+3. Upload AAB ke Google Play Console
 
-Pembagian tugas detail: → **[docs/task-list.md](docs/task-list.md)**
+Lihat **[docs/run-guide.md](docs/run-guide.md)** untuk panduan lengkap.
 
 ---
 
@@ -229,13 +247,12 @@ Pembagian tugas detail: → **[docs/task-list.md](docs/task-list.md)**
 | Dokumen | Isi |
 |---------|-----|
 | [PRD/00_MASTER_PRD.md](docs/PRD/00_MASTER_PRD.md) | Single source of truth — business rules, API contracts |
-| [PRD/01_PHASE_FOUNDATION.md](docs/PRD/01_PHASE_FOUNDATION.md) | Spesifikasi lengkap Phase 1 |
-| [PRD/02_PHASE_CUSTOMER.md](docs/PRD/02_PHASE_CUSTOMER.md) | Spesifikasi lengkap Phase 2 |
-| [PRD/03_PHASE_STORE_ADMIN.md](docs/PRD/03_PHASE_STORE_ADMIN.md) | Spesifikasi lengkap Phase 3 |
+| [docs/run-guide.md](docs/run-guide.md) | Panduan menjalankan backend + Flutter |
 | [CHANGELOG.md](CHANGELOG.md) | Riwayat perubahan semua phase |
+| [docs/architecture.md](docs/architecture.md) | Detail arsitektur sistem |
 
 ---
 
 <p align="center">
-  <b>ServisGadget</b> &mdash; Phase 1, 2, 3 selesai. Siap digunakan.
+  <b>ServisGadget</b> — Siap deploy Play Store.
 </p>
