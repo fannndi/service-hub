@@ -7,6 +7,8 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { HealthController } from './common/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { StoreAuthModule } from './modules/store-auth/store-auth.module';
+import { StoreRegisterModule } from './modules/store-register/store-register.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 import { UsersModule } from './modules/users/users.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { SparepartsModule } from './modules/spareparts/spareparts.module';
@@ -32,6 +34,8 @@ import { JobsModule } from './modules/jobs/jobs.module';
     NotificationsModule,
     AuthModule,
     StoreAuthModule,
+    StoreRegisterModule,
+    PlatformAdminModule,
     UsersModule,
     StoresModule,
     SparepartsModule,

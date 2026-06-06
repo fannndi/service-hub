@@ -462,3 +462,17 @@ model FailedNotification {
 
   @@map("failed_notifications")
 }
+
+// ─── PLATFORM ADMINS ───
+
+model PlatformAdmin {
+  id           String   @id @default(uuid())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  fullName     String   @map("full_name") @db.VarChar(150)
+  isActive     Boolean  @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("platform_admins")
+}

@@ -83,7 +83,6 @@ export class OrdersService {
         if (sp.qty - sp.qtyReserved <= 0) throw new StockUnavailableException();
         itemPrice = Number(sp.price);
       }
-      itemPrice += Number(config.service_fee?.[item.serviceType] ?? 0);
       itemData.push({
         serviceType: item.serviceType, complaint: item.complaint,
         sparepartId: item.sparepartId, itemPrice,
@@ -182,7 +181,7 @@ export class OrdersService {
   async approveOrder(orderId: string, userId: string) {
     const order = await this.prisma.serviceOrder.findFirst({
       where: { id: orderId, userId },
-      include: { items: { where: { status: 'confirmed' } }, store: true },
+      include: { items: true, store: true },
     });
     if (!order) throw new OrderNotFoundException();
     assertValidTransition(order.status, 'repairing');
@@ -190,6 +189,7 @@ export class OrdersService {
     await this.prisma.$transaction(async (tx) => {
       for (const item of order.items) {
         if (!item.sparepartId) continue;
+        if (item.status === 'cancelled') continue;
         const sp = await tx.sparePart.findUniqueOrThrow({ where: { id: item.sparepartId } });
         if (sp.qty < 1) throw new StockUnavailableException();
         await tx.sparePart.update({
@@ -266,7 +266,7 @@ export class OrdersService {
     await this.prisma.$transaction(async (tx) => {
       if (dto.status === 'repairing' && order.status === 'waiting_sparepart') {
         const items = await tx.orderItem.findMany({
-          where: { orderId, status: 'confirmed' },
+          where: { orderId, status: { in: ['confirmed', 'replaced'] } },
         });
         for (const item of items) {
           if (!item.sparepartId) continue;

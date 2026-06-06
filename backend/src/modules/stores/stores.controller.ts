@@ -19,6 +19,15 @@ export class StoresController {
     return this.storesService.findAll(false);
   }
 
+  @Get('match')
+  async matchStores(
+    @Query('brand') brand: string,
+    @Query('deviceModel') deviceModel: string,
+    @Query('partType') partType?: string,
+  ) {
+    return this.storesService.matchStores(brand, deviceModel, partType);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.storesService.findById(id);

@@ -8,8 +8,10 @@ import '../screens/customer_screens.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/', redirect: (_, __) => '/splash'),
+  GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
   GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
   GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+  GoRoute(path: '/service', builder: (_, __) => const ServiceFlowScreen()),
   GoRoute(path: '/change-password', builder: (_, __) => const ChangePasswordScreen()),
   GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
   GoRoute(path: '/stores', builder: (_, __) => const StoreListScreen()),
@@ -39,11 +41,11 @@ final customerRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(customerAuthProvider);
       final loc = state.matchedLocation;
-      final publicRoutes = {'/', '/splash', '/login', '/change-password', '/booking-success/:orderNumber'};
+      final publicRoutes = {'/', '/welcome', '/splash', '/login', '/store-login', '/change-password', '/booking-success/:orderNumber'};
       final isPublic = publicRoutes.contains(loc);
       final user = auth.valueOrNull;
       if (auth.isLoading) return null;
-      if (user == null && !isPublic) return '/login';
+      if (user == null && !isPublic) return '/welcome';
       if (user?.isFirstLogin == true && loc != '/change-password') return '/change-password';
       if (user != null && loc == '/login') return '/home';
       return null;
