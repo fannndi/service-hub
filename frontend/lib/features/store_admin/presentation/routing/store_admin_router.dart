@@ -7,7 +7,7 @@ import '../../domain/store_admin_models.dart';
 import '../screens/store_admin_screens.dart';
 
 final storeAdminRoutes = <RouteBase>[
-  GoRoute(path: '/login', builder: (_, __) => const StoreLoginScreen()),
+  GoRoute(path: '/store-login', builder: (_, __) => const StoreLoginScreen()),
   GoRoute(path: '/change-password', builder: (_, __) => const StoreChangePasswordScreen()),
   GoRoute(path: '/dashboard', builder: (_, __) => const DashboardScreen()),
   GoRoute(path: '/orders', builder: (_, __) => const OrderListScreen()),
@@ -35,9 +35,9 @@ final storeAdminRouterProvider = Provider<GoRouter>((ref) => GoRouter(
         final session = auth.valueOrNull;
         final loc = state.matchedLocation;
         if (auth.isLoading) return null;
-        if (session == null && loc != '/login') return '/login';
+        if (session == null && loc != '/store-login' && loc != '/welcome' && loc != '/login' && loc != '/splash') return '/store-login';
         if (session != null && session.isFirstLogin && loc != '/change-password') return '/change-password';
-        if (session != null && loc == '/login') return '/dashboard';
+        if (session != null && loc == '/store-login') return '/dashboard';
         return null;
       },
       routes: storeAdminRoutes,

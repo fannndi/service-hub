@@ -10,7 +10,7 @@ void main() {
   });
 
   test('create order request matches public customer booking contract', () {
-    final request = CreateOrderRequest(
+    const request = CreateOrderRequest(
       storeId: 'store-1',
       fullName: 'Budi Santoso',
       phoneNumber: '+6281234567890',
@@ -18,12 +18,18 @@ void main() {
       brand: 'Samsung',
       deviceModel: 'Galaxy S24',
       deliveryMethod: 'walk_in',
-      items: const [CreateOrderItemInput(serviceType: 'screen_replacement', complaint: 'Layar retak cukup parah', sparepartId: 'part-1')],
+      items: const [
+        CreateOrderItemInput(
+            serviceType: 'screen_replacement',
+            complaint: 'Layar retak cukup parah',
+            sparepartId: 'part-1')
+      ],
     );
 
     expect(request.toJson(), containsPair('storeId', 'store-1'));
     expect(request.toJson(), containsPair('phoneNumber', '+6281234567890'));
     expect(request.toJson()['items'], isA<List<dynamic>>());
-    expect((request.toJson()['items'] as List).first, containsPair('sparepartId', 'part-1'));
+    expect((request.toJson()['items'] as List).first,
+        containsPair('sparepartId', 'part-1'));
   });
 }

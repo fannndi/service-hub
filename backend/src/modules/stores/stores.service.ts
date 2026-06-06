@@ -1,6 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
+export interface StoreMatchResult {
+  storeId: string;
+  storeName: string;
+  address: string;
+  phoneNumber: string;
+  ratingAvg: number;
+  totalCompleted: number;
+  spareparts: Array<{
+    id: string;
+    partName: string;
+    partType: string;
+    price: number;
+    availableQty: number;
+    status: string;
+  }>;
+  estimatedCost: number;
+}
+
+export interface MatchStoresInput {
+  brand: string;
+  deviceModel: string;
+  partType?: string;
+}
+
 @Injectable()
 export class StoresService {
   constructor(private prisma: PrismaService) {}
@@ -15,6 +39,79 @@ export class StoresService {
       },
       orderBy: { ratingAvg: 'desc' },
     });
+  }
+
+  async matchStores(
+    brand: string,
+    deviceModel: string,
+    partType?: string,
+  ): Promise<StoreMatchResult[]> {
+    const sparepartWhere: any = {
+      brand,
+      deviceModel,
+      status: { not: 'discontinued' },
+    };
+    if (partType) sparepartWhere.partType = partType;
+
+    const stores = await this.prisma.store.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        storeName: true,
+        address: true,
+        phoneNumber: true,
+        ratingAvg: true,
+        totalCompleted: true,
+        config: true,
+        spareparts: {
+          where: sparepartWhere,
+          select: {
+            id: true,
+            partName: true,
+            partType: true,
+            price: true,
+            qty: true,
+            qtyReserved: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { ratingAvg: 'desc' },
+    });
+
+    const results: StoreMatchResult[] = [];
+    for (const store of stores) {
+      const availableParts = store.spareparts
+        .filter((sp) => sp.qty - sp.qtyReserved > 0)
+        .map((sp) => ({
+          id: sp.id,
+          partName: sp.partName,
+          partType: sp.partType,
+          price: Number(sp.price),
+          availableQty: sp.qty - sp.qtyReserved,
+          status: sp.status as string,
+        }));
+
+      if (availableParts.length === 0) continue;
+
+      const config = store.config as any;
+      const serviceFee = partType
+        ? Number(config?.service_fee?.[partType] ?? 0)
+        : 0;
+
+      results.push({
+        storeId: store.id,
+        storeName: store.storeName,
+        address: store.address,
+        phoneNumber: store.phoneNumber,
+        ratingAvg: Number(store.ratingAvg),
+        totalCompleted: store.totalCompleted,
+        spareparts: availableParts,
+        estimatedCost: availableParts[0].price + serviceFee,
+      });
+    }
+
+    return results;
   }
 
   async findById(id: string) {

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import 'features/customer/presentation/routing/customer_router.dart';
 import 'features/store_admin/presentation/routing/store_admin_router.dart';
+import 'features/platform_admin/presentation/routing/platform_admin_router.dart';
 import 'features/customer/application/customer_providers.dart';
 import 'features/store_admin/application/store_admin_providers.dart';
+import 'features/platform_admin/application/platform_admin_providers.dart';
 
 void main() {
   runApp(const ProviderScope(child: ServisGadgetApp()));
@@ -14,6 +16,46 @@ void main() {
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: _AppRefresh(ref),
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      final publicRoutes = {'/splash', '/welcome', '/login', '/store-login'};
+
+      final storeAuth = ref.read(storeAuthControllerProvider);
+      final custAuth = ref.read(customerAuthProvider);
+      final adminAuth = ref.read(adminAuthProvider);
+
+      if (storeAuth.isLoading || custAuth.isLoading) return null;
+
+      if (loc.startsWith('/admin/')) {
+        if (adminAuth.isLoading) return null;
+        final adminUser = adminAuth.valueOrNull;
+        if (adminUser == null && loc != '/admin/login') return '/admin/login';
+        if (adminUser != null && loc == '/admin/login') return '/admin/dashboard';
+        return null;
+      }
+
+      final storeUser = storeAuth.valueOrNull;
+      final custUser = custAuth.valueOrNull;
+
+      if (storeUser != null) {
+        if (storeUser.isFirstLogin && loc != '/change-password') return '/change-password';
+        if (loc == '/change-password') return null;
+        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/dashboard';
+        return null;
+      }
+
+      if (custUser != null) {
+        if (custUser.isFirstLogin && loc != '/change-password') return '/change-password';
+        if (publicRoutes.contains(loc)) return '/home';
+        return null;
+      }
+
+      if (!publicRoutes.contains(loc) && loc != '/service' && loc != '/stores' && !loc.startsWith('/stores/') && !loc.startsWith('/booking/')) {
+        return '/welcome';
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
@@ -21,9 +63,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       ...customerRoutes,
       ...storeAdminRoutes,
+      ...adminRoutes,
     ],
   );
 });
+
+class _AppRefresh extends ChangeNotifier {
+  _AppRefresh(this.ref) {
+    ref.listen(storeAuthControllerProvider, (_, __) => notifyListeners());
+    ref.listen(customerAuthProvider, (_, __) => notifyListeners());
+    ref.listen(adminAuthProvider, (_, __) => notifyListeners());
+  }
+  final Ref ref;
+}
 
 class _RoleSplash extends ConsumerStatefulWidget {
   const _RoleSplash();
@@ -63,7 +115,7 @@ class _RoleSplashState extends ConsumerState<_RoleSplash> {
     } catch (_) {}
 
     if (!mounted) return;
-    context.go('/login');
+    context.go('/welcome');
   }
 
   @override

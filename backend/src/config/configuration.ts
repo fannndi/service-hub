@@ -19,6 +19,7 @@ export default () => ({
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
     storeAccessSecret: process.env.JWT_STORE_ACCESS_SECRET,
     storeRefreshSecret: process.env.JWT_STORE_REFRESH_SECRET,
+    platformAdminSecret: process.env.JWT_PLATFORM_ADMIN_SECRET || process.env.JWT_STORE_ACCESS_SECRET,
   },
 
   credential: {

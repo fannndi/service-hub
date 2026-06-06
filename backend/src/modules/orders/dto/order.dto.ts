@@ -21,7 +21,10 @@ export class CreateOrderDto {
   @IsUUID() storeId: string;
   @IsEnum(['walk_in', 'courier_pickup']) deliveryMethod: string;
   @IsOptional() @IsString() deliveryAddress?: string;
-  @IsString() @IsNotEmpty() customerName: string;
+
+  @IsString() @IsNotEmpty()
+  @Transform(({ value, obj }) => value ?? obj?.fullName ?? '')
+  customerName: string;
 
   @IsString()
   @Transform(({ value }) => normalizePhone(value))

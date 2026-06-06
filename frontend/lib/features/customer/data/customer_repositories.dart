@@ -185,8 +185,21 @@ class StoreDiscoveryRepository {
   }
 
   Future<List<SparePart>> getSpareparts(String storeId) async {
-    final response = await _api.authDio.get('/store/spareparts', queryParameters: {'storeId': storeId});
+    final response = await _api.authDio.get('/stores/$storeId/spareparts');
     return CustomerApiClient.unwrapList(response.data).map(SparePart.fromJson).toList();
+  }
+
+  Future<List<StoreMatchResult>> matchStores({
+    required String brand,
+    required String deviceModel,
+    String? partType,
+  }) async {
+    final response = await _api.publicDio.get('/stores/match', queryParameters: {
+      'brand': brand,
+      'deviceModel': deviceModel,
+      if (partType != null) 'partType': partType,
+    });
+    return CustomerApiClient.unwrapList(response.data).map(StoreMatchResult.fromJson).toList();
   }
 }
 

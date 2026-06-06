@@ -137,6 +137,22 @@ async function main() {
     });
   }
   console.log(`${spareparts.length} spareparts created`);
+
+  // 5. Create Platform Admin
+  const adminPw = process.env.PLATFORM_ADMIN_PASSWORD || 'servisgadget2026';
+  const adminPwHash = await bcrypt.hash(adminPw, 12);
+  const platformAdmin = await prisma.platformAdmin.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      fullName: 'Platform Admin',
+      passwordHash: adminPwHash,
+      isActive: true,
+    },
+  });
+  console.log(`Platform admin created: ${platformAdmin.username}`);
+  console.log(`Admin login: username=admin password=${adminPw}`);
 }
 
 main()
