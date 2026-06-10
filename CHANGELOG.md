@@ -1,5 +1,32 @@
 ﻿# Changelog
 
+## 2026-06-10 — Comprehensive Documentation Update
+
+### Documentation Restructure
+- Split docs into `docs/backend/` and `docs/frontend/` for separate role clarity
+- Created 5 backend docs + 5 frontend docs = 10 new comprehensive documentation files
+
+### Backend Docs
+- `BACKEND_API_REFERENCE.md` — Complete API reference (all endpoints, request/response, error codes)
+- `BACKEND_DATABASE_SCHEMA.md` — Prisma schema documentation (21 models, 20+ enums, relationships, indexes)
+- `BACKEND_AUTH_SYSTEM.md` — 3 JWT auth systems (Customer, Store Admin, Platform Admin), stealth accounts, credential encryption, security features
+- `BACKEND_BUSINESS_LOGIC.md` — Order lifecycle, state machine, SLA system, payments, reviews, disputes, store matching, notifications
+- `BACKEND_SETUP.md` — Environment variables, Docker setup, deployment (Render), project structure
+
+### Frontend Docs
+- `FRONTEND_ARCHITECTURE.md` — Flutter app structure, clean architecture layers, Riverpod providers, GoRouter routing, shared widgets
+- `FRONTEND_CUSTOMER.md` — Customer feature docs (models, repos, providers, 24+ screens, widgets)
+- `FRONTEND_STORE_ADMIN.md` — Store admin feature docs (models, repos, providers, 18+ screens, responsive layout)
+- `FRONTEND_PLATFORM_ADMIN.md` — Platform admin feature docs (models, repos, 2 screens)
+- `FRONTEND_NETWORK_LAYER.md` — Dio client, error handling, token management, repository pattern, provider system
+
+### Purpose
+- Enable AI agents to understand the full codebase by reading documentation alone
+- Provide team members clear reference without reading source code
+- Standardize documentation format across frontend/backend
+
+---
+
 ## 2026-06-06 — UI/UX Rework, Admin Platform, Play Store Readiness
 
 ### Welcome Page Rework
