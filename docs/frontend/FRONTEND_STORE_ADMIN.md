@@ -37,69 +37,50 @@ enum DisputeStatus { open, storeAccepted, storeRejected, escalated, resolved, cl
 #### StoreAdminSession
 ```dart
 class StoreAdminSession {
-  final String adminId;        // Bukan 'id'
-  final String adminName;      // Bukan 'fullName'
+  final String adminId;
+  final String adminName;
   final String phoneNumber;
   final String storeId;
   final String storeName;
   final bool isFirstLogin;
 
-  // Serializable to/from SecureStorage
-  Map<String, String> toStorage();       // Bukan toStorageMap()
-  factory StoreAdminSession.fromStorage(Map<String, String> map);  // Bukan fromStorageMap()
+  Map<String, String?> toStorage();                              // Nullable values
+  factory StoreAdminSession.fromStorage(Map<String, String?> map);  // Nullable values
 }
 ```
 
-**Notes:**
-- Field `adminId` (bukan `id`)
-- Field `adminName` (bukan `fullName`)
-- Method `toStorage()` (bukan `toStorageMap()`)
-- Method `fromStorage()` (bukan `fromStorageMap()`)
+**Note:** Parameter `Map<String, String?>` (nullable values, bukan `Map<String, String>`).
 
 #### DashboardSummary
 ```dart
 class DashboardSummary {
-  final int todayOrders;        // Bukan totalOrdersToday
   final int activeOrders;
-  final int pendingOrders;
+  final Map<String, int> byStatus;          // Bukan statusBreakdown
   final int pendingPayments;
-  final int waitingApproval;
-  final int activeDisputes;     // Bukan openDisputes
-  final num revenueMonth;       // Bukan double monthlyRevenue
-  final num revenueToday;
+  final int openDisputes;
   final double ratingAvg;
-  final double completionRate;
-  final String adminName;
-  final String storeName;
-  final Map<String, int> statusBreakdown;
+  final int totalCompletedThisMonth;
   final List<StoreOrder> recentOrders;
-  final List<MetricPoint> ordersTrend;
-  final List<CategoryMetric> sparepartConsumption;
-  final List<CustomerProfile> customers;
 }
 ```
 
-**Notes:**
-- `todayOrders` (bukan `totalOrdersToday`)
-- `revenueMonth` bertipe `num` (bukan `double`)
-- `activeDisputes` (bukan `openDisputes`)
-- Ada field tambahan: `pendingOrders`, `waitingApproval`, `revenueToday`, `completionRate`, `adminName`, `storeName`, `ordersTrend`, `sparepartConsumption`, `customers`
+**Note:** Response dari backend hanya memiliki field-field di atas. Field lain seperti `todayOrders`, `revenueMonth`, `completionRate` tidak ada di response.
 
 #### StoreOrder
 ```dart
 class StoreOrder {
   final String id;
   final String orderNumber;
-  final String deviceName;      // Bukan deviceType + brand + deviceModel
+  final String deviceName;      // Gabungan brand + model
   final String status;
   final String paymentStatus;
-  final num estimatedTotal;     // Bukan double totalEstimasi
-  final num? finalPrice;
+  final num estimatedTotal;     // num, bukan double
+  final num finalPrice;         // non-nullable
   final DateTime createdAt;
   final DateTime? slaDeadline;
   final List<String> allowedActions;
   final CredentialPanel? credentialPanel;
-  final String customerName;    // Bukan CustomerInfo object
+  final String customerName;
   final String customerPhone;
   final List<OrderItem>? items;
   final List<PaymentRecord>? payments;
@@ -109,31 +90,8 @@ class StoreOrder {
 ```
 
 **Notes:**
-- `deviceName` (bukan `deviceType`, `brand`, `deviceModel` terpisah)
-- `estimatedTotal` bertipe `num` (bukan `double totalEstimasi`)
-- `customerName` dan `customerPhone` sebagai String (bukan `CustomerInfo` object)
-- Ada field tambahan: `items`, `payments`, `trackingEvents`, `deliveryAddress`
-
-#### Sparepart
-```dart
-class Sparepart {
-  final String id;
-  final String name;           // Bukan partName
-  final String description;
-  final double price;
-  final int qty;
-  final int qtyReserved;
-  final String status;
-
-  int get availableStock => qty - qtyReserved;
-  bool get isLowStock => availableStock <= 2;  // Bukan <= 3
-}
-```
-
-**Notes:**
-- Class name `Sparepart` (bukan `AdminSparepart`)
-- Field `name` dan `description` (bukan `brand`, `deviceModel`, `partType`, `partName`)
-- Threshold `isLowStock` adalah `<= 2` (bukan `<= 3`)
+- `finalPrice` non-nullable (bukan `num?`)
+- `estimatedTotal` bertipe `num` (bukan `double`)
 
 #### OrderItem
 ```dart
@@ -141,40 +99,62 @@ class OrderItem {
   final String id;
   final String serviceType;
   final String complaint;
-  final double itemPrice;
-  final double? finalItemPrice;
+  final num price;              // num, bukan double; field name 'price' bukan 'itemPrice'
   final String status;
-  final String? technicianNote;
-  final String? sparepartName;
 }
 ```
+
+**Note:** Hanya 5 fields (bukan 8). Tidak ada `itemPrice`, `finalItemPrice`, `technicianNote`.
+
+#### Sparepart
+```dart
+class Sparepart {
+  final String id;
+  final String name;
+  final String description;
+  final num price;              // num, bukan double
+  final int qty;
+  final int qtyReserved;
+  final String? imageUrl;       // Ada field imageUrl
+  final String status;
+
+  int get availableStock => qty - qtyReserved;
+  bool get isLowStock => availableStock <= 2;
+}
+```
+
+**Note:** `price` bertipe `num` (bukan `double`). Ada field `imageUrl`.
 
 #### PaymentRecord
 ```dart
 class PaymentRecord {
   final String id;
-  final double amount;
-  final String paymentMethod;
-  final String paymentType;
+  final num amount;             // num, bukan double
+  final String method;          // 'method', bukan 'paymentMethod'
   final String status;
   final String? proofUrl;
   final DateTime createdAt;
 }
 ```
 
+**Note:** Field name adalah `method` (bukan `paymentMethod`). Tidak ada field `paymentType`.
+
 #### DisputeCase
 ```dart
 class DisputeCase {
   final String id;
-  final String orderNumber;
-  final String disputeType;
+  final String orderId;
+  final String customerName;
+  final String type;            // DisputeType enum value as String
   final String description;
   final List<String> evidenceUrls;
-  final String status;
+  final DisputeStatus status;   // Enum, bukan String
   final String? storeResponse;
   final DateTime createdAt;
 }
 ```
+
+**Note:** Model ini完全 berbeda dari yang sebelumnya didokumentasikan. Ada field `orderId`, `customerName`, `type` (bukan `disputeType`). `status` bertipe `DisputeStatus` enum.
 
 #### ReviewItem
 ```dart
@@ -202,11 +182,14 @@ class NotificationItem {
 ```dart
 class CustomerProfile {
   final String id;
-  final String fullName;
-  final String phoneNumber;
+  final String name;           // 'name', bukan 'fullName'
+  final String phone;           // 'phone', bukan 'phoneNumber'
   final int totalOrders;
+  final num totalSpent;         // Ada field totalSpent
 }
 ```
+
+**Note:** Field `name` (bukan `fullName`), `phone` (bukan `phoneNumber`). Ada field `totalSpent`.
 
 ### Helper Models
 
@@ -228,30 +211,18 @@ class CustomerProfile {
 
 ```dart
 class StoreAdminSessionStorage {
-  // 8 keys in SecureStorage:
-  // - 'store_access_token', 'store_refresh_token'
-  // - 'store_admin_id', 'store_admin_name', 'store_admin_phone'
-  // - 'store_id', 'store_name', 'store_is_first_login'
-
-  Future<void> saveLogin(StoreAdminSession session);  // Bukan saveSession()
-  Future<StoreAdminSession?> restore();               // Bukan getSession()
-  Future<void> clear();                               // Bukan clearSession()
+  Future<void> saveLogin(StoreAdminSession session);
+  Future<StoreAdminSession?> restore();
+  Future<void> clear();
 }
 ```
-
-**Notes:**
-- Method `saveLogin()` (bukan `saveSession()`)
-- Method `restore()` (bukan `getSession()`)
-- Method `clear()` (bukan `clearSession()`)
 
 ### Dio Provider
 
 ```dart
 final storeAdminDioProvider = Provider<Dio>((ref) {
-  // Similar to customer but uses store JWT
   // Base URL: AppConfig.apiBaseUrl
   // Token: store_access_token
-  // Auto-refresh on 401
 });
 ```
 
@@ -288,12 +259,6 @@ final storeAdminDioProvider = Provider<Dio>((ref) {
 | `analytics(storeId)` | `GET /store/analytics` | Analytics data |
 | `presignUpload(storeId, filename, contentType)` | `POST /uploads/presign` | Upload file |
 
-**Notes:**
-- `dashboard()` → endpoint `/store/dashboard/summary` (bukan `/store/dashboard`)
-- `updateOrderStatus()` → `POST /store/orders/:id/actions/:action` (bukan `PATCH /store/orders/:id/status`)
-- `confirmPayment()` → endpoint `/store/orders/:orderId/payments/:paymentId/confirm` (bukan `/store/payments/:orderId/:paymentId/confirm`)
-- `respondReview()` → endpoint `/store/reviews/:reviewId/response` (bukan `/store/reviews/:reviewId/respond`)
-
 ---
 
 ## 3. Providers
@@ -308,15 +273,15 @@ final storeAuthControllerProvider = AsyncNotifierProvider<StoreAuthController, S
 );
 ```
 
-**Note:** Provider name adalah `storeAuthControllerProvider` (bukan `storeAuthProvider`).
-
 ### Data Providers
 
 ```dart
 final orderQueryProvider = StateProvider<OrderQuery>((ref) => OrderQuery());
 final inventoryQueryProvider = StateProvider<InventoryQuery>((ref) => InventoryQuery());
 
-final dashboardSummaryProvider = StreamProvider<DashboardSummary>((ref) {
+final dashboardSummaryProvider = StreamProvider.autoDispose<DashboardSummary>((ref) {
+  final storeId = ref.watch(storeAuthControllerProvider).valueOrNull?.storeId;
+  if (storeId == null) return Stream.empty();
   return Stream.periodic(Duration(seconds: 60))
       .asyncMap((_) => ref.read(storeOperationsRepositoryProvider).dashboard(storeId));
 });
@@ -324,40 +289,32 @@ final dashboardSummaryProvider = StreamProvider<DashboardSummary>((ref) {
 final storeOrdersProvider = AsyncNotifierProvider<StoreOrdersController, PageResult<StoreOrder>>(
   StoreOrdersController.new,
 );
-```
 
-**Note:** `storeOrdersProvider` adalah `AsyncNotifierProvider` (bukan `FutureProvider`).
-
-### Controller Providers
-
-```dart
-final storeOrdersProvider = AsyncNotifierProvider<StoreOrdersController, PageResult<StoreOrder>>(
-  StoreOrdersController.new,
-);
-
-class StoreOrdersController extends AsyncNotifier<PageResult<StoreOrder>> {
-  // Methods:
-  // - refresh()
-  // - loadMore()
-  // - updateStatus(orderId, action)
-  // - submitDiagnosis(orderId, dto)
-}
-```
-
-### Other Providers
-
-```dart
 final inventoryProvider = AsyncNotifierProvider<InventoryController, PageResult<Sparepart>>(
   InventoryController.new,
 );
 
-final paymentsProvider = FutureProvider<List<PaymentRecord>>((ref) async { ... });
-final disputesProvider = FutureProvider<List<DisputeCase>>((ref) async { ... });
+final paymentsProvider = AsyncNotifierProvider<PaymentsController, PageResult<PaymentRecord>>(
+  PaymentsController.new,
+);
+
+final disputesProvider = AsyncNotifierProvider<DisputesController, PageResult<DisputeCase>>(
+  DisputesController.new,
+);
+```
+
+**Notes:**
+- `paymentsProvider` dan `disputesProvider` adalah `AsyncNotifierProvider` (bukan `FutureProvider`)
+- `dashboardSummaryProvider` menggunakan `StreamProvider.autoDispose` dengan session param
+
+### Other Providers
+
+```dart
 final reviewsProvider = FutureProvider<List<ReviewItem>>((ref) async { ... });
 final notificationsProvider = FutureProvider<List<NotificationItem>>((ref) async { ... });
-final customersProvider = FutureProvider<List<CustomerProfile>>((ref) async { ... });
-final analyticsProvider = FutureProvider<AnalyticsData>((ref) async { ... });
-final storeProfileProvider = FutureProvider<StoreProfile>((ref) async { ... });
+final customersProvider = FutureProvider.autoDispose<List<CustomerProfile>>((ref) async { ... });
+final analyticsProvider = FutureProvider.autoDispose<DashboardSummary>((ref) async { ... });
+final storeProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async { ... });
 ```
 
 ---
@@ -371,7 +328,7 @@ final storeProfileProvider = FutureProvider<StoreProfile>((ref) async { ... });
 | Screen | Route | Fungsi |
 |--------|-------|--------|
 | `StoreLoginScreen` | `/store-login` | Phone + password |
-| `StoreChangePasswordScreen` | `/store/change-password` | Old + new password |
+| `StoreChangePasswordScreen` | `/change-password` | Old + new password |
 | `DashboardScreen` | `/dashboard` | Metrics, charts, recent orders |
 | `OrderListScreen` | `/orders` | Searchable/filterable order table |
 | `OrderDetailScreen` | `/orders/:id` | Full order + credential panel + actions |
@@ -388,50 +345,12 @@ final storeProfileProvider = FutureProvider<StoreProfile>((ref) async { ... });
 | `StoreSettingsScreen` | `/settings` | Store profile key-value |
 | `AnalyticsScreen` | `/analytics` | Charts and metrics |
 
-**Notes:**
-- Route `/` → `/store-login` (bukan `/`)
-- Route `/inventory/:id` untuk edit sparepart
-
-### DashboardScreen Sections
-
-1. **Metrics Grid** — Cards: todayOrders, activeOrders, revenueMonth, ratingAvg, pendingPayments, activeDisputes
-2. **Status Breakdown Chart** — Horizontal bar chart per status
-3. **Orders Trend** — Line/bar chart 7 hari terakhir
-4. **Sparepart Consumption** — Chart penggunaan sparepart
-5. **Recent Orders Table** — 5 order terbaru dengan quick actions
-
 ### OrderDetailScreen Sections
 
 1. **Order Info Card** — orderNumber, deviceName, dates
-2. **Credential Panel** — Tampil jika customer baru (name, phone, auto-generated password)
+2. **Credential Panel** — Tampil jika customer baru
 3. **Items Table** — serviceType, complaint, price, status
 4. **Action Panel** — Buttons berdasarkan `allowedActions`
-   - `receive_device` → "Terima Device"
-   - `start_diagnosis` → "Mulai Diagnosis"
-   - `sparepart_arrived` → "Sparepart Sampai"
-   - `start_qc` → "Mulai QC"
-   - `mark_complete` → "Tandai Selesai"
-
-### DiagnosisScreen Form
-
-```
-Fields:
-1. condition (Text) — Kondisi device
-2. damage (Text) — Kerusakan
-3. repair (Text) — Perbaikan yang dilakukan
-4. technician (Text) — Nama teknisi
-5. estimatedCost (Number) — Estimasi biaya
-6. estimatedDuration (Text) — Estimasi durasi
-```
-
-**Note:** 6 fields (bukan 4 fields seperti yang sebelumnya didokumentasikan).
-
-### InventoryScreen Features
-
-- **Search** — Cari berdasarkan nama
-- **Filter** — By status
-- **Low Stock Alert** — Badge merah jika `availableStock <= 2`
-- **Quick Edit** — Tap untuk edit harga/stok
 
 ---
 
@@ -441,7 +360,7 @@ Fields:
 
 | Widget | Fungsi |
 |--------|--------|
-| `StoreAdminScaffold` | Responsive layout (NavigationRail/Drawer/NavigationBar) |
+| `StoreAdminScaffold` | Responsive layout |
 | `AsyncPage<T>` | AsyncSnapshot wrapper |
 | `ErrorPanel` | Error display |
 | `EmptyPanel` | Empty data display |
@@ -449,22 +368,22 @@ Fields:
 | `StatusPill` | Admin-specific status pill |
 | `AdminDataTable<T>` | Generic DataTable with row selection |
 | `QueryToolbar` | Search + filter chips + export button |
-| `SimpleBarChart` | Horizontal bar chart using LinearProgressIndicator |
-| `OrderActionPanel` | Renders `allowedActions` as Indonesian buttons |
+| `SimpleBarChart` | Horizontal bar chart |
+| `OrderActionPanel` | Renders `allowedActions` as buttons |
 
 ### Responsive Layout
 
 ```dart
 StoreAdminScaffold(
-  // Wide screen (>1200px): NavigationRail on left
-  // Medium screen (600-1200px): Drawer
-  // Narrow screen (<600px): Bottom NavigationBar
+  // >=1200: NavigationRail (extended)
+  // >=900: NavigationRail
+  // <900: NavigationBar
   destinations: [
     NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
     NavigationDestination(icon: Icon(Icons.receipt), label: 'Pesanan'),
     NavigationDestination(icon: Icon(Icons.inventory), label: 'Inventory'),
     NavigationDestination(icon: Icon(Icons.payment), label: 'Pembayaran'),
-    NavigationDestination(icon: Icon(Icons.more), label: 'Lainnya'),
+    NavigationDestination(icon: Icon(Icons.analytics), label: 'Analitik'),  // Bukan 'Lainnya'
   ],
 )
 ```
@@ -481,13 +400,14 @@ StoreAdminScaffold(
 final storeAdminRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/dashboard',
+    refreshListenable: _RouterRefresh(ref),
     redirect: (context, state) {
       final isAuth = ref.watch(storeAuthControllerProvider).valueOrNull != null;
       final isFirstLogin = ref.watch(storeAuthControllerProvider).valueOrNull?.isFirstLogin == true;
 
       if (!isAuth && state.matchedLocation != '/store-login') return '/store-login';
-      if (isAuth && isFirstLogin && state.matchedLocation != '/store/change-password') {
-        return '/store/change-password';
+      if (isAuth && isFirstLogin && state.matchedLocation != '/change-password') {
+        return '/change-password';
       }
       if (isAuth && !isFirstLogin && state.matchedLocation == '/store-login') return '/dashboard';
       return null;
@@ -498,6 +418,5 @@ final storeAdminRouterProvider = Provider<GoRouter>((ref) {
 ```
 
 **Notes:**
-- `initialLocation` adalah `'/dashboard'` (bukan `'/'`)
-- Auth check menggunakan `storeAuthControllerProvider` (bukan `storeAuthProvider`)
-- Login route adalah `'/store-login'` (bukan `'/'`)
+- Ada `refreshListenable: _RouterRefresh(ref)` (bukan tanpa refresh)
+- Route `/change-password` (bukan `/store/change-password`)

@@ -117,7 +117,7 @@ frontend/lib/
 ## 3. Clean Architecture Layers
 
 ### Domain Layer (`domain/`)
-- Pure Dart models (no Flutter imports)
+- Dart models dengan annotations (menggunakan `@immutable` dari flutter/foundation.dart)
 - Enums, data classes, factory constructors
 - JSON serialization (manual)
 - Contoh: `OrderStatus`, `CustomerUser`, `CustomerOrder`
@@ -316,17 +316,48 @@ ApiException mapNetworkError(DioException e) {
 
 ## 7. Shared Widgets
 
+> Widget reusable ada di dalam masing-masing feature module, bukan di folder `shared_widgets/` terpisah.
+
+### Customer Widgets (`customer_widgets.dart`)
+
+| Widget | Fungsi |
+|--------|--------|
+| `CustomerScaffold` | Reusable scaffold dengan AppBar |
+| `AsyncPage<T>` | Handle AsyncValue loading/error/data |
+| `StatusPill` | Colored badge per OrderStatus |
+| `StoreCard` | Card: storeName, address, rating, verified |
+| `OrderCard` | Card: orderNumber, status, device, SLA warning |
+| `SectionTitle` | Title + optional action button |
+| `EmptyMessage` | "Tidak ada data" |
+| `OrderStatusTimeline` | Vertical timeline tracking |
+| `CouponRewardBanner` | "Selamat! Kamu dapat kupon Rp 10.000" |
+| `SkeletonList` | Loading placeholder cards |
+
+### Store Admin Widgets (`store_admin_widgets.dart`)
+
+| Widget | Fungsi |
+|--------|--------|
+| `StoreAdminScaffold` | Responsive layout |
+| `AsyncPage<T>` | AsyncSnapshot wrapper |
+| `ErrorPanel` | Error display |
+| `EmptyPanel` | Empty data display |
+| `MetricCard` | Dashboard metric card |
+| `StatusPill` | Admin-specific status pill |
+| `AdminDataTable<T>` | Generic DataTable |
+| `QueryToolbar` | Search + filter chips |
+| `SimpleBarChart` | Horizontal bar chart |
+| `OrderActionPanel` | Action buttons |
+
+### Shared Widgets (`shared_widgets/`)
+
 | Widget | File | Fungsi |
 |--------|------|--------|
-| `StatusBadge` | `status_badge.dart` | Pill badge dengan warna berdasarkan status |
-| `SlaCountdownBadge` | `sla_countdown_badge.dart` | Tampilkan jam tersisa SLA |
+| `StatusBadge` | `status_badge.dart` | Pill badge dengan warna |
 | `SectionHeader` | `section_header.dart` | Title + subtitle |
-| `SearchFilterBar` | `search_filter_bar.dart` | TextField + FilterChip row |
-| `LoadingState` | `loading_state.dart` | Centered spinner + message |
-| `ErrorState` | `error_state.dart` | Error icon + message + retry button |
-| `EmptyState` | `empty_state.dart` | Title + description (no data) |
-| `KeyValueRow` | `key_value_row.dart` | Label/value pair |
-| `AppInfoCard` | `app_info_card.dart` | Card dengan icon, title, subtitle |
+| `SearchFilterBar` | `search_filter_bar.dart` | TextField + FilterChip |
+| `LoadingState` | `loading_state.dart` | Centered spinner |
+| `ErrorState` | `error_state.dart` | Error + retry |
+| `EmptyState` | `empty_state.dart` | Empty data display |
 
 ---
 
