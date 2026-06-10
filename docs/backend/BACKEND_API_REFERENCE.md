@@ -184,10 +184,11 @@ Error response:
   "storeId": "uuid",
   "storeName": "Service Center ABC",
   "address": "...",
+  "phoneNumber": "08111222333",
   "ratingAvg": 4.5,
-  "matchingParts": [{ "partName": "LCD iPhone 14", "price": 850000, "qty": 3 }],
-  "estimatedServiceFee": 50000,
-  "totalEstimate": 900000
+  "totalCompleted": 150,
+  "spareparts": [{ "id": "uuid", "partName": "LCD iPhone 14", "partType": "LCD", "price": 850000, "availableQty": 3, "status": "available" }],
+  "estimatedCost": 900000
 }]
 ```
 
@@ -234,7 +235,14 @@ Error response:
 
 - **Response:**
 ```json
-{ "orderId": "uuid", "orderNumber": "SG-20260610-XXXX" }
+{
+  "id": "uuid",
+  "orderNumber": "SG-20260610-XXXX",
+  "status": "waiting_device",
+  "totalEstimasi": 0,
+  "isNewCustomer": true,
+  "message": "Order berhasil dibuat."
+}
 ```
 
 ### `GET /orders/me`
@@ -244,12 +252,12 @@ Error response:
 - **Response:** Detail order lengkap
 
 ### `POST /orders/:id/approve`
-- **Auth:** Tidak perlu
+- **Auth:** `Bearer Token` (customer JWT)
 - **Description:** Customer menyetujui diagnosis dari teknisi
-- **Status Transition:** `waiting_approval` → `waiting_sparepart`
+- **Status Transition:** `waiting_approval` → `repairing`
 
 ### `POST /orders/:id/reject`
-- **Auth:** Tidak perlu
+- **Auth:** `Bearer Token` (customer JWT)
 - **Body (optional):** `{ "reason": "..." }`
 - **Status Transition:** `waiting_approval` → `cancelled`
 
@@ -375,19 +383,17 @@ Error response:
 - **Response:**
 ```json
 {
-  "totalOrdersToday": 5,
   "activeOrders": 12,
-  "pendingPayments": 3,
-  "openDisputes": 1,
-  "monthlyRevenue": 5000000,
-  "ratingAvg": 4.5,
-  "statusBreakdown": {
+  "byStatus": {
     "waiting_device": 3,
     "diagnosing": 2,
     "repairing": 4,
     "waiting_payment": 3
   },
-  "recentOrders": [...]
+  "pendingPayments": 3,
+  "openDisputes": 1,
+  "ratingAvg": 4.5,
+  "totalCompletedThisMonth": 15
 }
 ```
 
@@ -569,7 +575,7 @@ Error response:
   - `operationalHours`: JSON jam operasional (optional)
 
 - **Side Effect:**
-  - Buat store (`isActive = false`, perlu verifikasi)
+  - Buat store (`isActive = true`, langsung aktif)
   - Buat 1 store admin
   - Hash password dengan bcrypt
 
@@ -583,6 +589,13 @@ Error response:
 
 ### `POST /uploads/presign`
 - **Auth:** `Bearer Token`
-- **Body:** `{ "filename": "photo.jpg", "contentType": "image/jpeg" }`
+- **Body:**
+  | Field | Type | Required | Notes |
+  |-------|------|----------|-------|
+  | `fileName` | string | Ya | Nama file (camelCase, bukan snake_case) |
+  | `mimeType` | string | Tidak | MIME type file |
+  | `contentType` | string | Tidak | Alternative ke mimeType |
+  | `folder` | string | Tidak | Folder tujuan upload |
+
 - **Response:** `{ "uploadUrl": "...", "fileUrl": "..." }`
 - **Note:** Menggunakan S3-compatible storage (Cloudflare R2 / AWS S3)

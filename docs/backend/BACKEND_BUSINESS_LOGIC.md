@@ -105,14 +105,14 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   waiting_device:      ['device_received', 'cancelled'],
   device_received:     ['diagnosing', 'cancelled'],
   diagnosing:          ['waiting_approval', 'cancelled'],
-  waiting_approval:    ['waiting_sparepart', 'cancelled'],
+  waiting_approval:    ['repairing', 'waiting_sparepart', 'cancelled'],
   waiting_sparepart:   ['repairing', 'cancelled'],
   repairing:           ['quality_check', 'cancelled'],
   quality_check:       ['waiting_payment', 'cancelled'],
   waiting_payment:     ['completed', 'cancelled'],
   completed:           ['disputed'],
   cancelled:           [],
-  disputed:            ['completed', 'cancelled'],
+  disputed:            ['completed'],
 };
 ```
 
@@ -130,11 +130,13 @@ function assertValidTransition(from: string, to: string): void {
 
 ```typescript
 const ACTION_STATUS_MAP: Record<string, string> = {
-  receive_device:   'device_received',
-  start_diagnosis:  'diagnosing',
-  start_repair:     'repairing',
-  start_qc:         'quality_check',
-  mark_complete:    'completed',
+  receive_device:      'device_received',
+  start_diagnosis:     'diagnosing',
+  sparepart_arrived:   'repairing',
+  complete_repair:     'quality_check',
+  qc_ok:               'waiting_payment',
+  request_payment:     'waiting_payment',
+  mark_complete:       'completed',
 };
 ```
 

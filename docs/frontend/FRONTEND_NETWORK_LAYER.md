@@ -93,10 +93,14 @@ final dioClientProvider = Provider<Dio>((ref) {
 class AppConfig {
   final String apiBaseUrl;
 
-  AppConfig({this.apiBaseUrl = 'http://10.0.2.2:3000/v1'});
+  const AppConfig({required this.apiBaseUrl});
 }
 
-final appConfigProvider = Provider<AppConfig>((ref) => AppConfig());
+final appConfigProvider = Provider<AppConfig>((ref) {
+  return AppConfig(
+    apiBaseUrl: String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:3000/v1'),
+  );
+});
 ```
 
 ---
@@ -108,15 +112,17 @@ final appConfigProvider = Provider<AppConfig>((ref) => AppConfig());
 ### Error Mapping
 
 ```dart
-ApiException mapNetworkError(DioException e) {
-  // Extract error message from response
+DioException mapNetworkError(DioException e) {
+  // Extract error message from response and wrap in DioException
   final data = e.response?.data;
-  if (data is Map<String, dynamic> && data['message'] != null) {
-    return ApiException(data['message']);
-  }
-  return ApiException('Terjadi kesalahan. Coba lagi nanti.');
+  final message = data is Map<String, dynamic> && data['message'] != null
+      ? data['message']
+      : 'Terjadi kesalahan. Coba lagi nanti.';
+  return e.copyWith(error: ApiException(message));
 }
 ```
+
+**Note:** Fungsi ini mengembalikan `DioException` (bukan `ApiException`).
 
 ### Custom Exception
 
@@ -125,7 +131,7 @@ ApiException mapNetworkError(DioException e) {
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
-  ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode});
 }
 ```
 

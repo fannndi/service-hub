@@ -39,7 +39,7 @@ class StoreListItem {
   final String phoneNumber;
   final double ratingAvg;
   final int totalCompleted;
-  final DateTime createdAt;
+  final String createdAt;       // String, bukan DateTime
   final Map<String, dynamic>? deviceTypes;
   final List<Map<String, dynamic>> admins;
 }
