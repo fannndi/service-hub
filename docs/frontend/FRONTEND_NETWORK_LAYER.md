@@ -62,39 +62,20 @@ final dioClientProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final dio = Dio(BaseOptions(
     baseUrl: AppConfig.apiBaseUrl,
-    connectTimeout: Duration(seconds: 10),
-    receiveTimeout: Duration(seconds: 10),
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
+    connectTimeout: Duration(seconds: 15),
+    receiveTimeout: Duration(seconds: 15),
   ));
 
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) async {
-      // 1. Get token from storage
-      final token = await tokenStorage.getAccessToken();
-
-      // 2. Inject Bearer token
+      final token = await tokenStorage.readAccessToken();
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
-
       handler.next(options);
     },
     onError: (error, handler) async {
-      // 3. Auto-refresh on 401
-      if (error.response?.statusCode == 401) {
-        final refreshed = await _attemptTokenRefresh(dio, tokenStorage);
-        if (refreshed) {
-          // Retry original request
-          final newToken = await tokenStorage.getAccessToken();
-          error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-          final response = await dio.fetch(error.requestOptions);
-          return handler.resolve(response);
-        }
-      }
-      handler.next(error);
+      handler.reject(mapNetworkError(error));
     },
   ));
 
@@ -110,9 +91,12 @@ final dioClientProvider = Provider<Dio>((ref) {
 //   flutter run --dart-define=API_BASE_URL=https://api.example.com/v1
 
 class AppConfig {
-  static final String apiBaseUrl =
-      String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:3000/v1');
+  final String apiBaseUrl;
+
+  AppConfig({this.apiBaseUrl = 'http://10.0.2.2:3000/v1'});
 }
+
+final appConfigProvider = Provider<AppConfig>((ref) => AppConfig());
 ```
 
 ---
@@ -125,25 +109,12 @@ class AppConfig {
 
 ```dart
 ApiException mapNetworkError(DioException e) {
-  // Extract user_message from backend error response
+  // Extract error message from response
   final data = e.response?.data;
-  if (data is Map<String, dynamic> && data['error']?['user_message'] != null) {
-    return ApiException(data['error']['user_message']);
+  if (data is Map<String, dynamic> && data['message'] != null) {
+    return ApiException(data['message']);
   }
-
-  // Fallback by error type
-  switch (e.type) {
-    case DioExceptionType.connectionTimeout:
-      return ApiException('Koneksi timeout. Periksa jaringan Anda.');
-    case DioExceptionType.connectionError:
-      return ApiException('Tidak ada koneksi internet.');
-    case DioExceptionType.receiveTimeout:
-      return ApiException('Server lambat merespon. Coba lagi.');
-    case DioExceptionType.badResponse:
-      return ApiException('Terjadi kesalahan server.');
-    default:
-      return ApiException('Terjadi kesalahan. Coba lagi nanti.');
-  }
+  return ApiException('Terjadi kesalahan. Coba lagi nanti.');
 }
 ```
 
@@ -182,10 +153,8 @@ class ApiException implements Exception {
 ```dart
 abstract class TokenStorage {
   Future<void> saveAccessToken(String token);
-  Future<String?> getAccessToken();
-  Future<void> saveRefreshToken(String token);
-  Future<String?> getRefreshToken();
-  Future<void> clearAll();
+  Future<String?> readAccessToken();
+  Future<void> clear();
 }
 ```
 
@@ -193,33 +162,26 @@ abstract class TokenStorage {
 
 ```dart
 class SecureTokenStorage implements TokenStorage {
-  final _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
+
+  SecureTokenStorage(this._storage);
 
   @override
   Future<void> saveAccessToken(String token) =>
       _storage.write(key: 'access_token', value: token);
 
   @override
-  Future<String?> getAccessToken() =>
+  Future<String?> readAccessToken() =>
       _storage.read(key: 'access_token');
 
   @override
-  Future<void> saveRefreshToken(String token) =>
-      _storage.write(key: 'refresh_token', value: token);
-
-  @override
-  Future<String?> getRefreshToken() =>
-      _storage.read(key: 'refresh_token');
-
-  @override
-  Future<void> clearAll() async {
+  Future<void> clear() async {
     await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
   }
 }
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) {
-  return SecureTokenStorage();
+  return SecureTokenStorage(FlutterSecureStorage());
 });
 ```
 
@@ -227,9 +189,9 @@ final tokenStorageProvider = Provider<TokenStorage>((ref) {
 
 | Feature | Keys |
 |---------|------|
-| Customer | `access_token`, `refresh_token`, `cached_profile`, `notification_pref` |
+| Customer | `access_token`, `customer_cached_profile`, `customer_notifications_enabled` |
 | Store Admin | `store_access_token`, `store_refresh_token`, `store_admin_id`, `store_admin_name`, `store_admin_phone`, `store_id`, `store_name`, `store_is_first_login` |
-| Platform Admin | `admin_access_token`, `admin_id`, `admin_username`, `admin_full_name` |
+| Platform Admin | `admin_access_token` |
 
 ---
 
@@ -285,29 +247,6 @@ class OrderRepository extends BaseRepository {
 }
 ```
 
-### Error Handling in Repositories
-
-```dart
-// Option 1: Let DioException propagate (handled by provider)
-Future<T> safeApiCall<T>(Future<T> Function() call) async {
-  try {
-    return await call();
-  } on DioException catch (e) {
-    throw mapNetworkError(e);
-  }
-}
-
-// Option 2: Parse error in repository
-Future<ApiResult<T>> safeApiCall<T>(Future<T> Function() call) async {
-  try {
-    final result = await call();
-    return ApiResult.success(result);
-  } on DioException catch (e) {
-    return ApiResult.failure(mapNetworkError(e));
-  }
-}
-```
-
 ---
 
 ## 6. Provider System
@@ -324,9 +263,9 @@ final storeListProvider = FutureProvider<List<Store>>((ref) async {
 });
 
 // 3. StreamProvider — Real-time data
-final orderTrackingProvider = StreamProvider.family<List<Event>, String>(
+final orderTrackingProvider = StreamProvider.family<CustomerOrder, String>(
   (ref, orderId) => Stream.periodic(Duration(seconds: 30))
-      .asyncMap((_) => ref.read(orderRepoProvider).getTracking(orderId)),
+      .asyncMap((_) => ref.read(orderRepoProvider).getOrderDetail(orderId)),
 );
 
 // 4. StateProvider — Mutable state
@@ -341,18 +280,6 @@ final ordersProvider = StateNotifierProvider<OrdersNotifier, AsyncValue<List<Ord
 final authProvider = AsyncNotifierProvider<AuthNotifier, User?>(
   AuthNotifier.new,
 );
-```
-
-### Provider Hierarchy
-
-```
-Infrastructure Providers (dio, storage, config)
-  ↓
-Repository Providers (API calls + business logic)
-  ↓
-Application Providers (state + methods)
-  ↓
-Widget/Screen (UI + user interaction)
 ```
 
 ### Reading Providers in Widgets
@@ -413,21 +340,6 @@ static List<T> unwrapList<T>(dynamic data, T Function(dynamic) fromJson) {
     "code": "ORDER_NOT_FOUND",
     "message": "Order not found",
     "user_message": "Pesanan tidak ditemukan."
-  },
-  "timestamp": "2026-06-10T11:00:00.000Z"
-}
-```
-
-### Pagination Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "orders": [...],
-    "total": 50,
-    "page": 1,
-    "limit": 20
   }
 }
 ```

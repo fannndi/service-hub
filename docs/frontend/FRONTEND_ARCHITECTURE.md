@@ -119,7 +119,7 @@ frontend/lib/
 ### Domain Layer (`domain/`)
 - Pure Dart models (no Flutter imports)
 - Enums, data classes, factory constructors
-- JSON serialization (manual or freezed)
+- JSON serialization (manual)
 - Contoh: `OrderStatus`, `CustomerUser`, `CustomerOrder`
 
 ### Data Layer (`data/`)
@@ -146,11 +146,11 @@ frontend/lib/
 
 ### Provider Types Used
 
-```typescript
+```dart
 // 1. Simple Provider (readonly)
 final featuredStoresProvider = FutureProvider<List<ServiceStore>>((ref) async {
   final repo = ref.watch(storeDiscoveryRepositoryProvider);
-  return repo.getStores(limit: 5);
+  return repo.getStores();
 });
 
 // 2. StateProvider (mutable state)
@@ -162,7 +162,7 @@ final customerAuthProvider = AsyncNotifierProvider<CustomerAuthNotifier, Custome
 );
 
 // 4. StreamProvider (real-time updates)
-final orderTrackingProvider = StreamProvider.family<List<TrackingEntry>, String>(
+final orderTrackingProvider = StreamProvider.family<CustomerOrder, String>(
   (ref, orderId) => Stream.periodic(Duration(seconds: 30))
       .asyncMap((_) => repo.getOrderProgress(orderId)),
 );
@@ -182,87 +182,88 @@ Screen/Widget (presentation)
 
 ## 5. Routing (GoRouter)
 
-### Customer Routes (24 routes)
+### Main Router (main.dart)
 
 ```dart
-final customerRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(customerAuthProvider);
-  return GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) {
-      // Splash → check auth → redirect to appropriate screen
-      // Unauthenticated → /login
-      // First login → /change-password
-      // Authenticated → /home
-    },
-    routes: [
-      GoRoute(path: '/', builder: (_, __) => SplashScreen()),
-      GoRoute(path: '/welcome', builder: (_, __) => WelcomeScreen()),
-      GoRoute(path: '/login', builder: (_, __) => LoginScreen()),
-      GoRoute(path: '/change-password', builder: (_, __) => ChangePasswordScreen()),
-      GoRoute(path: '/home', builder: (_, __) => HomeScreen()),
-      GoRoute(path: '/stores', builder: (_, __) => StoreListScreen()),
-      GoRoute(path: '/stores/:id', builder: (_, state) => StoreDetailScreen(storeId: state.pathParameters['id']!)),
-      GoRoute(path: '/service', builder: (_, __) => ServiceFlowScreen()),
-      GoRoute(path: '/booking', builder: (_, __) => BookingFormScreen()),
-      GoRoute(path: '/orders', builder: (_, __) => OrderListScreen()),
-      GoRoute(path: '/orders/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/tracking', builder: (_, state) => TrackingScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/payment', builder: (_, state) => PaymentUploadScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/review', builder: (_, state) => ReviewFormScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/dispute', builder: (_, state) => WarrantyClaimScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/coupons', builder: (_, __) => CouponsScreen()),
-      GoRoute(path: '/notifications', builder: (_, __) => NotificationsScreen()),
-      GoRoute(path: '/profile', builder: (_, __) => ProfileScreen()),
-    ],
-  );
-});
+GoRouter(
+  initialLocation: '/splash',
+  redirect: (context, state) {
+    // 1. Check store admin auth → /dashboard
+    // 2. Check customer auth → /home
+    // 3. Check admin auth → /admin/dashboard
+    // 4. No auth → /welcome
+  },
+  routes: [
+    GoRoute(path: '/splash', builder: (_, __) => SplashScreen()),
+    ...customerRoutes,
+    ...storeAdminRoutes,
+    ...adminRoutes,
+  ],
+)
 ```
 
-### Store Admin Routes (18 routes)
+### Customer Routes
 
 ```dart
-final storeAdminRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) {
-      // Check store admin auth
-      // First login → /change-password
-    },
-    routes: [
-      GoRoute(path: '/', builder: (_, __) => StoreLoginScreen()),
-      GoRoute(path: '/change-password', builder: (_, __) => StoreChangePasswordScreen()),
-      GoRoute(path: '/dashboard', builder: (_, __) => DashboardScreen()),
-      GoRoute(path: '/orders', builder: (_, __) => OrderListScreen()),
-      GoRoute(path: '/orders/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/diagnosis', builder: (_, state) => DiagnosisScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/orders/:id/tracking', builder: (_, state) => TrackingScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/inventory', builder: (_, __) => InventoryScreen()),
-      GoRoute(path: '/inventory/new', builder: (_, __) => SparepartFormScreen()),
-      GoRoute(path: '/payments', builder: (_, __) => PaymentsScreen()),
-      GoRoute(path: '/reviews', builder: (_, __) => ReviewsScreen()),
-      GoRoute(path: '/disputes', builder: (_, __) => DisputesScreen()),
-      GoRoute(path: '/customers', builder: (_, __) => CustomersScreen()),
-      GoRoute(path: '/notifications', builder: (_, __) => NotificationsScreen()),
-      GoRoute(path: '/settings', builder: (_, __) => StoreSettingsScreen()),
-      GoRoute(path: '/analytics', builder: (_, __) => AnalyticsScreen()),
-    ],
-  );
-});
+final customerRoutes = [
+  GoRoute(path: '/welcome', builder: (_, __) => WelcomeScreen()),
+  GoRoute(path: '/login', builder: (_, __) => LoginScreen()),
+  GoRoute(path: '/change-password', builder: (_, __) => ChangePasswordScreen()),
+  GoRoute(path: '/home', builder: (_, __) => HomeScreen()),
+  GoRoute(path: '/stores', builder: (_, __) => StoreListScreen()),
+  GoRoute(path: '/stores/:id', builder: (_, state) => StoreDetailScreen(storeId: state.pathParameters['id']!)),
+  GoRoute(path: '/service', builder: (_, __) => ServiceFlowScreen()),
+  GoRoute(path: '/booking/:storeId', builder: (_, state) => BookingFormScreen(storeId: state.pathParameters['storeId']!)),
+  GoRoute(path: '/booking-success/:orderNumber', builder: (_, state) => BookingSuccessScreen(orderNumber: state.pathParameters['orderNumber']!)),
+  GoRoute(path: '/orders', builder: (_, __) => OrderListScreen()),
+  GoRoute(path: '/orders/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/orders/:id/tracking', builder: (_, state) => TrackingScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/orders/:id/payment', builder: (_, state) => PaymentUploadScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/orders/:id/review', builder: (_, state) => ReviewFormScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/review-success', builder: (_, __) => ReviewSuccessScreen()),
+  GoRoute(path: '/orders/:id/warranty-claim', builder: (_, state) => WarrantyClaimScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/coupons', builder: (_, __) => CouponsScreen()),
+  GoRoute(path: '/notifications', builder: (_, __) => NotificationsScreen()),
+  GoRoute(path: '/notifications/:id', builder: (_, state) => NotificationDetailScreen(id: state.pathParameters['id']!)),
+  GoRoute(path: '/notification-preferences', builder: (_, __) => NotificationPreferencesScreen()),
+  GoRoute(path: '/profile', builder: (_, __) => ProfileScreen()),
+  GoRoute(path: '/sessions', builder: (_, __) => SessionsScreen()),
+  GoRoute(path: '/security', builder: (_, __) => SecurityScreen()),
+];
 ```
 
-### Platform Admin Routes (2 routes)
+### Store Admin Routes
 
 ```dart
-final adminRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/admin/login',
-    routes: [
-      GoRoute(path: '/admin/login', builder: (_, __) => AdminLoginScreen()),
-      GoRoute(path: '/admin/dashboard', builder: (_, __) => AdminDashboardScreen()),
-    ],
-  );
-});
+final storeAdminRoutes = [
+  GoRoute(path: '/store-login', builder: (_, __) => StoreLoginScreen()),
+  GoRoute(path: '/store/change-password', builder: (_, __) => StoreChangePasswordScreen()),
+  GoRoute(path: '/dashboard', builder: (_, __) => DashboardScreen()),
+  GoRoute(path: '/orders', builder: (_, __) => OrderListScreen()),
+  GoRoute(path: '/orders/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/orders/:id/diagnosis', builder: (_, state) => DiagnosisScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/orders/:id/tracking', builder: (_, state) => TrackingScreen(orderId: state.pathParameters['id']!)),
+  GoRoute(path: '/inventory', builder: (_, __) => InventoryScreen()),
+  GoRoute(path: '/inventory/new', builder: (_, __) => SparepartFormScreen()),
+  GoRoute(path: '/inventory/:id', builder: (_, state) => SparepartFormScreen(sparepartId: state.pathParameters['id']!)),
+  GoRoute(path: '/payments', builder: (_, __) => PaymentsScreen()),
+  GoRoute(path: '/reviews', builder: (_, __) => ReviewsScreen()),
+  GoRoute(path: '/disputes', builder: (_, __) => DisputesScreen()),
+  GoRoute(path: '/disputes/:id', builder: (_, state) => DisputeDetailScreen(disputeId: state.pathParameters['id']!)),
+  GoRoute(path: '/customers', builder: (_, __) => CustomersScreen()),
+  GoRoute(path: '/notifications', builder: (_, __) => NotificationsScreen()),
+  GoRoute(path: '/settings', builder: (_, __) => StoreSettingsScreen()),
+  GoRoute(path: '/analytics', builder: (_, __) => AnalyticsScreen()),
+];
+```
+
+### Platform Admin Routes
+
+```dart
+final adminRoutes = [
+  GoRoute(path: '/admin/login', builder: (_, __) => AdminLoginScreen()),
+  GoRoute(path: '/admin/dashboard', builder: (_, __) => AdminDashboardScreen()),
+];
 ```
 
 ---
@@ -275,30 +276,22 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
 final dioClientProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final dio = Dio(BaseOptions(
-    baseUrl: AppConfig.apiBaseUrl, // Default: http://10.0.2.2:3000/v1
-    connectTimeout: Duration(seconds: 10),
-    receiveTimeout: Duration(seconds: 10),
+    baseUrl: AppConfig.apiBaseUrl,
+    connectTimeout: Duration(seconds: 15),
+    receiveTimeout: Duration(seconds: 15),
   ));
 
   // Token interceptor
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) async {
-      final token = await tokenStorage.getAccessToken();
+      final token = await tokenStorage.readAccessToken();
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
       }
       handler.next(options);
     },
     onError: (error, handler) async {
-      if (error.response?.statusCode == 401) {
-        // Auto-refresh token
-        final refreshed = await _refreshToken(dio, tokenStorage);
-        if (refreshed) {
-          // Retry original request
-          return handler.resolve(await dio.fetch(error.requestOptions));
-        }
-      }
-      handler.next(error);
+      handler.reject(mapNetworkError(error));
     },
   ));
 
@@ -310,19 +303,12 @@ final dioClientProvider = Provider<Dio>((ref) {
 
 ```dart
 ApiException mapNetworkError(DioException e) {
-  switch (e.type) {
-    case DioExceptionType.connectionTimeout:
-      return ApiException('Koneksi timeout. Coba lagi.');
-    case DioExceptionType.connectionError:
-      return ApiException('Tidak ada koneksi internet.');
-    default:
-      // Extract from response body
-      final data = e.response?.data;
-      if (data?['error']?['user_message'] != null) {
-        return ApiException(data['error']['user_message']);
-      }
-      return ApiException('Terjadi kesalahan. Coba lagi nanti.');
+  // Extract error message from response
+  final data = e.response?.data;
+  if (data is Map<String, dynamic> && data['message'] != null) {
+    return ApiException(data['message']);
   }
+  return ApiException('Terjadi kesalahan. Coba lagi nanti.');
 }
 ```
 
@@ -351,25 +337,23 @@ ApiException mapNetworkError(DioException e) {
 ```
 main()
   ↓
- runApp(ServisGadgetApp())
+ runApp(ProviderScope(child: ServisGadgetApp()))
   ↓
  MaterialApp.router
-  ├── Router: _RoleSplash router
-  │     ↓
-  │   _RoleSplash()
+  ├── Router: GoRouter with redirect logic
   │     ↓
   │   Check TokenStorage:
-  │     ├── Customer token → /home (customer router)
-  │     ├── Store admin token → /dashboard (store admin router)
-  │     ├── Admin token → /admin/dashboard (admin router)
-  │     └── No token → /welcome (welcome screen)
+  │     ├── Store admin token → /dashboard
+  │     ├── Customer token → /home
+  │     ├── Admin token → /admin/dashboard
+  │     └── No token → /welcome
   │
   └── Theme: Teal Material3
 ```
 
 ### Welcome Screen
 
-3 entry points:
+4 entry points:
 1. **"Service Sekarang"** → Customer flow (bisa langsung tanpa login)
 2. **"Masuk sebagai Pelanggan"** → Customer login
 3. **"Masuk sebagai Toko"** → Store admin login
@@ -381,16 +365,4 @@ main()
 // Default: http://10.0.2.2:3000/v1 (Android emulator)
 // Override via --dart-define:
 flutter run --dart-define=API_BASE_URL=https://api.example.com/v1
-```
-
-### Theme Configuration
-
-```dart
-MaterialApp.router(
-  theme: ThemeData(
-    colorSchemeSeed: Colors.teal,
-    useMaterial3: true,
-  ),
-  // ...
-)
 ```

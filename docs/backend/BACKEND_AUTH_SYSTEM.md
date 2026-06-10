@@ -176,8 +176,8 @@ PlatformAdminService.login()
 
 ### Key Differences
 - Hanya 1 token (access only, no refresh)
-- Payload JWT: `{ sub: id, role: 'platform_admin' }`
-- Menggunakan secret: `JWT_PLATFORM_ADMIN_SECRET` (fallback ke `JWT_STORE_ACCESS_SECRET`)
+- Payload JWT: `{ sub: id, role: 'platform_admin', username: 'admin' }`
+- Menggunakan secret: `JWT_PLATFORM_ADMIN_SECRET` (tanpa fallback ke store secret)
 
 ---
 
