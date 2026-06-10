@@ -262,15 +262,15 @@ Error response:
 - **Status Transition:** `waiting_approval` → `cancelled`
 
 ### `POST /orders/:id/payments`
-- **Auth:** Tidak perlu
+- **Auth:** `Bearer Token` (customer JWT)
 - **Description:** Buat payment untuk order (alternate route)
 
 ### `POST /orders/:id/reviews`
-- **Auth:** Tidak perlu
+- **Auth:** `Bearer Token` (customer JWT)
 - **Description:** Buat review untuk order (alternate route)
 
 ### `POST /orders/:id/disputes`
-- **Auth:** Tidak perlu
+- **Auth:** `Bearer Token` (customer JWT)
 - **Description:** Buat dispute untuk order (alternate route)
 
 ---
