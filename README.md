@@ -222,7 +222,22 @@ service-hub/
 │       ├── store_admin/         Admin Toko (14 screens)
 │       └── platform_admin/     Admin Platform (2 screens)
 │
-├── docs/                        PRD, arsitektur, run-guide
+├── docs/                        Dokumentasi lengkap
+│   ├── backend/                 Backend reference (5 files)
+│   │   ├── BACKEND_API_REFERENCE.md
+│   │   ├── BACKEND_DATABASE_SCHEMA.md
+│   │   ├── BACKEND_AUTH_SYSTEM.md
+│   │   ├── BACKEND_BUSINESS_LOGIC.md
+│   │   └── BACKEND_SETUP.md
+│   ├── frontend/                Frontend reference (5 files)
+│   │   ├── FRONTEND_ARCHITECTURE.md
+│   │   ├── FRONTEND_CUSTOMER.md
+│   │   ├── FRONTEND_STORE_ADMIN.md
+│   │   ├── FRONTEND_PLATFORM_ADMIN.md
+│   │   └── FRONTEND_NETWORK_LAYER.md
+│   ├── PRD/                     Product Requirements Documents
+│   └── *.md                     Arsitektur, run-guide, task-list
+│
 ├── render.yaml                  One-click Render deployment
 └── CHANGELOG.md                 Riwayat perubahan lengkap
 
@@ -243,6 +258,28 @@ Lihat **[docs/run-guide.md](docs/run-guide.md)** untuk panduan lengkap.
 ---
 
 ## Dokumentasi
+
+### Backend Docs
+
+| Dokumen | Isi |
+|---------|-----|
+| [BACKEND_API_REFERENCE.md](docs/backend/BACKEND_API_REFERENCE.md) | Referensi lengkap semua endpoint API, request/response, error codes |
+| [BACKEND_DATABASE_SCHEMA.md](docs/backend/BACKEND_DATABASE_SCHEMA.md) | Schema database: 21 models, 20+ enums, relasi, indexes |
+| [BACKEND_AUTH_SYSTEM.md](docs/backend/BACKEND_AUTH_SYSTEM.md) | 3 sistem JWT auth, stealth account, enkripsi credential, security |
+| [BACKEND_BUSINESS_LOGIC.md](docs/backend/BACKEND_BUSINESS_LOGIC.md) | Order lifecycle, state machine, SLA, payments, reviews, disputes |
+| [BACKEND_SETUP.md](docs/backend/BACKEND_SETUP.md) | Environment variables, Docker setup, deployment, project structure |
+
+### Frontend Docs
+
+| Dokumen | Isi |
+|---------|-----|
+| [FRONTEND_ARCHITECTURE.md](docs/frontend/FRONTEND_ARCHITECTURE.md) | Clean architecture, Riverpod, GoRouter, shared widgets |
+| [FRONTEND_CUSTOMER.md](docs/frontend/FRONTEND_CUSTOMER.md) | Customer feature: 24 screens, models, repos, providers |
+| [FRONTEND_STORE_ADMIN.md](docs/frontend/FRONTEND_STORE_ADMIN.md) | Store admin feature: 18 screens, responsive layout |
+| [FRONTEND_PLATFORM_ADMIN.md](docs/frontend/FRONTEND_PLATFORM_ADMIN.md) | Platform admin feature: 2 screens, admin flow |
+| [FRONTEND_NETWORK_LAYER.md](docs/frontend/FRONTEND_NETWORK_LAYER.md) | Dio client, error handling, token management, provider system |
+
+### Other Docs
 
 | Dokumen | Isi |
 |---------|-----|
