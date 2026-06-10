@@ -54,17 +54,27 @@ class StoreAdminSession {
 #### DashboardSummary
 ```dart
 class DashboardSummary {
+  final int todayOrders;
   final int activeOrders;
-  final Map<String, int> byStatus;          // Bukan statusBreakdown
   final int pendingPayments;
+  final int pendingOrders;
+  final int waitingApproval;
   final int openDisputes;
+  final num revenueToday;
+  final num revenueMonth;
   final double ratingAvg;
-  final int totalCompletedThisMonth;
+  final double completionRate;
+  final String adminName;
+  final String storeName;
+  final Map<String, int> statusBreakdown;
   final List<StoreOrder> recentOrders;
+  final List<MetricPoint> revenueTrend;
+  final List<CategoryMetric> serviceCategories;
+  final List<CustomerProfile> customers;
 }
 ```
 
-**Note:** Response dari backend hanya memiliki field-field di atas. Field lain seperti `todayOrders`, `revenueMonth`, `completionRate` tidak ada di response.
+**Note:** Model ini memiliki banyak field. `statusBreakdown` (bukan `byStatus`). Response dari backend termasuk field `todayOrders`, `revenueMonth`, `completionRate`.
 
 #### StoreOrder
 ```dart
@@ -171,10 +181,10 @@ class ReviewItem {
 ```dart
 class NotificationItem {
   final String id;
-  final String status;
-  final String? note;
+  final String title;
+  final String message;
   final DateTime createdAt;
-  final String orderNumber;
+  final bool isRead;
 }
 ```
 
