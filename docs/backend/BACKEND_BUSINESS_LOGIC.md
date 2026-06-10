@@ -64,10 +64,15 @@
 ### Order Creation Logic
 
 ```typescript
-async createOrder(userId: string, dto: CreateOrderDto) {
+async createOrder(userId: string | null, dto: CreateOrderDto) {
+  // dto: { storeId, deviceType, brand, deviceModel, deliveryMethod,
+  //        customerName, phoneNumber, couponCode?, items[] }
+
   // 1. Validasi store aktif
-  // 2. Auto-create account jika user baru
-  // 3. Reserve sparepart stock
+  // 2. Auto-create account jika user baru (stealth account)
+  //    - generatePassword(fullName, phone)
+  //    - encryptCredential(plainPassword)
+  // 3. Reserve sparepart stock (qtyReserved += 1 per item)
   // 4. Validate coupon jika ada
   // 5. Create order + items dalam transaction
   // 6. Create shipment jika courier_pickup
@@ -248,8 +253,8 @@ await tx.store.update({
 Customer → POST /disputes/:orderId
   ↓
 1. Validasi order completed & milik user
-2. Cek warranty masih berlaku
-3. Cek belum ada dispute aktif
+2. Cek warranty masih berlaku (warrantyExpiredAt > now)
+3. Cek belum ada dispute aktif (status ≠ open)
 4. Dalam transaction:
    - Create dispute (status: open, slaDeadline: now + 24 jam)
    - Update order status → disputed

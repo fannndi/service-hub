@@ -78,17 +78,20 @@ class ServiceStore {
   final String address;
   final String phoneNumber;
   final double ratingAvg;
-  final int totalCompleted;
-  final bool isActive;
+  final int reviewCount;
+  final DateTime? verifiedAt;
   final Map<String, dynamic> operationalHours;
-  final List<StoreReview> reviews;
+  final List<ReviewItem> reviews;
 }
 ```
+
+**Note:** Field `reviewCount` (bukan `totalCompleted`), `verifiedAt` (nullable), dan `reviews` bertipe `List<ReviewItem>`.
 
 #### SparePart
 ```dart
 class SparePart {
   final String id;
+  final String storeId;
   final String brand;
   final String deviceModel;
   final String partType;
@@ -96,9 +99,30 @@ class SparePart {
   final double price;
   final int qty;
   final int qtyReserved;
-  final SparePartStatus status;
 
   int get availableQty => qty - qtyReserved;
+}
+```
+
+**Note:** Tidak ada field `status` di model ini.
+
+#### StoreMatchResult
+```dart
+class StoreMatchResult {
+  final String storeId;
+  final String storeName;
+  final String address;
+  final double ratingAvg;
+  final List<MatchSparePart> matchingParts;
+  final double estimatedServiceFee;
+  final double totalEstimate;
+}
+
+class MatchSparePart {
+  final String id;
+  final String partName;
+  final double price;
+  final int qty;
 }
 ```
 
@@ -107,25 +131,73 @@ class SparePart {
 class CustomerOrder {
   final String id;
   final String orderNumber;
-  final DeviceType deviceType;
+  final String deviceType;        // String, bukan enum
   final String brand;
   final String deviceModel;
-  final DeliveryMethod deliveryMethod;
-  final OrderStatus status;
-  final PaymentStatus paymentStatus;
+  final String deliveryMethod;    // String, bukan enum
+  final String status;
+  final String paymentStatus;     // String, bukan enum
   final double totalEstimasi;
   final double discountAmount;
   final double? finalPrice;
   final double? serviceFee;
   final String? diagnosisNote;
-  final int? warrantyDays;
   final DateTime? warrantyExpiredAt;
   final DateTime? slaDeadline;
-  final bool isWarrantyOrder;
+  final String? couponId;
+  final DateTime createdAt;
+  final bool reviewed;
+  // Store info sebagai separate fields:
+  final String storeName;
+  final String storeAddress;
+  final String storePhone;
   final List<OrderItem> items;
   final List<TrackingEntry> tracking;
   final List<PaymentRecord> payments;
-  final ServiceStore store;
+}
+```
+
+**Notes:**
+- `deviceType`, `deliveryMethod`, `paymentStatus` bertipe `String` (bukan enum)
+- Tidak ada field `warrantyDays` atau `isWarrantyOrder`
+- Store info berupa separate fields, bukan object `ServiceStore`
+- Ada field `createdAt` dan `reviewed`
+
+#### OrderItem
+```dart
+class OrderItem {
+  final String id;
+  final String serviceType;
+  final String complaint;
+  final double itemPrice;
+  final double? finalItemPrice;
+  final String status;
+  final String? technicianNote;
+  final String? sparepartName;
+}
+```
+
+#### TrackingEntry
+```dart
+class TrackingEntry {
+  final String id;
+  final String status;
+  final String? note;
+  final String createdByType;
+  final DateTime createdAt;
+}
+```
+
+#### PaymentRecord
+```dart
+class PaymentRecord {
+  final String id;
+  final double amount;
+  final String paymentMethod;
+  final String paymentType;
+  final String status;
+  final String? proofUrl;
+  final DateTime createdAt;
 }
 ```
 
@@ -133,13 +205,60 @@ class CustomerOrder {
 ```dart
 class CreateOrderRequest {
   final String storeId;
-  final DeviceType deviceType;
+  final String deviceType;
   final String brand;
   final String deviceModel;
-  final DeliveryMethod deliveryMethod;
+  final String deliveryMethod;
   final String? deliveryAddress;
-  final List<CreateOrderItemInput> items;
+  final String customerName;      // Wajib untuk stealth account
+  final String phoneNumber;       // Wajib untuk stealth account
   final String? couponCode;
+  final List<CreateOrderItemInput> items;
+}
+```
+
+**Note:** `customerName` dan `phoneNumber` wajib untuk auto-create account.
+
+#### CreateOrderItemInput
+```dart
+class CreateOrderItemInput {
+  final String serviceType;
+  final String complaint;
+  final String? sparepartId;
+}
+```
+
+#### ReviewItem
+```dart
+class ReviewItem {
+  final String id;
+  final int rating;
+  final String? comment;
+  final DateTime createdAt;
+  final String customerName;
+}
+```
+
+#### CouponReward
+```dart
+class CouponReward {
+  final String id;
+  final String code;
+  final double amount;
+  final bool isUsed;
+  final DateTime expiredAt;
+  final DateTime createdAt;
+}
+```
+
+#### NotificationItem
+```dart
+class NotificationItem {
+  final String id;
+  final String status;
+  final String? note;
+  final DateTime createdAt;
+  final String orderNumber;
 }
 ```
 
@@ -154,15 +273,19 @@ class CreateOrderRequest {
 ```dart
 class CustomerSessionStorage {
   // Keys:
-  // - 'access_token', 'refresh_token'
-  // - 'cached_profile', 'notification_pref'
+  // - 'access_token'
+  // - 'customer_cached_profile'
+  // - 'customer_notifications_enabled'
 
-  Future<void> saveTokens(String access, String refresh);
-  Future<String?> getAccessToken();
-  Future<String?> getRefreshToken();
+  Future<void> saveAccessToken(String token);
+  Future<String?> readAccessToken();
+  Future<void> saveRefreshToken(String token);
+  Future<String?> readRefreshToken();
   Future<void> clearAll();
-  Future<void> saveProfile(CustomerUser user);
-  Future<CustomerUser?> getCachedProfile();
+  Future<void> cacheProfile(CustomerUser user);
+  Future<CustomerUser?> readCachedProfile();
+  Future<void> saveNotificationPreference(bool enabled);
+  Future<bool> readNotificationPreference();
 }
 ```
 
@@ -172,13 +295,13 @@ class CustomerSessionStorage {
 class CustomerApiClient {
   // 2 Dio instances:
   // - _publicDio: tanpa token (login, register)
-  // - _authDio: dengan token + auto-refresh
+  // - _authDio: dengan token
 
-  // Auto-refresh flow:
+  // Auto-refresh on 401:
   // 1. Request gagal 401
   // 2. Coba refresh token
   // 3. Jika berhasil → retry request
-  // 4. Jika gagal → clear session, redirect ke login
+  // 4. Jika gagal → clear session, throw error
 
   static T unwrap<T>(dynamic data);
   static List<T> unwrapList<T>(dynamic data, T Function(dynamic) fromJson);
@@ -192,31 +315,13 @@ class CustomerApiClient {
 | `CustomerAuthRepository` | `login()`, `getMe()`, `getSummary()`, `changePassword()`, `updateProfile()`, `logout()` | `/auth/*`, `/me/*` |
 | `StoreDiscoveryRepository` | `getStores()`, `getStore()`, `getSpareparts()`, `matchStores()` | `/stores/*` |
 | `OrderRepository` | `createOrder()`, `getMyOrders()`, `getOrderDetail()`, `getOrderProgress()`, `approveOrder()`, `rejectOrder()` | `/orders/*` |
-| `PaymentRepository` | `createPayment(orderId, dto)` | `/payments/:orderId` |
+| `PaymentRepository` | `createPayment(orderId, dto)` | `/orders/$orderId/payments` |
 | `ReviewRepository` | `createReview()`, `getCoupons()` | `/reviews/*`, `/me/coupons` |
 | `DisputeRepository` | `createDispute(orderId, dto)` | `/disputes/:orderId` |
-| `UploadRepository` | `presignUpload(filename, contentType)` | `/uploads/presign` |
+| `UploadRepository` | `uploadFile(file, folder, onProgress)` | `/uploads/presign` |
 | `NotificationRepository` | `getNotifications()` | `/me/notifications` |
 
-### Error Handling
-
-```dart
-String parseApiError(DioException e) {
-  final data = e.response?.data;
-  if (data?['error']?['user_message'] != null) {
-    return data['error']['user_message'];
-  }
-  // Fallback berdasarkan type
-  switch (e.type) {
-    case DioExceptionType.connectionTimeout:
-      return 'Koneksi timeout.';
-    case DioExceptionType.connectionError:
-      return 'Tidak ada koneksi internet.';
-    default:
-      return 'Terjadi kesalahan.';
-  }
-}
-```
+**Note:** `PaymentRepository` menggunakan endpoint `/orders/$orderId/payments` (bukan `/payments/:orderId`). `UploadRepository` menggunakan `uploadFile(file, folder, onProgress)` (bukan `presignUpload`).
 
 ---
 
@@ -234,7 +339,7 @@ final customerAuthProvider = AsyncNotifierProvider<CustomerAuthNotifier, Custome
 class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   // Methods:
   // - login(phone, password) → User?
-  // - restore() → User? (dari cache)
+  // - restoreSession() → User? (dari cache)
   // - changePassword(old, new)
   // - updateProfile({fullName, address, avatarUrl})
   // - logout()
@@ -251,13 +356,13 @@ final homeSummaryProvider = FutureProvider<HomeSummary>((ref) async {
 
 final featuredStoresProvider = FutureProvider<List<ServiceStore>>((ref) async {
   final repo = ref.watch(storeDiscoveryRepositoryProvider);
-  return repo.getStores(limit: 5);
+  return repo.getStores();  // Tanpa limit
 });
 
-final storeListProvider = FutureProvider.family<List<ServiceStore>, StoreFilter>(
+final storeListProvider = FutureProvider.family<List<ServiceStore>, ({String? brand, String? model})>(
   (ref, filter) async {
     final repo = ref.watch(storeDiscoveryRepositoryProvider);
-    return repo.getStores(brand: filter.brand, partType: filter.partType);
+    return repo.getStores(brand: filter.brand, model: filter.model);
   },
 );
 
@@ -276,18 +381,22 @@ final sparepartsProvider = FutureProvider.family<List<SparePart>, String>(
 );
 ```
 
+**Notes:**
+- `storeListProvider` menggunakan record type `({String? brand, String? model})` (bukan `StoreFilter`)
+- Filter field adalah `model` (bukan `partType`)
+- `featuredStoresProvider` tidak ada parameter `limit`
+
 ### Order Providers
 
 ```dart
-final customerOrdersProvider = FutureProvider<CustomerOrderList>((ref) async {
-  final repo = ref.watch(orderRepositoryProvider);
-  final orders = await repo.getMyOrders();
-  return CustomerOrderList(
-    active: orders.where((o) => !o.isCompleted && !o.isCancelled).toList(),
-    completed: orders.where((o) => o.isCompleted).toList(),
-    cancelled: orders.where((o) => o.isCancelled).toList(),
-  );
-});
+final customerOrdersProvider = FutureProvider.family<List<CustomerOrder>, String>(
+  (ref, statusFilter) async {
+    final repo = ref.watch(orderRepositoryProvider);
+    final orders = await repo.getMyOrders();
+    if (statusFilter.isEmpty) return orders;
+    return orders.where((o) => o.status == statusFilter).toList();
+  },
+);
 
 final orderDetailProvider = FutureProvider.family<CustomerOrder, String>(
   (ref, orderId) async {
@@ -296,21 +405,27 @@ final orderDetailProvider = FutureProvider.family<CustomerOrder, String>(
   },
 );
 
-final orderTrackingProvider = StreamProvider.family<List<TrackingEntry>, String>(
+final orderTrackingProvider = StreamProvider.family<CustomerOrder, String>(
   (ref, orderId) {
     return Stream.periodic(Duration(seconds: 30))
-        .asyncMap((_) => ref.read(orderRepositoryProvider).getOrderProgress(orderId));
+        .asyncMap((_) => ref.read(orderRepositoryProvider).getOrderDetail(orderId));
   },
 );
 ```
+
+**Notes:**
+- `customerOrdersProvider` mengembalikan `List<CustomerOrder>` (bukan `CustomerOrderList`)
+- `orderTrackingProvider` mengembalikan `CustomerOrder` (bukan `List<TrackingEntry>`)
 
 ### Other Providers
 
 ```dart
 final couponsProvider = FutureProvider<List<CouponReward>>((ref) async { ... });
 final notificationsProvider = FutureProvider<List<NotificationItem>>((ref) async { ... });
-final notificationPreferenceProvider = StateProvider<bool>((ref) => true);
+final notificationPreferenceProvider = FutureProvider<bool>((ref) async { ... });
 ```
+
+**Note:** `notificationPreferenceProvider` adalah `FutureProvider<bool>` (bukan `StateProvider<bool>`).
 
 ---
 
@@ -322,31 +437,36 @@ final notificationPreferenceProvider = StateProvider<bool>((ref) => true);
 
 | Screen | Route | Fungsi |
 |--------|-------|--------|
-| `SplashScreen` | `/` | Token check + session restore |
-| `WelcomeScreen` | `/welcome` | 3 entry points |
+| `SplashScreen` | `/splash` | Token check + session restore |
+| `WelcomeScreen` | `/welcome` | 4 entry points |
 | `LoginScreen` | `/login` | Phone + password |
 | `ChangePasswordScreen` | `/change-password` | Old + new password |
 | `HomeScreen` | `/home` | Summary, quick actions, recent orders |
 | `StoreListScreen` | `/stores` | Brand filter + search + store list |
 | `StoreDetailScreen` | `/stores/:id` | Store info + spareparts + reviews |
 | `ServiceFlowScreen` | `/service` | 5-step booking wizard |
-| `BookingFormScreen` | `/booking` | Single-store order form |
-| `BookingSuccessScreen` | - | Success confirmation |
+| `BookingFormScreen` | `/booking/:storeId` | Single-store order form |
+| `BookingSuccessScreen` | `/booking-success/:orderNumber` | Success confirmation |
 | `OrderListScreen` | `/orders` | 3 tabs (active/completed/cancelled) |
 | `OrderDetailScreen` | `/orders/:id` | Full order view |
 | `DiagnosisApprovalCard` | - | Approve/reject diagnosis |
 | `TrackingScreen` | `/orders/:id/tracking` | Live tracking (30s polling) |
 | `PaymentUploadScreen` | `/orders/:id/payment` | Payment + proof upload |
 | `ReviewFormScreen` | `/orders/:id/review` | 5-star rating + comment |
-| `ReviewSuccessScreen` | - | Coupon reward banner |
-| `WarrantyClaimScreen` | `/orders/:id/dispute` | Dispute form + photo evidence |
+| `ReviewSuccessScreen` | `/review-success` | Coupon reward banner |
+| `WarrantyClaimScreen` | `/orders/:id/warranty-claim` | Dispute form + photo evidence |
 | `ProfileScreen` | `/profile` | Edit profile + logout |
 | `CouponsScreen` | `/coupons` | List kupon |
 | `NotificationsScreen` | `/notifications` | List notifikasi |
-| `NotificationDetailScreen` | - | Detail notifikasi |
-| `NotificationPreferencesScreen` | - | Setelan notifikasi |
-| `SessionsScreen` | - | Active sessions |
-| `SecurityScreen` | - | Security settings |
+| `NotificationDetailScreen` | `/notifications/:id` | Detail notifikasi |
+| `NotificationPreferencesScreen` | `/notification-preferences` | Setelan notifikasi |
+| `SessionsScreen` | `/sessions` | Active sessions |
+| `SecurityScreen` | `/security` | Security settings |
+
+**Notes:**
+- Route `/booking` → `/booking/:storeId` (parameter storeId wajib)
+- Route `/orders/:id/dispute` → `/orders/:id/warranty-claim`
+- Ada route tambahan: `/splash`, `/booking-success/:orderNumber`, `/review-success`, `/sessions`, `/security`, `/notifications/:id`, `/notification-preferences`
 
 ### ServiceFlowScreen (5-Step Wizard)
 
@@ -379,11 +499,12 @@ Step 5: Confirm
 
 1. **Order Info Card** — orderNumber, status, device, dates
 2. **SLA Badge** — countdown waktu tersisa
-3. **Items List** — serviceType, complaint, price, technicianNote
-4. **Tracking Timeline** — status history dengan timestamp
-5. **Payment Info** — payment status, method, amount
-6. **Action Buttons** — approve/reject (jika waiting_approval), bayar, review, dispute
-7. **Credential Panel** — tampil jika customer baru (password)
+3. **Store Info** — storeName, storeAddress, storePhone
+4. **Items List** — serviceType, complaint, price, technicianNote
+5. **Tracking Timeline** — status history dengan timestamp
+6. **Payment Info** — payment status, method, amount
+7. **Action Buttons** — approve/reject (jika waiting_approval), bayar, review, dispute
+8. **Credential Panel** — tampil jika customer baru (password)
 
 ---
 
@@ -407,9 +528,11 @@ Step 5: Confirm
 ### Formatting Helpers
 
 ```dart
-String rupiah(double amount) => 'Rp ${amount.toStringAsFixed(0).replaceAllMapped(...)}';
-String shortDate(DateTime date) => DateFormat('dd MMM yyyy').format(date);
+String rupiah(num value) => 'Rp ${value.toStringAsFixed(0).replaceAllMapped(...)}';
+String shortDate(DateTime? value) => value != null ? DateFormat('dd MMM yyyy').format(value) : '-';
 ```
+
+**Note:** `rupiah()` menerima `num` (bukan `double`), `shortDate()` menerima `DateTime?` (nullable).
 
 ---
 
@@ -424,7 +547,7 @@ final customerRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(customerAuthProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     refreshListenable: _RouterRefresh(ref),
     redirect: (context, state) {
       final isAuth = authState.valueOrNull != null;
@@ -441,10 +564,12 @@ final customerRouterProvider = Provider<GoRouter>((ref) {
       }
       return null;
     },
-    routes: [ ... ], // 24 routes
+    routes: [ ... ], // 25 routes
   );
 });
 ```
+
+**Note:** `initialLocation` adalah `'/splash'` (bukan `'/'`).
 
 ### _RouterRefresh
 

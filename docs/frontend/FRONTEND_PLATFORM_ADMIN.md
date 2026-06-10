@@ -37,19 +37,15 @@ class StoreListItem {
   final String storeName;
   final String address;
   final String phoneNumber;
-  final bool isActive;
   final double ratingAvg;
   final int totalCompleted;
-  final List<String> deviceTypes;
-  final List<AdminInfo> admins;
-}
-
-class AdminInfo {
-  final String id;
-  final String fullName;
-  final String phoneNumber;
+  final DateTime createdAt;
+  final Map<String, dynamic>? deviceTypes;
+  final List<Map<String, dynamic>> admins;
 }
 ```
+
+**Note:** `deviceTypes` berbentuk `Map<String, dynamic>?` (bukan `List<String>`), dan `admins` berbentuk `List<Map<String, dynamic>>` (bukan `List<AdminInfo>`).
 
 ---
 
@@ -63,14 +59,14 @@ class AdminInfo {
 class AdminSessionStorage {
   // Keys:
   // - 'admin_access_token'
-  // - 'admin_id', 'admin_username', 'admin_full_name'
 
-  Future<void> saveSession(String token, AdminSession admin);
-  Future<String?> getAccessToken();
-  Future<AdminSession?> getAdmin();
-  Future<void> clearSession();
+  Future<void> saveToken(String token);
+  Future<String?> readToken();
+  Future<void> clear();
 }
 ```
+
+**Note:** Hanya menyimpan token, tidak menyimpan data admin di storage. Data admin di-cache di memory saja.
 
 ### API Client
 
@@ -88,22 +84,32 @@ class AdminApiClient {
 |--------|----------|-------------|
 | `login(username, password)` | `POST /platform/login` | Login admin |
 | `listStores()` | `GET /platform/stores` | Daftar semua stores |
-| `createStore(dto)` | `POST /platform/stores` | Buat store baru + admin |
+| `createStore(storeName, address, storePhone, adminName, adminPhone, password, handlesAndroid, handlesIos)` | `POST /platform/stores` | Buat store baru + admin |
 | `logout()` | - | Clear local session |
 
-### Create Store DTO
+### Create Store Parameters
 
 ```dart
-class CreateStoreDto {
-  final String storeName;
-  final String address;
-  final String phoneNumber;
-  final String adminFullName;
-  final String adminPhoneNumber;
-  final String? adminPassword;   // Optional, auto-generated jika null
-  final List<String> deviceTypes; // ['android', 'ios']
-}
+// Parameter individual (bukan DTO)
+Future<void> createStore({
+  required String storeName,
+  required String address,
+  required String storePhone,
+  required String adminName,
+  required String adminPhone,
+  required String password,
+  required bool handlesAndroid,
+  required bool handlesIos,
+});
 ```
+
+**Field Notes:**
+- `storePhone`: Nomor HP toko
+- `adminName`: Nama lengkap admin toko
+- `adminPhone`: Nomor HP admin toko
+- `password`: Password admin (wajib)
+- `handlesAndroid`: Toko handle perangkat Android (boolean)
+- `handlesIos`: Toko handle perangkat iOS (boolean)
 
 ---
 
@@ -121,7 +127,7 @@ final adminAuthProvider = AsyncNotifierProvider<AdminAuthNotifier, AdminSession?
 class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
   // Methods:
   // - login(username, password) → AdminSession?
-  // - restore() → AdminSession? (dari cache)
+  // - restore() → AdminSession? (dari token storage)
   // - logout()
 }
 ```
@@ -162,11 +168,9 @@ Simple login form:
 - Table dengan columns:
   - Nama Toko
   - Alamat
-  - Status (Active/Inactive badge)
   - Rating
   - Total Completed
   - Admins
-- Search/filter functionality
 
 **Section 2: Create Store Form**
 
@@ -174,19 +178,15 @@ Simple login form:
 Form Fields:
 1. storeName (Text) — Nama toko
 2. address (Text) — Alamat lengkap
-3. phoneNumber (Text) — Nomor HP toko
-4. adminFullName (Text) — Nama admin toko
-5. adminPhoneNumber (Text) — Nomor HP admin
-6. adminPassword (Text, optional) — Password (auto-generated jika kosong)
-7. deviceTypes (Chip select) — ['android', 'ios']
+3. storePhone (Text) — Nomor HP toko
+4. adminName (Text) — Nama admin toko
+5. adminPhone (Text) — Nomor HP admin
+6. password (Text) — Password admin (wajib)
+7. handlesAndroid (Checkbox) — Handle perangkat Android
+8. handlesIos (Checkbox) — Handle perangkat iOS
 
 Submit → POST /platform/stores
 ```
-
-**Section 3: Response**
-- Show created store info
-- Show generated password (if auto-generated)
-- Success/error feedback
 
 ---
 
