@@ -13,48 +13,12 @@ import {
   InvalidStatusTransitionException,
 } from '../../common/exceptions';
 import { assertValidTransition } from './utils/state-machine.util';
-import { customAlphabet } from 'nanoid';
-import { normalizePhone } from '../auth/utils/password.util';
-
-const nid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
-
-interface CreateOrderItemDto {
-  serviceType: string;
-  complaint: string;
-  sparepartId?: string;
-}
-
-interface CreateOrderDto {
-  storeId: string;
-  deviceType: string;
-  brand: string;
-  deviceModel: string;
-  deliveryMethod: string;
-  deliveryAddress?: string;
-  customerName: string;
-  phoneNumber: string;
-  items: CreateOrderItemDto[];
-  couponCode?: string;
-}
-
-interface UpdateOrderStatusDto {
-  status: string;
-  note?: string;
-}
-
-interface DiagnosisItemDto {
-  orderItemId: string;
-  status: string;
-  finalItemPrice: number;
-  technicianNote?: string;
-  replacedSparepartId?: string;
-}
-
-interface SubmitDiagnosisDto {
-  serviceFee: number;
-  diagnosisNote?: string;
-  items: DiagnosisItemDto[];
-}
+import { generateOrderNumber, normalizePhone } from '../../common/utils';
+import {
+  CreateOrderDto,
+  SubmitDiagnosisDto,
+  UpdateOrderStatusDto,
+} from './dto/order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -64,17 +28,20 @@ export class OrdersService {
     private notif: NotificationsService,
   ) {}
 
-  async createOrder(dto: CreateOrderDto): Promise<any> {
+  async createOrder(dto: CreateOrderDto) {
     if (dto.deliveryMethod === 'courier_pickup' && !dto.deliveryAddress)
       throw new DeliveryAddressRequiredException();
 
     const store = await this.prisma.store.findUnique({ where: { id: dto.storeId } });
     if (!store || !store.isActive) throw new StoreNotActiveException();
-    const config = store.config as any;
 
     const itemData: Array<{
-      serviceType: string; complaint: string; sparepartId?: string; itemPrice: number;
+      serviceType: string;
+      complaint: string;
+      sparepartId?: string;
+      itemPrice: number;
     }> = [];
+
     for (const item of dto.items) {
       let itemPrice = 0;
       if (item.sparepartId) {
@@ -84,8 +51,10 @@ export class OrdersService {
         itemPrice = Number(sp.price);
       }
       itemData.push({
-        serviceType: item.serviceType, complaint: item.complaint,
-        sparepartId: item.sparepartId, itemPrice,
+        serviceType: item.serviceType,
+        complaint: item.complaint,
+        sparepartId: item.sparepartId,
+        itemPrice,
       });
     }
 
@@ -103,16 +72,17 @@ export class OrdersService {
       couponId = coupon.id;
     }
 
-    const { user, isNew, rawPass } =
-      await this.authService.autoCreateAccount(dto.customerName, dto.phoneNumber);
+    const { user, isNew, rawPass } = await this.authService.autoCreateAccount(
+      dto.customerName,
+      dto.phoneNumber,
+    );
 
     const totalEstimasi = Math.max(
       0,
       itemData.reduce((sum, i) => sum + i.itemPrice, 0) - discountAmount,
     );
 
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const orderNumber = `SG-${dateStr}-${nid()}`;
+    const orderNumber = generateOrderNumber();
 
     const order = await this.prisma.$transaction(async (tx) => {
       for (const item of dto.items) {
@@ -127,10 +97,17 @@ export class OrdersService {
 
       const o = await tx.serviceOrder.create({
         data: {
-          userId: user.id, storeId: dto.storeId, orderNumber,
-          deviceType: dto.deviceType as any, brand: dto.brand, deviceModel: dto.deviceModel,
-          deliveryMethod: dto.deliveryMethod as any, deliveryAddress: dto.deliveryAddress,
-          totalEstimasi, discountAmount, couponId,
+          userId: user.id,
+          storeId: dto.storeId,
+          orderNumber,
+          deviceType: dto.deviceType as 'android' | 'ios',
+          brand: dto.brand,
+          deviceModel: dto.deviceModel,
+          deliveryMethod: dto.deliveryMethod as 'walk_in' | 'courier_pickup',
+          deliveryAddress: dto.deliveryAddress,
+          totalEstimasi,
+          discountAmount,
+          couponId,
           slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
           items: { create: itemData },
         },
@@ -139,8 +116,10 @@ export class OrdersService {
 
       await tx.serviceTracking.create({
         data: {
-          orderId: o.id, status: 'waiting_device',
-          createdByType: 'customer', createdById: user.id,
+          orderId: o.id,
+          status: 'waiting_device',
+          createdByType: 'customer',
+          createdById: user.id,
           note: 'Order berhasil dibuat.',
         },
       });
@@ -155,8 +134,10 @@ export class OrdersService {
       if (dto.deliveryMethod === 'courier_pickup') {
         await tx.shipment.create({
           data: {
-            orderId: o.id, shipmentType: 'pickup',
-            pickupAddress: dto.deliveryAddress!, destinationAddress: store.address,
+            orderId: o.id,
+            shipmentType: 'pickup',
+            pickupAddress: dto.deliveryAddress!,
+            destinationAddress: store.address,
             status: 'scheduled',
           },
         });
@@ -191,7 +172,7 @@ export class OrdersService {
         if (!item.sparepartId) continue;
         if (item.status === 'cancelled') continue;
         const sp = await tx.sparePart.findUniqueOrThrow({ where: { id: item.sparepartId } });
-        if (sp.qty < 1) throw new StockUnavailableException();
+        if (sp.qty - sp.qtyReserved < 0) throw new StockUnavailableException();
         await tx.sparePart.update({
           where: { id: item.sparepartId },
           data: { qty: { decrement: 1 }, qtyReserved: { decrement: 1 } },
@@ -203,15 +184,18 @@ export class OrdersService {
       });
       await tx.serviceTracking.create({
         data: {
-          orderId, status: 'repairing', createdByType: 'customer',
-          createdById: userId, note: 'Pelanggan menyetujui diagnosa.',
+          orderId,
+          status: 'repairing',
+          createdByType: 'customer',
+          createdById: userId,
+          note: 'Pelanggan menyetujui diagnosa.',
         },
       });
     });
 
     await this.notif.send(
       order.store.phoneNumber,
-      `✅ Pelanggan menyetujui order ${order.orderNumber}. Segera mulai perbaikan!`,
+      `Pelanggan menyetujui order ${order.orderNumber}. Segera mulai perbaikan!`,
       'order_approved',
     );
     return { status: 'repairing' };
@@ -239,8 +223,11 @@ export class OrdersService {
       });
       await tx.serviceTracking.create({
         data: {
-          orderId, status: 'cancelled', createdByType: 'customer',
-          createdById: userId, note: 'Pelanggan menolak diagnosa.',
+          orderId,
+          status: 'cancelled',
+          createdByType: 'customer',
+          createdById: userId,
+          note: 'Pelanggan menolak diagnosa.',
         },
       });
     });
@@ -280,14 +267,16 @@ export class OrdersService {
       await tx.serviceOrder.update({
         where: { id: orderId },
         data: {
-          status: dto.status as any,
+          status: dto.status as 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'cancelled',
           ...(newSla && { slaDeadline: newSla, slaWarnedAt: null }),
         },
       });
       await tx.serviceTracking.create({
         data: {
-          orderId, status: dto.status as any,
-          createdByType: 'store_admin', createdById: adminId,
+          orderId,
+          status: dto.status as 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'cancelled',
+          createdByType: 'store_admin',
+          createdById: adminId,
           note: dto.note ?? null,
         },
       });
@@ -295,19 +284,21 @@ export class OrdersService {
 
     if (dto.status === 'waiting_payment') {
       const fullOrder = await this.prisma.serviceOrder.findUniqueOrThrow({
-        where: { id: orderId }, include: { user: true },
+        where: { id: orderId },
+        include: { user: true },
       });
       await this.notif.sendWaitingPayment(
-        fullOrder.user.phoneNumber, fullOrder.user.fullName,
-        fullOrder.orderNumber, Number(fullOrder.finalPrice));
+        fullOrder.user.phoneNumber,
+        fullOrder.user.fullName,
+        fullOrder.orderNumber,
+        Number(fullOrder.finalPrice),
+      );
     }
 
     return { status: dto.status };
   }
 
-  async submitDiagnosis(
-    orderId: string, adminId: string, storeId: string, dto: SubmitDiagnosisDto,
-  ) {
+  async submitDiagnosis(orderId: string, adminId: string, storeId: string, dto: SubmitDiagnosisDto) {
     const order = await this.prisma.serviceOrder.findFirst({
       where: { id: orderId, storeId, status: 'diagnosing' },
       include: { items: true, user: true },
@@ -316,8 +307,7 @@ export class OrdersService {
 
     for (const diagItem of dto.items) {
       if (diagItem.status === 'replaced' && !diagItem.replacedSparepartId) {
-        throw new InvalidStatusTransitionException(
-          'diagnosing', 'waiting_approval');
+        throw new InvalidStatusTransitionException('diagnosing', 'waiting_approval');
       }
     }
 
@@ -330,11 +320,17 @@ export class OrdersService {
 
     await this.prisma.$transaction(async (tx) => {
       for (const diagItem of dto.items) {
-        const updateData: any = {
-          status: diagItem.status,
+        const updateData: {
+          status: 'confirmed' | 'replaced' | 'cancelled';
+          finalItemPrice: number;
+          technicianNote: string | null;
+          sparepartId?: string;
+        } = {
+          status: diagItem.status as 'confirmed' | 'replaced' | 'cancelled',
           finalItemPrice: diagItem.finalItemPrice,
           technicianNote: diagItem.technicianNote ?? null,
         };
+
         if (diagItem.status === 'replaced' && diagItem.replacedSparepartId) {
           const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
           if (oldItem?.sparepartId) {
@@ -353,6 +349,7 @@ export class OrdersService {
           });
           updateData.sparepartId = diagItem.replacedSparepartId;
         }
+
         if (diagItem.status === 'cancelled') {
           const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
           if (oldItem?.sparepartId) {
@@ -362,6 +359,7 @@ export class OrdersService {
             });
           }
         }
+
         await tx.orderItem.update({
           where: { id: diagItem.orderItemId },
           data: updateData,
@@ -381,14 +379,21 @@ export class OrdersService {
       });
       await tx.serviceTracking.create({
         data: {
-          orderId, status: 'waiting_approval', createdByType: 'store_admin',
-          createdById: adminId, note: 'Diagnosa selesai, menunggu persetujuan pelanggan.',
+          orderId,
+          status: 'waiting_approval',
+          createdByType: 'store_admin',
+          createdById: adminId,
+          note: 'Diagnosa selesai, menunggu persetujuan pelanggan.',
         },
       });
     });
 
     await this.notif.sendDiagnosisResult(
-      order.user.phoneNumber, order.user.fullName, order.orderNumber, finalPrice);
+      order.user.phoneNumber,
+      order.user.fullName,
+      order.orderNumber,
+      finalPrice,
+    );
     return { status: 'waiting_approval', finalPrice };
   }
 
@@ -418,7 +423,7 @@ export class OrdersService {
   }
 
   async findStoreOrders(storeId: string, status?: string) {
-    const where: any = { storeId };
+    const where: Record<string, unknown> = { storeId };
     if (status) where.status = status;
     return this.prisma.serviceOrder.findMany({
       where,
@@ -432,7 +437,17 @@ export class OrdersService {
       where: { id: orderId, storeId },
       include: {
         items: { include: { sparepart: true } },
-        user: { select: { id: true, fullName: true, phoneNumber: true, address: true, createdAt: true, isCredentialSent: true, credentialPlainEnc: true } },
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            phoneNumber: true,
+            address: true,
+            createdAt: true,
+            isCredentialSent: true,
+            credentialPlainEnc: true,
+          },
+        },
         tracking: { orderBy: { createdAt: 'asc' } },
         payments: true,
         shipments: true,
@@ -502,7 +517,7 @@ export class OrdersService {
     return this.prisma.serviceTracking.create({
       data: {
         orderId,
-        status: status as any,
+        status: status as 'waiting_device' | 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'completed' | 'cancelled' | 'disputed',
         createdByType: 'store_admin',
         createdById: adminId,
         note: note ?? null,
@@ -525,7 +540,12 @@ export class OrdersService {
     return { message: 'Credential marked as sent.' };
   }
 
-  private buildCredentialPanel(user: any) {
+  private buildCredentialPanel(user: {
+    phoneNumber: string;
+    credentialPlainEnc: string | null;
+    isCredentialSent: boolean;
+    createdAt: Date;
+  }) {
     const isNewCustomer = user.credentialPlainEnc !== null && user.isCredentialSent === false;
     const credential = isNewCustomer
       ? {

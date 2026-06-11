@@ -7,9 +7,7 @@ import '../../domain/customer_models.dart';
 import '../screens/customer_screens.dart';
 
 final customerRoutes = <RouteBase>[
-  GoRoute(path: '/', redirect: (_, __) => '/splash'),
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
-  GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
   GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
   GoRoute(path: '/service', builder: (_, __) => const ServiceFlowScreen()),
   GoRoute(path: '/change-password', builder: (_, __) => const ChangePasswordScreen()),
@@ -17,7 +15,13 @@ final customerRoutes = <RouteBase>[
   GoRoute(path: '/stores', builder: (_, __) => const StoreListScreen()),
   GoRoute(path: '/stores/:id', builder: (_, state) => StoreDetailScreen(storeId: state.pathParameters['id']!)),
   GoRoute(path: '/booking/:storeId', builder: (_, state) => BookingFormScreen(storeId: state.pathParameters['storeId']!)),
-  GoRoute(path: '/booking-success/:orderNumber', builder: (_, state) => BookingSuccessScreen(orderNumber: state.pathParameters['orderNumber']!, isNewCustomer: state.extra as bool? ?? false)),
+  GoRoute(
+    path: '/booking-success/:orderNumber',
+    builder: (_, state) => BookingSuccessScreen(
+      orderNumber: state.pathParameters['orderNumber']!,
+      isNewCustomer: state.extra as bool? ?? false,
+    ),
+  ),
   GoRoute(path: '/orders', builder: (_, __) => const OrderListScreen()),
   GoRoute(path: '/orders/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
   GoRoute(path: '/orders/:id/tracking', builder: (_, state) => TrackingScreen(orderId: state.pathParameters['id']!)),

@@ -5,18 +5,28 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { createHash } from 'crypto';
 import {
-  InvalidCredentialsException, AccountLockedException, AccountSuspendedException,
-  PasswordSameAsOldException, TokenInvalidException,
+  InvalidCredentialsException,
+  AccountLockedException,
+  AccountSuspendedException,
+  PasswordSameAsOldException,
+  TokenInvalidException,
 } from '../../common/exceptions';
-import { generatePassword, normalizePhone } from './utils/password.util';
-import { encryptCredential, decryptCredential } from './utils/encryption.util';
+import { generatePassword, normalizePhone, encryptCredential, decryptCredential } from '../../common/utils';
+import { AuthenticatedUser, JwtPayload } from '../../common/types/jwt-payload.type';
+import { AppConfig } from '../../config/configuration';
+
+interface AutoCreateAccountResult {
+  user: { id: string; phoneNumber: string; fullName: string; isFirstLogin: boolean };
+  isNew: boolean;
+  rawPass?: string;
+}
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-    private config: ConfigService,
+    private config: ConfigService<AppConfig>,
   ) {}
 
   async login(rawPhone: string, password: string, ip: string) {
@@ -30,12 +40,12 @@ export class AuthService {
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
       const attempts = user.loginAttemptCount + 1;
-      const upd: any = { loginAttemptCount: attempts };
+      const updateData: { loginAttemptCount: number; lockedUntil?: Date } = { loginAttemptCount: attempts };
       if (attempts >= 5) {
-        upd.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
-        upd.loginAttemptCount = 0;
+        updateData.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+        updateData.loginAttemptCount = 0;
       }
-      await this.prisma.user.update({ where: { id: user.id }, data: upd });
+      await this.prisma.user.update({ where: { id: user.id }, data: updateData });
       throw new InvalidCredentialsException();
     }
 
@@ -55,17 +65,26 @@ export class AuthService {
 
   async changePassword(userId: string, oldPassword: string, newPassword: string) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!await bcrypt.compare(oldPassword, user.passwordHash))
+    if (!(await bcrypt.compare(oldPassword, user.passwordHash)))
       throw new InvalidCredentialsException();
     if (await bcrypt.compare(newPassword, user.passwordHash))
       throw new PasswordSameAsOldException();
 
     const hash = await bcrypt.hash(newPassword, 12);
+    const updateData: { passwordHash: string; isFirstLogin: boolean; passwordChangedAt: Date; credentialPlainEnc?: string | null } = {
+      passwordHash: hash,
+      isFirstLogin: false,
+      passwordChangedAt: new Date(),
+    };
+
+    if (user.isFirstLogin) {
+      updateData.credentialPlainEnc = null;
+    }
+
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: userId },
-        data: { passwordHash: hash, isFirstLogin: false,
-                passwordChangedAt: new Date(), credentialPlainEnc: null },
+        data: updateData,
       }),
       this.prisma.userSession.updateMany({
         where: { userId, isActive: true },
@@ -76,10 +95,11 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string, ip: string) {
-    let payload: any;
+    let payload: JwtPayload;
     try {
-      payload = this.jwt.verify(refreshToken,
-        { secret: this.config.get('jwt.refreshSecret') });
+      payload = this.jwt.verify<JwtPayload>(refreshToken, {
+        secret: this.config.get('jwt.refreshSecret', { infer: true }),
+      });
     } catch {
       throw new TokenInvalidException();
     }
@@ -89,8 +109,7 @@ export class AuthService {
     });
     if (!session) throw new TokenInvalidException();
 
-    await this.prisma.userSession.update(
-      { where: { id: session.id }, data: { isActive: false } });
+    await this.prisma.userSession.update({ where: { id: session.id }, data: { isActive: false } });
 
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: payload.sub } });
     const tokens = this.generateCustomerTokens(user.id, user.isFirstLogin);
@@ -113,37 +132,50 @@ export class AuthService {
     });
   }
 
-  async autoCreateAccount(fullName: string, rawPhone: string)
-    : Promise<{ user: any; isNew: boolean; rawPass?: string }> {
+  async autoCreateAccount(fullName: string, rawPhone: string): Promise<AutoCreateAccountResult> {
     const phone = normalizePhone(rawPhone);
     const existing = await this.prisma.user.findUnique({ where: { phoneNumber: phone } });
     if (existing) return { user: existing, isNew: false };
 
     const rawPass = generatePassword(fullName, phone);
     const passwordHash = await bcrypt.hash(rawPass, 12);
-    const credentialPlainEnc = encryptCredential(rawPass);
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+    if (!encryptionKey) throw new Error('CREDENTIAL_ENCRYPTION_KEY not configured');
+    const credentialPlainEnc = encryptCredential(rawPass, encryptionKey);
     const user = await this.prisma.user.create({
-      data: { fullName, phoneNumber: phone, passwordHash,
-              credentialPlainEnc, isFirstLogin: true, isCredentialSent: false },
+      data: {
+        fullName,
+        phoneNumber: phone,
+        passwordHash,
+        credentialPlainEnc,
+        isFirstLogin: true,
+        isCredentialSent: false,
+      },
     });
     return { user, isNew: true, rawPass };
   }
 
   getDecryptedCredential(enc: string | null): string | null {
     if (!enc) return null;
-    try { return decryptCredential(enc); } catch { return null; }
+    try {
+      const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+      if (!encryptionKey) return null;
+      return decryptCredential(enc, encryptionKey);
+    } catch {
+      return null;
+    }
   }
 
   private generateCustomerTokens(userId: string, isFirstLogin: boolean) {
-    const payload = { sub: userId, role: 'customer', isFirstLogin };
+    const payload: JwtPayload = { sub: userId, role: 'customer', isFirstLogin };
     return {
       accessToken: this.jwt.sign(payload, {
-        secret: this.config.get('jwt.accessSecret'),
-        expiresIn: this.config.get('jwt.accessExpiresIn') ?? '1h',
+        secret: this.config.get('jwt.accessSecret', { infer: true }),
+        expiresIn: this.config.get('jwt.accessExpiresIn', { infer: true }) ?? '1h',
       }),
       refreshToken: this.jwt.sign(payload, {
-        secret: this.config.get('jwt.refreshSecret'),
-        expiresIn: this.config.get('jwt.refreshExpiresIn') ?? '30d',
+        secret: this.config.get('jwt.refreshSecret', { infer: true }),
+        expiresIn: this.config.get('jwt.refreshExpiresIn', { infer: true }) ?? '30d',
       }),
     };
   }
@@ -152,7 +184,9 @@ export class AuthService {
     const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
     await this.prisma.userSession.create({
       data: {
-        userId, tokenHash, ipAddress: ip,
+        userId,
+        tokenHash,
+        ipAddress: ip,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     });

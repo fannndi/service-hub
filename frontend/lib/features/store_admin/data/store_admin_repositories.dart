@@ -86,8 +86,8 @@ class StoreAuthRepository {
     return session;
   }
 
-  Future<StoreAdminSession> changePassword(String currentPassword, String newPassword, StoreAdminSession session) async {
-    await _dio.post('/store/auth/change-password', data: {'currentPassword': currentPassword, 'newPassword': newPassword});
+  Future<StoreAdminSession> changePassword(String oldPassword, String newPassword, StoreAdminSession session) async {
+    await _dio.post('/store/auth/change-password', data: {'oldPassword': oldPassword, 'newPassword': newPassword});
     await _storage.markPasswordChanged();
     return session.copyWith(isFirstLogin: false);
   }
@@ -177,7 +177,7 @@ class StoreOperationsRepository {
     return _page(response.data, DisputeCase.fromJson);
   }
 
-  Future<void> resolveDispute(String disputeId, bool accept, String reason) async => _dio.post('/store/disputes/$disputeId/respond', data: {'accept': accept, 'reason': reason});
+  Future<void> resolveDispute(String disputeId, bool accept, String reason) async => _dio.post('/store/disputes/$disputeId/respond', data: {'decision': accept ? 'store_accepted' : 'store_rejected', 'storeResponse': reason});
 
   Future<PageResult<NotificationItem>> notifications({int page = 1}) async {
     final response = await _dio.get('/store/notifications', queryParameters: {'page': page});

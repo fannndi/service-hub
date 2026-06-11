@@ -1,17 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import {
-  OrderNotFoundException,
-  DuplicateReviewException,
-} from '../../common/exceptions';
-import { customAlphabet } from 'nanoid';
-
-const nid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
-
-interface CreateReviewDto {
-  rating: number;
-  comment?: string;
-}
+import { OrderNotFoundException, DuplicateReviewException } from '../../common/exceptions';
+import { generateCouponCode } from '../../common/utils';
+import { CreateReviewDto } from './dto/review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -29,22 +20,24 @@ export class ReviewsService {
     const result = await this.prisma.$transaction(async (tx) => {
       const review = await tx.review.create({
         data: {
-          orderId, userId, storeId: order.storeId,
-          rating: dto.rating, comment: dto.comment,
+          orderId,
+          userId,
+          storeId: order.storeId,
+          rating: dto.rating,
+          comment: dto.comment,
         },
       });
 
       const agg = await tx.review.aggregate({
         where: { storeId: order.storeId },
         _avg: { rating: true },
-        _count: { rating: true },
       });
       await tx.store.update({
         where: { id: order.storeId },
         data: { ratingAvg: agg._avg.rating ?? 0 },
       });
 
-      const code = `RWD-${Date.now().toString(36).toUpperCase()}-${nid().slice(0, 4)}`;
+      const code = generateCouponCode();
       const coupon = await tx.coupon.create({
         data: {
           userId,
@@ -58,6 +51,9 @@ export class ReviewsService {
       return { review, coupon };
     });
 
-    return result;
+    return {
+      reviewId: result.review.id,
+      couponCode: result.coupon.code,
+    };
   }
 }

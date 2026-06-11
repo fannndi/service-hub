@@ -55,6 +55,33 @@ class StoreChangePasswordScreen extends ConsumerStatefulWidget {
 class _StoreChangePasswordScreenState extends ConsumerState<StoreChangePasswordScreen> {
   final oldPassword = TextEditingController();
   final newPassword = TextEditingController();
+  final confirmPassword = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _submit() async {
+    if (oldPassword.text.isEmpty || newPassword.text.isEmpty) return;
+    if (newPassword.text.length < 8) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password baru minimal 8 karakter.')));
+      return;
+    }
+    if (newPassword.text != confirmPassword.text) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konfirmasi password tidak cocok.')));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ref.read(storeAuthControllerProvider.notifier).changePassword(oldPassword.text, newPassword.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password berhasil diubah.')));
+        context.go('/store/dashboard');
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Ganti Password')),
@@ -66,9 +93,15 @@ class _StoreChangePasswordScreenState extends ConsumerState<StoreChangePasswordS
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 TextField(controller: oldPassword, obscureText: true, decoration: const InputDecoration(labelText: 'Password lama')),
                 const SizedBox(height: 12),
-                TextField(controller: newPassword, obscureText: true, decoration: const InputDecoration(labelText: 'Password baru')),
+                TextField(controller: newPassword, obscureText: true, decoration: const InputDecoration(labelText: 'Password baru', helperText: 'Minimal 8 karakter')),
+                const SizedBox(height: 12),
+                TextField(controller: confirmPassword, obscureText: true, decoration: const InputDecoration(labelText: 'Konfirmasi password baru')),
                 const SizedBox(height: 18),
-                FilledButton.icon(onPressed: () => ref.read(storeAuthControllerProvider.notifier).changePassword(oldPassword.text, newPassword.text), icon: const Icon(Icons.lock_reset), label: const Text('Simpan Password')),
+                FilledButton.icon(
+                  onPressed: _loading ? null : _submit,
+                  icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.lock_reset),
+                  label: const Text('Simpan Password'),
+                ),
               ]),
             ),
           ),
@@ -94,11 +127,11 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           _MetricGrid(cards: [
             MetricCard(title: 'Revenue', value: money(data.revenueMonth), subtitle: 'Bulan ini', icon: Icons.payments_outlined),
-            MetricCard(title: 'Orders', value: '${data.todayOrders}', subtitle: '${data.activeOrders} aktif', icon: Icons.receipt_long_outlined, onTap: () => context.go('/orders')),
-            MetricCard(title: 'Customers', value: '${data.customers}', subtitle: 'Profil pelanggan', icon: Icons.groups_outlined, onTap: () => context.go('/customers')),
-            MetricCard(title: 'Reviews', value: data.ratingAvg.toStringAsFixed(1), subtitle: 'Rata-rata rating', icon: Icons.star_border, onTap: () => context.go('/reviews')),
-            MetricCard(title: 'Pending Payment', value: '${data.pendingPayments}', subtitle: 'Butuh verifikasi', icon: Icons.fact_check_outlined, onTap: () => context.go('/payments')),
-            MetricCard(title: 'Active Disputes', value: '${data.activeDisputes}', subtitle: 'Klaim terbuka', icon: Icons.gavel_outlined, onTap: () => context.go('/disputes')),
+            MetricCard(title: 'Orders', value: '${data.todayOrders}', subtitle: '${data.activeOrders} aktif', icon: Icons.receipt_long_outlined, onTap: () => context.go('/store/orders')),
+            MetricCard(title: 'Customers', value: '${data.customers}', subtitle: 'Profil pelanggan', icon: Icons.groups_outlined, onTap: () => context.go('/store/customers')),
+            MetricCard(title: 'Reviews', value: data.ratingAvg.toStringAsFixed(1), subtitle: 'Rata-rata rating', icon: Icons.star_border, onTap: () => context.go('/store/reviews')),
+            MetricCard(title: 'Pending Payment', value: '${data.pendingPayments}', subtitle: 'Butuh verifikasi', icon: Icons.fact_check_outlined, onTap: () => context.go('/store/payments')),
+            MetricCard(title: 'Active Disputes', value: '${data.activeDisputes}', subtitle: 'Klaim terbuka', icon: Icons.gavel_outlined, onTap: () => context.go('/store/disputes')),
           ]),
           Wrap(spacing: 8, runSpacing: 8, children: [for (final entry in data.statusBreakdown.entries) StatusPill(label: '${entry.key}: ${entry.value}')]),
           const SizedBox(height: 16),
@@ -110,7 +143,7 @@ class DashboardScreen extends ConsumerWidget {
             items: data.recentOrders,
             columns: const [DataColumn(label: Text('Order')), DataColumn(label: Text('Pelanggan')), DataColumn(label: Text('Status')), DataColumn(label: Text('Estimasi'))],
             cells: (o) => [DataCell(Text(o.orderNumber)), DataCell(Text(o.customerName)), DataCell(StatusPill(label: o.status.label)), DataCell(Text(money(o.estimatedTotal)))],
-            onTap: (o) => context.go('/orders/${o.id}'),
+            onTap: (o) => context.go('/store/orders/${o.id}'),
           ),
         ]),
       ),
@@ -150,7 +183,7 @@ class OrderListScreen extends ConsumerWidget {
               items: page.items,
               columns: const [DataColumn(label: Text('Order')), DataColumn(label: Text('Pelanggan')), DataColumn(label: Text('Device')), DataColumn(label: Text('Status')), DataColumn(label: Text('SLA'))],
               cells: (o) => [DataCell(Text(o.orderNumber)), DataCell(Text(o.customerName)), DataCell(Text(o.deviceName)), DataCell(StatusPill(label: o.status.label)), DataCell(Text(o.slaDeadline == null ? '-' : dateText(o.slaDeadline!)))],
-              onTap: (o) => context.go('/orders/${o.id}'),
+              onTap: (o) => context.go('/store/orders/${o.id}'),
             ),
           ),
         ),
@@ -166,7 +199,7 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final order = ref.watch(orderDetailProvider(orderId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Order'), actions: [IconButton(onPressed: () => context.go('/orders/$orderId/tracking'), icon: const Icon(Icons.timeline), tooltip: 'Tracking')]),
+      appBar: AppBar(title: const Text('Detail Order'), actions: [IconButton(onPressed: () => context.go('/store/orders/$orderId/tracking'), icon: const Icon(Icons.timeline), tooltip: 'Tracking')]),
       body: order.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorPanel(message: err.toString(), onRetry: () => ref.invalidate(orderDetailProvider(orderId))),
@@ -178,7 +211,7 @@ class OrderDetailScreen extends ConsumerWidget {
           Text('Item Order', style: Theme.of(context).textTheme.titleMedium),
           AdminDataTable<OrderItem>(items: o.items, columns: const [DataColumn(label: Text('Service')), DataColumn(label: Text('Sparepart')), DataColumn(label: Text('Harga')), DataColumn(label: Text('Status'))], cells: (i) => [DataCell(Text(i.serviceType)), DataCell(Text(i.sparepartName)), DataCell(Text(money(i.price))), DataCell(Text(i.status))]),
           const SizedBox(height: 16),
-          OrderActionPanel(order: o, onAction: (action) => action == 'submit_diagnosis' ? context.go('/orders/$orderId/diagnosis') : ref.read(storeOrdersProvider.notifier).runAction(orderId, action)),
+          OrderActionPanel(order: o, onAction: (action) => action == 'submit_diagnosis' ? context.go('/store/orders/$orderId/diagnosis') : ref.read(storeOrdersProvider.notifier).runAction(orderId, action)),
         ]),
       ),
     );
@@ -199,6 +232,8 @@ class _DiagnosisScreenState extends ConsumerState<DiagnosisScreen> {
   final technician = TextEditingController();
   final estimatedCost = TextEditingController();
   final estimatedDuration = TextEditingController();
+  bool _loading = false;
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Diagnosis Form')),
@@ -210,10 +245,30 @@ class _DiagnosisScreenState extends ConsumerState<DiagnosisScreen> {
           TextField(controller: estimatedCost, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Estimated Cost')),
           TextField(controller: estimatedDuration, decoration: const InputDecoration(labelText: 'Estimated Duration')),
           const SizedBox(height: 16),
-          FilledButton.icon(onPressed: () async {
-            await ref.read(storeOrdersProvider.notifier).submitDiagnosis(widget.orderId, {'deviceCondition': condition.text, 'damageNotes': damage.text, 'repairNotes': repair.text, 'technicianNotes': technician.text, 'estimatedCost': num.tryParse(estimatedCost.text) ?? 0, 'estimatedDuration': estimatedDuration.text, 'diagnosisItems': <Map<String, Object?>>[], 'serviceFee': num.tryParse(estimatedCost.text) ?? 0});
-            if (context.mounted) context.go('/orders/${widget.orderId}');
-          }, icon: const Icon(Icons.save_outlined), label: const Text('Submit Diagnosis')),
+          FilledButton.icon(
+            onPressed: _loading ? null : () async {
+              setState(() => _loading = true);
+              try {
+                await ref.read(storeOrdersProvider.notifier).submitDiagnosis(widget.orderId, {
+                  'deviceCondition': condition.text,
+                  'damageNotes': damage.text,
+                  'repairNotes': repair.text,
+                  'technicianNotes': technician.text,
+                  'estimatedCost': num.tryParse(estimatedCost.text) ?? 0,
+                  'estimatedDuration': estimatedDuration.text,
+                  'diagnosisItems': <Map<String, Object?>>[],
+                  'serviceFee': num.tryParse(estimatedCost.text) ?? 0,
+                });
+                if (context.mounted) context.go('/store/orders/${widget.orderId}');
+              } catch (e) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+              } finally {
+                if (mounted) setState(() => _loading = false);
+              }
+            },
+            icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+            label: const Text('Submit Diagnosis'),
+          ),
         ]),
       );
 }
@@ -228,17 +283,40 @@ class TrackingScreen extends ConsumerStatefulWidget {
 class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   final title = TextEditingController();
   final note = TextEditingController();
+  late Future<List<TrackingEvent>> _trackingFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _trackingFuture = ref.read(storeOperationsRepositoryProvider).tracking(widget.orderId);
+  }
+
+  void _refresh() {
+    setState(() {
+      _trackingFuture = ref.read(storeOperationsRepositoryProvider).tracking(widget.orderId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(storeOperationsRepositoryProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Tracking Timeline')),
       body: FutureBuilder<List<TrackingEvent>>(
-        future: repo.tracking(widget.orderId),
+        future: _trackingFuture,
         builder: (context, snapshot) => ListView(padding: const EdgeInsets.all(16), children: [
           TextField(controller: title, decoration: const InputDecoration(labelText: 'Judul event')),
           TextField(controller: note, decoration: const InputDecoration(labelText: 'Catatan')),
-          FilledButton.icon(onPressed: () async { await repo.addTracking(widget.orderId, title.text, note.text, 'progress'); setState(() {}); }, icon: const Icon(Icons.add), label: const Text('Tambah Event')),
+          FilledButton.icon(
+            onPressed: () async {
+              await repo.addTracking(widget.orderId, title.text, note.text, 'progress');
+              title.clear();
+              note.clear();
+              _refresh();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Tambah Event'),
+          ),
           const SizedBox(height: 16),
           if (snapshot.connectionState == ConnectionState.waiting) const Center(child: CircularProgressIndicator()),
           for (final event in snapshot.data ?? const <TrackingEvent>[]) ListTile(leading: const Icon(Icons.check_circle_outline), title: Text(event.title), subtitle: Text('${event.note}\n${dateText(event.createdAt)}')),
@@ -256,7 +334,7 @@ class InventoryScreen extends ConsumerWidget {
     return StoreAdminScaffold(
       title: 'Sparepart Management',
       selectedIndex: 2,
-      actions: [IconButton(onPressed: () => context.go('/inventory/new'), icon: const Icon(Icons.add), tooltip: 'Tambah sparepart')],
+      actions: [IconButton(onPressed: () => context.go('/store/inventory/new'), icon: const Icon(Icons.add), tooltip: 'Tambah sparepart')],
       body: Column(children: [
         QueryToolbar(hint: 'Cari sparepart', onSearch: (q) => ref.read(inventoryQueryProvider.notifier).state = ref.read(inventoryQueryProvider).copyWith(search: q)),
         Expanded(
@@ -267,7 +345,7 @@ class InventoryScreen extends ConsumerWidget {
               items: page.items,
               columns: const [DataColumn(label: Text('Nama')), DataColumn(label: Text('Harga')), DataColumn(label: Text('Stok')), DataColumn(label: Text('Reserved')), DataColumn(label: Text('Alert'))],
               cells: (s) => [DataCell(Text(s.name)), DataCell(Text(money(s.price))), DataCell(Text('${s.qty}')), DataCell(Text('${s.qtyReserved}')), DataCell(StatusPill(label: s.isLowStock ? 'Low Stock' : 'Aman', warning: s.isLowStock))],
-              onTap: (s) => context.go('/inventory/${s.id}', extra: s),
+              onTap: (s) => context.go('/store/inventory/${s.id}', extra: s),
             ),
           ),
         ),
@@ -288,6 +366,8 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
   late final description = TextEditingController(text: widget.item?.description);
   late final price = TextEditingController(text: widget.item?.price.toString());
   late final qty = TextEditingController(text: widget.item?.qty.toString());
+  bool _loading = false;
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: Text(widget.item == null ? 'Create Sparepart' : 'Edit Sparepart')),
@@ -297,7 +377,30 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
           TextField(controller: price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga')),
           TextField(controller: qty, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stok')),
           const SizedBox(height: 16),
-          FilledButton.icon(onPressed: () async { await ref.read(inventoryProvider.notifier).save({'name': name.text, 'description': description.text, 'price': num.tryParse(price.text) ?? 0, 'qty': int.tryParse(qty.text) ?? 0}, id: widget.item?.id); if (context.mounted) context.go('/inventory'); }, icon: const Icon(Icons.save_outlined), label: const Text('Simpan')),
+          FilledButton.icon(
+            onPressed: _loading ? null : () async {
+              if (name.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama wajib diisi.')));
+                return;
+              }
+              setState(() => _loading = true);
+              try {
+                await ref.read(inventoryProvider.notifier).save({
+                  'name': name.text,
+                  'description': description.text,
+                  'price': num.tryParse(price.text) ?? 0,
+                  'qty': int.tryParse(qty.text) ?? 0,
+                }, id: widget.item?.id);
+                if (context.mounted) context.go('/store/inventory');
+              } catch (e) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+              } finally {
+                if (mounted) setState(() => _loading = false);
+              }
+            },
+            icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+            label: const Text('Simpan'),
+          ),
         ]),
       );
 }
@@ -319,7 +422,38 @@ class ReviewsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(reviewsProvider);
-    return Scaffold(appBar: AppBar(title: const Text('Review Monitoring')), body: value.when(loading: () => const Center(child: CircularProgressIndicator()), error: (e, _) => ErrorPanel(message: e.toString()), data: (page) => AdminDataTable<ReviewItem>(items: page.items, columns: const [DataColumn(label: Text('Pelanggan')), DataColumn(label: Text('Rating')), DataColumn(label: Text('Komentar')), DataColumn(label: Text('Tanggal'))], cells: (r) => [DataCell(Text(r.customerName)), DataCell(Text('${r.rating}/5')), DataCell(Text(r.comment)), DataCell(Text(dateText(r.createdAt)))])));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Review Monitoring')),
+      body: value.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorPanel(message: e.toString()),
+        data: (page) => ListView(
+          children: [
+            for (final r in page.items)
+              Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Text(r.customerName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      const Spacer(),
+                      Text('${r.rating}/5', style: const TextStyle(color: Colors.amber)),
+                    ]),
+                    if (r.comment != null && r.comment!.isNotEmpty) Text(r.comment!),
+                    Text(dateText(r.createdAt), style: Theme.of(context).textTheme.bodySmall),
+                    if (r.response != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text('Balasan: ${r.response}', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                      ),
+                  ]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -332,7 +466,7 @@ class DisputesScreen extends ConsumerWidget {
         value: ref.watch(disputesProvider),
         columns: const [DataColumn(label: Text('Order')), DataColumn(label: Text('Pelanggan')), DataColumn(label: Text('Tipe')), DataColumn(label: Text('Status'))],
         cells: (d) => [DataCell(Text(d.orderNumber)), DataCell(Text(d.customerName)), DataCell(Text(d.type)), DataCell(Text(d.status.label))],
-        onTap: (d) => context.go('/disputes/${d.id}', extra: d),
+        onTap: (d) => context.go('/store/disputes/${d.id}', extra: d),
       );
 }
 
@@ -345,22 +479,38 @@ class DisputeDetailScreen extends ConsumerStatefulWidget {
 
 class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
   final reason = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _resolve(bool accept) async {
+    if (reason.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Catatan resolusi wajib diisi.')));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ref.read(disputesProvider.notifier).resolve(widget.dispute.id, accept, reason.text);
+      if (mounted) context.go('/store/disputes');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: Text(widget.dispute.orderNumber)),
         body: ListView(padding: const EdgeInsets.all(16), children: [
           Text(widget.dispute.description),
-          TextField(controller: reason, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Catatan resolusi')),
+          const SizedBox(height: 12),
+          TextField(controller: reason, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Catatan resolusi', border: OutlineInputBorder())),
+          const SizedBox(height: 16),
           Wrap(spacing: 8, children: [
-            FilledButton.icon(onPressed: () => _resolve(true), icon: const Icon(Icons.check), label: const Text('Terima Klaim')),
-            OutlinedButton.icon(onPressed: () => _resolve(false), icon: const Icon(Icons.close), label: const Text('Tolak Klaim')),
+            FilledButton.icon(onPressed: _loading ? null : () => _resolve(true), icon: const Icon(Icons.check), label: const Text('Terima Klaim')),
+            OutlinedButton.icon(onPressed: _loading ? null : () => _resolve(false), icon: const Icon(Icons.close), label: const Text('Tolak Klaim')),
           ]),
         ]),
       );
-  Future<void> _resolve(bool accept) async {
-    await ref.read(disputesProvider.notifier).resolve(widget.dispute.id, accept, reason.text);
-    if (mounted) context.go('/disputes');
-  }
 }
 
 class CustomersScreen extends ConsumerWidget {
@@ -368,7 +518,18 @@ class CustomersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(customersProvider);
-    return Scaffold(appBar: AppBar(title: const Text('Customer Management')), body: value.when(loading: () => const Center(child: CircularProgressIndicator()), error: (e, _) => ErrorPanel(message: e.toString()), data: (page) => AdminDataTable<CustomerProfile>(items: page.items, columns: const [DataColumn(label: Text('Nama')), DataColumn(label: Text('HP')), DataColumn(label: Text('Order')), DataColumn(label: Text('Total Spend'))], cells: (c) => [DataCell(Text(c.name)), DataCell(Text(c.phone)), DataCell(Text('${c.totalOrders}')), DataCell(Text(money(c.totalSpent)))])));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Customer Management')),
+      body: value.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorPanel(message: e.toString()),
+        data: (page) => AdminDataTable<CustomerProfile>(
+          items: page.items,
+          columns: const [DataColumn(label: Text('Nama')), DataColumn(label: Text('HP')), DataColumn(label: Text('Order')), DataColumn(label: Text('Total Spend'))],
+          cells: (c) => [DataCell(Text(c.name)), DataCell(Text(c.phone)), DataCell(Text('${c.totalOrders}')), DataCell(Text(money(c.totalSpent)))],
+        ),
+      ),
+    );
   }
 }
 
@@ -377,16 +538,87 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(notificationsProvider);
-    return Scaffold(appBar: AppBar(title: const Text('Notification Center')), body: value.when(loading: () => const Center(child: CircularProgressIndicator()), error: (e, _) => ErrorPanel(message: e.toString()), data: (page) => ListView(children: [for (final item in page.items) ListTile(leading: Icon(item.isRead ? Icons.mark_email_read_outlined : Icons.notifications_active_outlined), title: Text(item.title), subtitle: Text('${item.message}\n${dateText(item.createdAt)}'))])));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notification Center')),
+      body: value.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorPanel(message: e.toString()),
+        data: (page) => ListView(children: [
+          for (final item in page.items)
+            ListTile(
+              leading: Icon(item.isRead ? Icons.mark_email_read_outlined : Icons.notifications_active_outlined),
+              title: Text(item.title),
+              subtitle: Text('${item.message}\n${dateText(item.createdAt)}'),
+            ),
+        ]),
+      ),
+    );
   }
 }
 
-class StoreSettingsScreen extends ConsumerWidget {
+class StoreSettingsScreen extends ConsumerStatefulWidget {
   const StoreSettingsScreen({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StoreSettingsScreen> createState() => _StoreSettingsScreenState();
+}
+
+class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
+  final storeName = TextEditingController();
+  final address = TextEditingController();
+  final phoneNumber = TextEditingController();
+  bool _loading = false;
+  bool _initialized = false;
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(storeProfileProvider);
-    return Scaffold(appBar: AppBar(title: const Text('Store Profile')), body: profile.when(loading: () => const Center(child: CircularProgressIndicator()), error: (e, _) => ErrorPanel(message: e.toString()), data: (data) => ListView(padding: const EdgeInsets.all(16), children: [for (final entry in data.entries) ListTile(title: Text(entry.key), subtitle: Text(entry.value.toString()))])));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Store Profile')),
+      body: profile.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorPanel(message: e.toString()),
+        data: (data) {
+          if (!_initialized) {
+            final store = data['store'] as Map<String, dynamic>? ?? {};
+            storeName.text = store['storeName']?.toString() ?? '';
+            address.text = store['address']?.toString() ?? '';
+            phoneNumber.text = store['phoneNumber']?.toString() ?? '';
+            _initialized = true;
+          }
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TextField(controller: storeName, decoration: const InputDecoration(labelText: 'Nama Toko')),
+              const SizedBox(height: 12),
+              TextField(controller: address, maxLines: 2, decoration: const InputDecoration(labelText: 'Alamat')),
+              const SizedBox(height: 12),
+              TextField(controller: phoneNumber, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP')),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _loading ? null : () async {
+                  setState(() => _loading = true);
+                  try {
+                    await ref.read(storeOperationsRepositoryProvider).updateStoreProfile({
+                      'storeName': storeName.text,
+                      'address': address.text,
+                      'phoneNumber': phoneNumber.text,
+                    });
+                    ref.invalidate(storeProfileProvider);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil toko berhasil diupdate.')));
+                  } catch (e) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+                  } finally {
+                    if (mounted) setState(() => _loading = false);
+                  }
+                },
+                icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+                label: const Text('Simpan Perubahan'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 

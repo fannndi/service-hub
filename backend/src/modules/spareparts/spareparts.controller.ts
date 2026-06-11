@@ -4,14 +4,14 @@ import { SparepartsService } from './spareparts.service';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { FirstLoginGuard } from '../../common/guards/first-login.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
+import { CreateSparepartDto, UpdateSparepartDto } from './dto/sparepart.dto';
 
 @ApiTags('Store Spareparts')
 @Controller('store/spareparts')
 export class SparepartsController {
   constructor(private readonly sparepartsService: SparepartsService) {}
 
-  // Public: customer store detail screen (uses JWT but no StoreJwt required)
-  // Also used by store admin for their own inventory (passes storeId from JWT)
   @Get()
   async findAvailable(
     @Query('storeId') storeId: string,
@@ -25,11 +25,8 @@ export class SparepartsController {
   @Post()
   @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
   @ApiBearerAuth()
-  async create(
-    @GetUser('storeId') storeId: string,
-    @Body() dto: { brand: string; deviceModel: string; partType: string; partName: string; price: number; qty: number; status?: string },
-  ) {
-    return this.sparepartsService.create(storeId, dto);
+  async create(@GetUser() user: AuthenticatedUser, @Body() dto: CreateSparepartDto) {
+    return this.sparepartsService.create(user.storeId!, dto);
   }
 
   @Patch(':id')
@@ -37,16 +34,16 @@ export class SparepartsController {
   @ApiBearerAuth()
   async update(
     @Param('id') id: string,
-    @GetUser('storeId') storeId: string,
-    @Body() dto: { price?: number; qty?: number; status?: string; partName?: string },
+    @GetUser() user: AuthenticatedUser,
+    @Body() dto: UpdateSparepartDto,
   ) {
-    return this.sparepartsService.update(id, storeId, dto);
+    return this.sparepartsService.update(id, user.storeId!, dto);
   }
 
   @Delete(':id')
   @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
   @ApiBearerAuth()
-  async delete(@Param('id') id: string, @GetUser('storeId') storeId: string) {
-    return this.sparepartsService.delete(id, storeId);
+  async delete(@Param('id') id: string, @GetUser() user: AuthenticatedUser) {
+    return this.sparepartsService.delete(id, user.storeId!);
   }
 }

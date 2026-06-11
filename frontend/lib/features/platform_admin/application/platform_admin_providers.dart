@@ -14,6 +14,13 @@ class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
   Future<AdminSession?> build() async {
     final token = await ref.read(adminStorageProvider).readToken();
     if (token == null) return null;
+    try {
+      final stores = await ref.read(adminRepositoryProvider).listStores();
+      if (stores.isNotEmpty) {
+        return const AdminSession(id: '', username: 'admin', fullName: 'Platform Admin');
+      }
+    } catch (_) {}
+    await ref.read(adminStorageProvider).clear();
     return null;
   }
 

@@ -48,7 +48,7 @@ export class SlaMonitorJob {
 
         await this.notif.send(
           order.store.phoneNumber,
-          `⚠️ SLA untuk order ${order.orderNumber} sudah terlewati!`,
+          `SLA untuk order ${order.orderNumber} sudah terlewati!`,
           'sla_breach',
         );
 
@@ -67,7 +67,6 @@ export class SlaMonitorJob {
         this.logger.log(`SLA monitor: ${breached.length} orders breached`);
       }
 
-      // Auto-cancel: T+24h post-deadline (BR-20, AC-29)
       const cancelThreshold = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const toCancel = await this.prisma.serviceOrder.findMany({
         where: {
@@ -122,7 +121,7 @@ export class SlaMonitorJob {
 
         await this.notif.send(
           order.store.phoneNumber,
-          `🚫 Order ${order.orderNumber} auto-cancelled. SLA expired >24h. Penalti +1.`,
+          `Order ${order.orderNumber} auto-cancelled. SLA expired >24h. Penalti +1.`,
           'sla_auto_cancel',
         );
 
@@ -132,8 +131,8 @@ export class SlaMonitorJob {
       if (toCancel.length > 0) {
         this.logger.log(`SLA auto-cancel: ${toCancel.length} orders cancelled`);
       }
-    } catch (err) {
-      this.logger.error('SLA monitor error', err);
+    } catch (err: unknown) {
+      this.logger.error('SLA monitor error', err instanceof Error ? err.stack : String(err));
     }
   }
 }

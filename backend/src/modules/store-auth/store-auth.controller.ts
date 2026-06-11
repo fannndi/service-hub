@@ -4,6 +4,7 @@ import { StoreAuthService } from './store-auth.service';
 import { StoreLoginDto, StoreChangePasswordDto } from './dto/store-auth.dto';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
 
 @ApiTags('Store Auth')
 @Controller('store/auth')
@@ -20,15 +21,15 @@ export class StoreAuthController {
   @UseGuards(StoreJwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async changePassword(@GetUser('id') adminId: string, @Body() dto: StoreChangePasswordDto) {
-    return this.storeAuthService.changePassword(adminId, dto.oldPassword, dto.newPassword);
+  async changePassword(@GetUser() user: AuthenticatedUser, @Body() dto: StoreChangePasswordDto) {
+    return this.storeAuthService.changePassword(user.id, dto.oldPassword, dto.newPassword);
   }
 
   @Post('logout')
   @UseGuards(StoreJwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async logout(@GetUser('id') adminId: string) {
+  async logout(@GetUser() user: AuthenticatedUser) {
     return { message: 'Logout berhasil.' };
   }
 }

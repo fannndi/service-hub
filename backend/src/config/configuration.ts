@@ -1,10 +1,70 @@
-export default () => ({
+export interface AppConfig {
+  port: number;
+  nodeEnv: string;
+  appUrl: string;
+  database: { url: string };
+  redis: { host: string; port: number };
+  jwt: {
+    accessSecret: string;
+    refreshSecret: string;
+    accessExpiresIn: string;
+    refreshExpiresIn: string;
+    storeAccessSecret: string;
+    storeRefreshSecret: string;
+    platformAdminSecret: string;
+  };
+  credential: { encryptionKey: string };
+  wa: { gatewayUrl: string; token: string; senderNumber: string };
+  storage: {
+    endpoint: string;
+    accessKey: string;
+    secretKey: string;
+    bucket: string;
+    publicUrl: string;
+  };
+  sla: {
+    receiveDevice: number;
+    diagnosis: number;
+    approval: number;
+    payment: number;
+    credentialClear: number;
+    disputeRespond: number;
+  };
+  throttle: { ttl: number; limit: number };
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+export function validateConfig(): void {
+  const required = [
+    'DATABASE_URL',
+    'JWT_ACCESS_SECRET',
+    'JWT_REFRESH_SECRET',
+    'JWT_STORE_ACCESS_SECRET',
+    'JWT_STORE_REFRESH_SECRET',
+    'JWT_PLATFORM_ADMIN_SECRET',
+    'CREDENTIAL_ENCRYPTION_KEY',
+  ];
+  for (const name of required) {
+    if (!process.env[name]) {
+      throw new Error(`Missing required environment variable: ${name}`);
+    }
+  }
+}
+
+export default (): AppConfig => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
 
   database: {
-    url: process.env.DATABASE_URL,
+    url: requireEnv('DATABASE_URL'),
   },
 
   redis: {
@@ -13,31 +73,31 @@ export default () => ({
   },
 
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET,
-    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    accessSecret: requireEnv('JWT_ACCESS_SECRET'),
+    refreshSecret: requireEnv('JWT_REFRESH_SECRET'),
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
-    storeAccessSecret: process.env.JWT_STORE_ACCESS_SECRET,
-    storeRefreshSecret: process.env.JWT_STORE_REFRESH_SECRET,
-    platformAdminSecret: process.env.JWT_PLATFORM_ADMIN_SECRET || process.env.JWT_STORE_ACCESS_SECRET,
+    storeAccessSecret: requireEnv('JWT_STORE_ACCESS_SECRET'),
+    storeRefreshSecret: requireEnv('JWT_STORE_REFRESH_SECRET'),
+    platformAdminSecret: requireEnv('JWT_PLATFORM_ADMIN_SECRET'),
   },
 
   credential: {
-    encryptionKey: process.env.CREDENTIAL_ENCRYPTION_KEY,
+    encryptionKey: requireEnv('CREDENTIAL_ENCRYPTION_KEY'),
   },
 
   wa: {
-    gatewayUrl: process.env.WA_GATEWAY_URL,
-    token: process.env.WA_GATEWAY_TOKEN,
-    senderNumber: process.env.WA_SENDER_NUMBER,
+    gatewayUrl: process.env.WA_GATEWAY_URL || '',
+    token: process.env.WA_GATEWAY_TOKEN || '',
+    senderNumber: process.env.WA_SENDER_NUMBER || '',
   },
 
   storage: {
-    endpoint: process.env.STORAGE_ENDPOINT,
-    accessKey: process.env.STORAGE_ACCESS_KEY,
-    secretKey: process.env.STORAGE_SECRET_KEY,
-    bucket: process.env.STORAGE_BUCKET,
-    publicUrl: process.env.STORAGE_PUBLIC_URL,
+    endpoint: process.env.STORAGE_ENDPOINT || '',
+    accessKey: process.env.STORAGE_ACCESS_KEY || '',
+    secretKey: process.env.STORAGE_SECRET_KEY || '',
+    bucket: process.env.STORAGE_BUCKET || '',
+    publicUrl: process.env.STORAGE_PUBLIC_URL || '',
   },
 
   sla: {

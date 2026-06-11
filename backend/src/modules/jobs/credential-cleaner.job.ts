@@ -24,8 +24,8 @@ export class CredentialCleanerJob {
       if (result.count > 0) {
         this.logger.log(`Cleaned credentials for ${result.count} users`);
       }
-    } catch (err) {
-      this.logger.error('Credential cleaner error', err);
+    } catch (err: unknown) {
+      this.logger.error('Credential cleaner error', err instanceof Error ? err.stack : String(err));
     }
   }
 }

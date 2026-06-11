@@ -19,7 +19,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: _AppRefresh(ref),
     redirect: (context, state) {
       final loc = state.matchedLocation;
-      final publicRoutes = {'/splash', '/welcome', '/login', '/store-login'};
+      final publicRoutes = {'/splash', '/welcome', '/login', '/store-login', '/service', '/stores'};
 
       final storeAuth = ref.read(storeAuthControllerProvider);
       final custAuth = ref.read(customerAuthProvider);
@@ -35,13 +35,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
+      if (loc.startsWith('/store/')) {
+        final storeUser = storeAuth.valueOrNull;
+        if (storeUser == null && loc != '/store-login') return '/store-login';
+        if (storeUser != null && storeUser.isFirstLogin && loc != '/store/change-password') return '/store/change-password';
+        if (storeUser != null && loc == '/store-login') return '/store/dashboard';
+        return null;
+      }
+
       final storeUser = storeAuth.valueOrNull;
       final custUser = custAuth.valueOrNull;
 
       if (storeUser != null) {
-        if (storeUser.isFirstLogin && loc != '/change-password') return '/change-password';
-        if (loc == '/change-password') return null;
-        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/dashboard';
+        if (storeUser.isFirstLogin && loc != '/store/change-password') return '/store/change-password';
+        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/store/dashboard';
         return null;
       }
 
@@ -51,7 +58,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      if (!publicRoutes.contains(loc) && loc != '/service' && loc != '/stores' && !loc.startsWith('/stores/') && !loc.startsWith('/booking/')) {
+      if (!publicRoutes.contains(loc) && !loc.startsWith('/stores/') && !loc.startsWith('/booking/')) {
         return '/welcome';
       }
       return null;
@@ -100,7 +107,7 @@ class _RoleSplashState extends ConsumerState<_RoleSplash> {
       final storeAuth = ref.read(storeAuthControllerProvider);
       if (storeAuth.valueOrNull != null) {
         if (!mounted) return;
-        context.go('/dashboard');
+        context.go('/store/dashboard');
         return;
       }
     } catch (_) {}
@@ -125,9 +132,16 @@ class _RoleSplashState extends ConsumerState<_RoleSplash> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset('assets/images/logo.png', width: 120, errorBuilder: (_, __, ___) => const Icon(Icons.build, size: 80, color: Colors.teal)),
+            Image.asset(
+              'assets/images/logo.png',
+              width: 120,
+              errorBuilder: (_, __, ___) => const Icon(Icons.build, size: 80, color: Colors.teal),
+            ),
             const SizedBox(height: 24),
-            Text('ServisGadget', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'ServisGadget',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             const CircularProgressIndicator(),
           ],

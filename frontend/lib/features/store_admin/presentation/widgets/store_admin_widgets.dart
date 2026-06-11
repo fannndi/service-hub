@@ -18,11 +18,11 @@ class StoreAdminScaffold extends StatelessWidget {
   final List<Widget>? actions;
 
   static const destinations = [
-    ('Dashboard', Icons.dashboard_outlined, '/dashboard'),
-    ('Order', Icons.receipt_long_outlined, '/orders'),
-    ('Stok', Icons.inventory_2_outlined, '/inventory'),
-    ('Bayar', Icons.payments_outlined, '/payments'),
-    ('Analitik', Icons.query_stats_outlined, '/analytics'),
+    ('Dashboard', Icons.dashboard_outlined, '/store/dashboard'),
+    ('Order', Icons.receipt_long_outlined, '/store/orders'),
+    ('Stok', Icons.inventory_2_outlined, '/store/inventory'),
+    ('Bayar', Icons.payments_outlined, '/store/payments'),
+    ('Analitik', Icons.query_stats_outlined, '/store/analytics'),
   ];
 
   @override

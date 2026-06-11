@@ -1,9 +1,11 @@
-import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
+import { CreatePaymentDto } from './dto/payment.dto';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -14,11 +16,11 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async createPayment(
-    @GetUser('id') userId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('orderId') orderId: string,
-    @Body() dto: any,
+    @Body() dto: CreatePaymentDto,
   ) {
-    return this.paymentsService.createPayment(orderId, userId, dto);
+    return this.paymentsService.createPayment(orderId, user.id, dto);
   }
 }
 
@@ -31,11 +33,10 @@ export class StorePaymentsController {
 
   @Post(':orderId/:paymentId/confirm')
   async confirmPayment(
-    @GetUser('id') adminId: string,
-    @GetUser('storeId') storeId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('orderId') orderId: string,
     @Param('paymentId') paymentId: string,
   ) {
-    return this.paymentsService.confirmPayment(orderId, paymentId, adminId, storeId);
+    return this.paymentsService.confirmPayment(orderId, paymentId, user.id, user.storeId!);
   }
 }

@@ -1,5 +1,55 @@
 ﻿# Changelog
 
+## 2026-06-11 — Major Refactor (Production Readiness)
+
+### Backend Rewrite (Phase 1-5)
+- **Common infrastructure:** Consolidated `normalizePhone`, `nanoid`, `password`, `encryption` into `common/utils/`
+- **Config:** Added `validateConfig()` fail-fast for required env vars, removed JWT secret fallback
+- **Types:** Added `AuthenticatedUser` interface, proper typing across all guards/decorators
+- **Guards:** Fixed `any` types in `JwtAuthGuard`, `StoreJwtAuthGuard`, `RolesGuard`, `FirstLoginGuard`
+- **Exceptions:** Added `ForbiddenException`, `NotFoundException`, `RateLimitExceededException`, `FileValidationException`
+- **Health:** Added DB connectivity check, uptime, memory usage
+- **Main:** Added `helmet()`, `compression()`, env validation, `enableShutdownHooks()`, conditional Swagger
+- **Auth:** Fixed `changePassword` to only clear credentials on first login, proper typing
+- **Store-auth:** Fixed imports, proper typing
+- **Platform-admin:** Fixed imports, proper typing
+- **Users:** Fixed `updateProfile` to use `UpdateProfileDto`, proper typing
+- **Stores:** Fixed `findAll` to filter by brand/deviceModel, fixed `updateStoreProfile` to update store fields
+- **Orders:** Fixed imports from `common/utils`, fixed `approveOrder` stock check, added `mark_complete` action, removed duplicate PATCH diagnosis
+- **Payments:** Proper typing, `StoreConfig` interface
+- **Reviews:** Use `generateCouponCode` from common utils, return `{ reviewId, couponCode }`
+- **Disputes:** Use `generateOrderNumber` from common utils, proper typing
+- **Spareparts:** Fixed delete to check OrderItem references, use `NotFoundException`
+- **Notifications:** Added gateway URL validation, proper error typing
+- **Uploads:** Added file type whitelist validation, proper typing
+- **Jobs:** Fixed error typing in SLA monitor and credential cleaner
+- **Dockerfile:** Moved `prisma generate` to build stage, added `USER node`, health check
+- **tsconfig:** Enabled `noImplicitAny: true`, `noUnusedLocals`, `noUnusedParameters`
+- **package.json:** Added `helmet`, `compression`, `@types/compression`, `lint` script
+
+### Frontend Rewrite (Phase 6-10)
+- **Core:** Fixed `app_config.dart` with `required` parameter, `api_exception.dart` with `const`
+- **Network:** Fixed `dio_client.dart` timeout to 15s, fixed `network_error_mapper.dart` to extract `user_message`
+- **Shared widgets:** Fixed `SearchFilterBar` with `onSearch` callback and `searchController`
+- **Customer:** Fixed token key collision (`customer_access_token` instead of `access_token`)
+- **Store admin:** Fixed `changePassword` field name (`oldPassword`), fixed `resolveDispute` format (`decision`/`storeResponse`), prefixed all routes with `/store/`, fixed `FutureBuilder` infinite loop in `TrackingScreen`, added form validation, added edit capability to `StoreSettingsScreen`
+- **Platform admin:** Fixed session restore in `AdminAuthNotifier.build()`
+- **main.dart:** Fixed all route conflicts with `/store/` prefix namespacing
+
+### Play Store Readiness (Phase 11)
+- **build.gradle.kts:** Added release signing config with `key.properties`, set `minSdk = 21`, enabled `minifyEnabled` and `shrinkResources`, added ProGuard rules
+- **AndroidManifest.xml:** Fixed app label to `ServisGadget`, added `INTERNET`, `CAMERA`, `READ_MEDIA_IMAGES`, `READ_EXTERNAL_STORAGE` permissions
+- **pubspec.yaml:** Updated version to `1.0.0+1`, added `assets/images/` section, removed unused `freezed_annotation`, `json_annotation`, `build_runner`, `freezed`, `json_serializable`
+- **proguard-rules.pro:** Created with Flutter, flutter_secure_storage, image_picker, OkHttp rules
+- **key.properties:** Created template (gitignored)
+- **.gitignore:** Added `key.properties`, `*.jks`, `*.keystore`
+
+### Testing (Phase 12)
+- **Backend:** Added tests for state machine transitions, password generation, encryption roundtrip, phone normalization
+- **Frontend:** Fixed `normalizePhone` test expectations (`0xxx` format), added `OrderStatus` tests, `CustomerUser` tests, `CouponReward` tests, `StoreOrderStatus` tests, `Sparepart` tests, `StoreAdminSession` tests, `DisputeStatus` tests
+
+---
+
 ## 2026-06-10 — Comprehensive Documentation Update
 
 ### Documentation Restructure
