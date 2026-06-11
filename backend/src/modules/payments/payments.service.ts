@@ -6,12 +6,10 @@ import {
   InvalidStatusTransitionException,
   ProofRequiredException,
 } from '../../common/exceptions';
+import { CreatePaymentDto } from './dto/payment.dto';
 
-interface CreatePaymentDto {
-  amount: number;
-  paymentMethod: string;
-  paymentType: string;
-  proofUrl?: string;
+interface StoreConfig {
+  warranty_days?: number;
 }
 
 @Injectable()
@@ -32,37 +30,30 @@ export class PaymentsService {
 
     return this.prisma.payment.create({
       data: {
-        orderId, userId,
+        orderId,
+        userId,
         amount: dto.amount,
-        paymentMethod: dto.paymentMethod as any,
-        paymentType: dto.paymentType as any,
+        paymentMethod: dto.paymentMethod as 'transfer_bank' | 'qris' | 'cash' | 'ewallet',
+        paymentType: dto.paymentType as 'deposit' | 'final_payment',
         proofUrl: dto.proofUrl,
         status: 'pending',
       },
     });
   }
 
-  async confirmPayment(
-    orderId: string, paymentId: string, adminId: string, storeId: string,
-  ) {
+  async confirmPayment(orderId: string, paymentId: string, adminId: string, storeId: string) {
     const payment = await this.prisma.payment.findFirst({
       where: { id: paymentId, orderId },
-      include: {
-        order: {
-          include: { store: true, user: true },
-        },
-      },
+      include: { order: { include: { store: true, user: true } } },
     });
-    if (!payment || payment.order.storeId !== storeId)
-      throw new OrderNotFoundException();
+    if (!payment || payment.order.storeId !== storeId) throw new OrderNotFoundException();
     if (payment.order.status !== 'waiting_payment')
       throw new InvalidStatusTransitionException(payment.order.status, 'completed');
 
-    const config = payment.order.store.config as any;
+    const config = payment.order.store.config as StoreConfig;
     const warrantyDays: number = config.warranty_days ?? 30;
     const completedAt = new Date();
-    const warrantyExpiredAt = new Date(
-      completedAt.getTime() + warrantyDays * 24 * 60 * 60 * 1000);
+    const warrantyExpiredAt = new Date(completedAt.getTime() + warrantyDays * 24 * 60 * 60 * 1000);
 
     await this.prisma.$transaction([
       this.prisma.payment.update({
@@ -71,13 +62,7 @@ export class PaymentsService {
       }),
       this.prisma.serviceOrder.update({
         where: { id: orderId },
-        data: {
-          status: 'completed',
-          paymentStatus: 'paid',
-          completedAt,
-          warrantyDays,
-          warrantyExpiredAt,
-        },
+        data: { status: 'completed', paymentStatus: 'paid', completedAt, warrantyDays, warrantyExpiredAt },
       }),
       this.prisma.store.update({
         where: { id: storeId },
@@ -85,15 +70,21 @@ export class PaymentsService {
       }),
       this.prisma.serviceTracking.create({
         data: {
-          orderId, status: 'completed', createdByType: 'store_admin',
-          createdById: adminId, note: 'Pembayaran dikonfirmasi. Order selesai.',
+          orderId,
+          status: 'completed',
+          createdByType: 'store_admin',
+          createdById: adminId,
+          note: 'Pembayaran dikonfirmasi. Order selesai.',
         },
       }),
     ]);
 
     await this.notif.sendOrderCompleted(
-      payment.order.user.phoneNumber, payment.order.user.fullName,
-      payment.order.orderNumber, payment.order.deliveryMethod);
+      payment.order.user.phoneNumber,
+      payment.order.user.fullName,
+      payment.order.orderNumber,
+      payment.order.deliveryMethod,
+    );
 
     return { status: 'completed', warrantyDays, warrantyExpiredAt };
   }

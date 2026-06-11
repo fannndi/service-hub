@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, ChangePasswordDto, RefreshTokenDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -29,16 +30,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async changePassword(@GetUser('id') userId: string, @Body() dto: ChangePasswordDto) {
-    return this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
+  async changePassword(@GetUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.id, dto.oldPassword, dto.newPassword);
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async logout(@GetUser('id') userId: string, @Body('refreshToken') refreshToken: string) {
-    await this.authService.logout(userId, refreshToken);
+  async logout(@GetUser() user: AuthenticatedUser, @Body('refreshToken') refreshToken: string) {
+    await this.authService.logout(user.id, refreshToken);
     return { message: 'Logout berhasil.' };
   }
 
@@ -46,8 +47,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async logoutAll(@GetUser('id') userId: string) {
-    await this.authService.logoutAll(userId);
+  async logoutAll(@GetUser() user: AuthenticatedUser) {
+    await this.authService.logoutAll(user.id);
     return { message: 'Semua sesi telah diakhiri.' };
   }
 }

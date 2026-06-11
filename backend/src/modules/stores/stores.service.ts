@@ -19,34 +19,48 @@ export interface StoreMatchResult {
   estimatedCost: number;
 }
 
-export interface MatchStoresInput {
-  brand: string;
-  deviceModel: string;
-  partType?: string;
+interface StoreConfig {
+  service_fee?: Record<string, number>;
+  warranty_days?: number;
+  diagnosis_fee?: number;
+  low_stock_threshold?: number;
+  deposit_required?: boolean;
+  device_types?: { android: boolean; ios: boolean };
 }
 
 @Injectable()
 export class StoresService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(includeInactive = false) {
+  async findAll(includeInactive = false, brand?: string, deviceModel?: string) {
+    const sparepartFilter: Record<string, unknown> = {};
+    if (brand) sparepartFilter.brand = brand;
+    if (deviceModel) sparepartFilter.deviceModel = deviceModel;
+
+    const hasSparepartFilter = Object.keys(sparepartFilter).length > 0;
+
     return this.prisma.store.findMany({
-      where: includeInactive ? {} : { isActive: true },
+      where: {
+        ...(includeInactive ? {} : { isActive: true }),
+        ...(hasSparepartFilter ? { spareparts: { some: sparepartFilter } } : {}),
+      },
       select: {
-        id: true, storeName: true, address: true, phoneNumber: true,
-        operationalHours: true, config: true, isActive: true,
-        ratingAvg: true, totalCompleted: true,
+        id: true,
+        storeName: true,
+        address: true,
+        phoneNumber: true,
+        operationalHours: true,
+        config: true,
+        isActive: true,
+        ratingAvg: true,
+        totalCompleted: true,
       },
       orderBy: { ratingAvg: 'desc' },
     });
   }
 
-  async matchStores(
-    brand: string,
-    deviceModel: string,
-    partType?: string,
-  ): Promise<StoreMatchResult[]> {
-    const sparepartWhere: any = {
+  async matchStores(brand: string, deviceModel: string, partType?: string): Promise<StoreMatchResult[]> {
+    const sparepartWhere: Record<string, unknown> = {
       brand,
       deviceModel,
       status: { not: 'discontinued' },
@@ -94,10 +108,8 @@ export class StoresService {
 
       if (availableParts.length === 0) continue;
 
-      const config = store.config as any;
-      const serviceFee = partType
-        ? Number(config?.service_fee?.[partType] ?? 0)
-        : 0;
+      const config = store.config as StoreConfig;
+      const serviceFee = partType ? Number(config?.service_fee?.[partType] ?? 0) : 0;
 
       results.push({
         storeId: store.id,
@@ -118,27 +130,34 @@ export class StoresService {
     return this.prisma.store.findUniqueOrThrow({
       where: { id },
       select: {
-        id: true, storeName: true, address: true, phoneNumber: true,
-        operationalHours: true, config: true, isActive: true,
-        ratingAvg: true, totalCompleted: true, penaltyPoints: true,
-        verifiedAt: true, createdAt: true,
+        id: true,
+        storeName: true,
+        address: true,
+        phoneNumber: true,
+        operationalHours: true,
+        config: true,
+        isActive: true,
+        ratingAvg: true,
+        totalCompleted: true,
+        penaltyPoints: true,
+        verifiedAt: true,
+        createdAt: true,
+        reviews: {
+          include: { user: { select: { id: true, fullName: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
       },
     });
   }
 
   async findSpareparts(storeId: string, brand?: string, deviceModel?: string, partType?: string) {
-    const where: any = {
-      storeId,
-      status: { not: 'discontinued' },
-    };
+    const where: Record<string, unknown> = { storeId, status: { not: 'discontinued' } };
     if (brand) where.brand = brand;
     if (deviceModel) where.deviceModel = deviceModel;
     if (partType) where.partType = partType;
 
-    return this.prisma.sparePart.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.prisma.sparePart.findMany({ where, orderBy: { createdAt: 'desc' } });
   }
 
   async getDashboard(storeId: string) {
@@ -176,7 +195,7 @@ export class StoresService {
     };
   }
 
-  async updateConfig(storeId: string, config: Record<string, any>) {
+  async updateConfig(storeId: string, config: Record<string, unknown>) {
     return this.prisma.store.update({
       where: { id: storeId },
       data: { config },
@@ -191,7 +210,7 @@ export class StoresService {
       distinct: ['userId'],
     });
     const ids = distinctUserIds.map((d) => d.userId);
-    const where: any = { id: { in: ids } };
+    const where: Record<string, unknown> = { id: { in: ids } };
     if (search) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
@@ -209,7 +228,7 @@ export class StoresService {
     return this.prisma.payment.findMany({
       where: {
         order: { storeId },
-        ...(status ? { status: status as any } : {}),
+        ...(status ? { status: status as 'pending' | 'confirmed' | 'failed' | 'refunded' } : {}),
       },
       include: {
         order: { select: { id: true, orderNumber: true } },
@@ -232,13 +251,8 @@ export class StoresService {
 
   async getStoreNotifications(storeId: string) {
     return this.prisma.serviceTracking.findMany({
-      where: {
-        order: { storeId },
-        createdByType: { not: 'store_admin' },
-      },
-      include: {
-        order: { select: { id: true, orderNumber: true } },
-      },
+      where: { order: { storeId }, createdByType: { not: 'store_admin' } },
+      include: { order: { select: { id: true, orderNumber: true } } },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
@@ -265,17 +279,28 @@ export class StoresService {
     };
   }
 
-  async updateStoreProfile(adminId: string, dto: Record<string, any>) {
-    await this.prisma.storeAdmin.update({
-      where: { id: adminId },
-      data: { fullName: dto.fullName },
-    });
+  async updateStoreProfile(adminId: string, storeId: string, dto: Record<string, unknown>) {
+    const adminData: Record<string, unknown> = {};
+    if (typeof dto.fullName === 'string') adminData.fullName = dto.fullName;
+
+    const storeData: Record<string, unknown> = {};
+    if (typeof dto.storeName === 'string') storeData.storeName = dto.storeName;
+    if (dto.operationalHours !== undefined) storeData.operationalHours = dto.operationalHours;
+    if (typeof dto.address === 'string') storeData.address = dto.address;
+    if (typeof dto.phoneNumber === 'string') storeData.phoneNumber = dto.phoneNumber;
+
+    await this.prisma.$transaction([
+      this.prisma.storeAdmin.update({ where: { id: adminId }, data: adminData }),
+      ...(Object.keys(storeData).length > 0
+        ? [this.prisma.store.update({ where: { id: storeId }, data: storeData })]
+        : []),
+    ]);
+
     return this.getStoreProfile(adminId);
   }
 
   async getAnalytics(storeId: string) {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [totalOrders, completedOrders, cancelledOrders, avgRating, totalRevenue] = await Promise.all([
       this.prisma.serviceOrder.count({ where: { storeId, createdAt: { gte: thirtyDaysAgo } } }),

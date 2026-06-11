@@ -45,8 +45,8 @@ String _codeToMessage(String? code) => switch (code) {
 
 class CustomerSessionStorage {
   const CustomerSessionStorage(this._storage);
-  static const _accessKey = 'access_token';
-  static const _refreshKey = 'refresh_token';
+  static const _accessKey = 'customer_access_token';
+  static const _refreshKey = 'customer_refresh_token';
   static const _cachedProfileKey = 'customer_cached_profile';
   static const _cachedSettingsKey = 'customer_notifications_enabled';
   final FlutterSecureStorage _storage;

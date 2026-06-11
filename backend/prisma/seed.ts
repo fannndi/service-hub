@@ -6,7 +6,10 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // 1. Create Store
+  const storeAdminPassword = process.env.SEED_STORE_ADMIN_PASSWORD || 'admin123';
+  const customerPassword = process.env.SEED_CUSTOMER_PASSWORD || 'customer123';
+  const platformAdminPassword = process.env.SEED_PLATFORM_ADMIN_PASSWORD || 'admin';
+
   const store = await prisma.store.upsert({
     where: { id: 'store-01' },
     update: {},
@@ -42,8 +45,7 @@ async function main() {
   });
   console.log(`Store created: ${store.storeName}`);
 
-  // 2. Create Store Admin
-  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminPasswordHash = await bcrypt.hash(storeAdminPassword, 12);
   const admin = await prisma.storeAdmin.upsert({
     where: { id: 'admin-01' },
     update: {},
@@ -52,15 +54,14 @@ async function main() {
       storeId: store.id,
       fullName: 'Admin Toko Pusat',
       phoneNumber: '081234567890',
-      passwordHash: adminPassword,
+      passwordHash: adminPasswordHash,
       isActive: true,
       isFirstLogin: false,
     },
   });
   console.log(`Store admin created: ${admin.fullName}`);
 
-  // 3. Create Customer Users
-  const customerPassword = await bcrypt.hash('customer123', 12);
+  const customerPasswordHash = await bcrypt.hash(customerPassword, 12);
   const customer1 = await prisma.user.upsert({
     where: { id: 'user-01' },
     update: {},
@@ -68,14 +69,13 @@ async function main() {
       id: 'user-01',
       fullName: 'Budi Santoso',
       phoneNumber: '081212345678',
-      passwordHash: customerPassword,
+      passwordHash: customerPasswordHash,
       isFirstLogin: false,
       address: 'Jl. Merdeka No. 10, Jakarta Pusat',
     },
   });
   console.log(`Customer created: ${customer1.fullName}`);
 
-  // 4. Create Sample Spareparts
   const spareparts = [
     {
       id: 'sp-01',
@@ -138,17 +138,14 @@ async function main() {
   }
   console.log(`${spareparts.length} spareparts created`);
 
-  // 5. Create Platform Admin
-  const adminUser = 'admin';
-  const adminPw = process.env.PLATFORM_ADMIN_PASSWORD || 'admin';
-  const adminPwHash = await bcrypt.hash(adminPw, 12);
+  const platformAdminPasswordHash = await bcrypt.hash(platformAdminPassword, 12);
   const platformAdmin = await prisma.platformAdmin.upsert({
-    where: { username: adminUser },
+    where: { username: 'admin' },
     update: {},
     create: {
-      username: adminUser,
+      username: 'admin',
       fullName: 'Platform Admin',
-      passwordHash: adminPwHash,
+      passwordHash: platformAdminPasswordHash,
       isActive: true,
     },
   });
@@ -160,8 +157,8 @@ main()
     await prisma.$disconnect();
     console.log('Seed completed successfully!');
   })
-  .catch(async (e) => {
-    console.error('Seed failed:', e);
+  .catch(async (e: unknown) => {
+    console.error('Seed failed:', e instanceof Error ? e.message : String(e));
     await prisma.$disconnect();
     process.exit(1);
   });

@@ -1,5 +1,5 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -8,10 +8,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
 
     if (exception instanceof HttpException) {
       const body = exception.getResponse();
-      if (typeof body === 'object' && (body as any).success === false) {
+      if (typeof body === 'object' && body !== null && 'success' in body && (body as { success: boolean }).success === false) {
         return res.status(exception.getStatus()).json(body);
       }
       return res.status(exception.getStatus()).json({
@@ -20,13 +21,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           code: 'VALIDATION_ERROR',
           message: 'Validation failed',
           user_message: 'Data tidak valid.',
-          details: (body as any).message,
+          details: typeof body === 'object' && body !== null && 'message' in body ? (body as { message: unknown }).message : undefined,
         },
         timestamp: new Date().toISOString(),
+        path: req.url,
       });
     }
 
-    this.logger.error('Unhandled exception', exception);
+    this.logger.error(`Unhandled exception at ${req.method} ${req.url}`, exception instanceof Error ? exception.stack : String(exception));
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: {
@@ -35,6 +37,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         user_message: 'Terjadi kesalahan. Coba lagi nanti.',
       },
       timestamp: new Date().toISOString(),
+      path: req.url,
     });
   }
 }

@@ -7,12 +7,16 @@ class SearchFilterBar extends StatelessWidget {
     required this.filters,
     required this.selectedFilter,
     required this.onFilterSelected,
+    this.onSearch,
+    this.searchController,
   });
 
   final String hintText;
   final List<String> filters;
   final String selectedFilter;
   final ValueChanged<String> onFilterSelected;
+  final ValueChanged<String>? onSearch;
+  final TextEditingController? searchController;
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +24,13 @@ class SearchFilterBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
+          controller: searchController,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
             hintText: hintText,
             border: const OutlineInputBorder(),
           ),
+          onSubmitted: onSearch,
         ),
         const SizedBox(height: 12),
         SingleChildScrollView(

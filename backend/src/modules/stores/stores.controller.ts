@@ -1,11 +1,10 @@
 import { Controller, Get, Post, Param, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { StoresService } from './stores.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
 
-// Public endpoints
 @ApiTags('Stores')
 @Controller('stores')
 export class StoresController {
@@ -16,7 +15,7 @@ export class StoresController {
     @Query('brand') brand?: string,
     @Query('deviceModel') deviceModel?: string,
   ) {
-    return this.storesService.findAll(false);
+    return this.storesService.findAll(false, brand, deviceModel);
   }
 
   @Get('match')
@@ -44,7 +43,6 @@ export class StoresController {
   }
 }
 
-// Store admin authenticated endpoints
 @ApiTags('Store Dashboard')
 @Controller('store')
 @UseGuards(StoreJwtAuthGuard)
@@ -53,40 +51,31 @@ export class StoreDashboardController {
   constructor(private readonly storesService: StoresService) {}
 
   @Get('dashboard/summary')
-  async getDashboard(@GetUser('storeId') storeId: string) {
-    return this.storesService.getDashboard(storeId);
+  async getDashboard(@GetUser() user: AuthenticatedUser) {
+    return this.storesService.getDashboard(user.storeId!);
   }
 
   @Patch('settings')
-  async updateConfig(
-    @GetUser('storeId') storeId: string,
-    @Body() config: Record<string, any>,
-  ) {
-    return this.storesService.updateConfig(storeId, config);
+  async updateConfig(@GetUser() user: AuthenticatedUser, @Body() config: Record<string, unknown>) {
+    return this.storesService.updateConfig(user.storeId!, config);
   }
 
   @Get('customers')
   async getCustomers(
-    @GetUser('storeId') storeId: string,
+    @GetUser() user: AuthenticatedUser,
     @Query('q') q?: string,
-    @Query('page') page?: string,
   ) {
-    return this.storesService.getCustomers(storeId, q);
+    return this.storesService.getCustomers(user.storeId!, q);
   }
 
   @Get('payments')
-  async getPayments(
-    @GetUser('storeId') storeId: string,
-    @Query('status') status?: string,
-  ) {
-    return this.storesService.getPayments(storeId, status);
+  async getPayments(@GetUser() user: AuthenticatedUser, @Query('status') status?: string) {
+    return this.storesService.getPayments(user.storeId!, status);
   }
 
   @Get('reviews')
-  async getReviews(
-    @GetUser('storeId') storeId: string,
-  ) {
-    return this.storesService.getReviews(storeId);
+  async getReviews(@GetUser() user: AuthenticatedUser) {
+    return this.storesService.getReviews(user.storeId!);
   }
 
   @Post('reviews/:reviewId/response')
@@ -94,31 +83,26 @@ export class StoreDashboardController {
     @Param('reviewId') reviewId: string,
     @Body() dto: { response: string },
   ) {
-    return { message: 'Response recorded' };
+    return { message: 'Response recorded', reviewId, response: dto.response };
   }
 
   @Get('notifications')
-  async getNotifications(
-    @GetUser('storeId') storeId: string,
-  ) {
-    return this.storesService.getStoreNotifications(storeId);
+  async getNotifications(@GetUser() user: AuthenticatedUser) {
+    return this.storesService.getStoreNotifications(user.storeId!);
   }
 
   @Get('profile')
-  async getProfile(@GetUser('id') adminId: string) {
-    return this.storesService.getStoreProfile(adminId);
+  async getProfile(@GetUser() user: AuthenticatedUser) {
+    return this.storesService.getStoreProfile(user.id);
   }
 
   @Patch('profile')
-  async updateProfile(
-    @GetUser('id') adminId: string,
-    @Body() dto: Record<string, any>,
-  ) {
-    return this.storesService.updateStoreProfile(adminId, dto);
+  async updateProfile(@GetUser() user: AuthenticatedUser, @Body() dto: Record<string, unknown>) {
+    return this.storesService.updateStoreProfile(user.id, user.storeId!, dto);
   }
 
   @Get('analytics')
-  async getAnalytics(@GetUser('storeId') storeId: string) {
-    return this.storesService.getAnalytics(storeId);
+  async getAnalytics(@GetUser() user: AuthenticatedUser) {
+    return this.storesService.getAnalytics(user.storeId!);
   }
 }

@@ -3,52 +3,95 @@ import {
   IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty,
   IsOptional, IsUUID, MinLength, ArrayMinSize, IsNumber, Min,
 } from 'class-validator';
-import { normalizePhone } from '../../auth/dto/auth.dto';
+import { normalizePhone } from '../../../common/utils';
 
 export class CreateOrderItemDto {
   @IsEnum(['screen_replacement', 'battery_replacement', 'charging_port', 'camera', 'other'])
   serviceType: string;
 
-  @IsString() @MinLength(10) complaint: string;
+  @IsString()
+  @MinLength(10)
+  complaint: string;
 
-  @IsOptional() @IsUUID() sparepartId?: string;
+  @IsOptional()
+  @IsUUID()
+  sparepartId?: string;
 }
 
 export class CreateOrderDto {
-  @IsEnum(['android', 'ios']) deviceType: string;
-  @IsString() @IsNotEmpty() brand: string;
-  @IsString() @IsNotEmpty() deviceModel: string;
-  @IsUUID() storeId: string;
-  @IsEnum(['walk_in', 'courier_pickup']) deliveryMethod: string;
-  @IsOptional() @IsString() deliveryAddress?: string;
+  @IsEnum(['android', 'ios'])
+  deviceType: string;
 
-  @IsString() @IsNotEmpty()
-  @Transform(({ value, obj }) => value ?? obj?.fullName ?? '')
+  @IsString()
+  @IsNotEmpty()
+  brand: string;
+
+  @IsString()
+  @IsNotEmpty()
+  deviceModel: string;
+
+  @IsUUID()
+  storeId: string;
+
+  @IsEnum(['walk_in', 'courier_pickup'])
+  deliveryMethod: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryAddress?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value, obj }: { value: string; obj: Record<string, unknown> }) => value ?? obj?.fullName ?? '')
   customerName: string;
 
   @IsString()
-  @Transform(({ value }) => normalizePhone(value))
+  @Transform(({ value }: { value: string }) => normalizePhone(value))
   phoneNumber: string;
 
-  @IsOptional() @IsString() couponCode?: string;
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
 
-  @IsArray() @ArrayMinSize(1)
-  @ValidateNested({ each: true }) @Type(() => CreateOrderItemDto)
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
 }
 
 export class DiagnosisItemDto {
-  @IsUUID() orderItemId: string;
-  @IsEnum(['confirmed', 'replaced', 'cancelled']) status: string;
-  @IsOptional() @IsUUID() replacedSparepartId?: string;
-  @IsNumber() @Min(0) finalItemPrice: number;
-  @IsOptional() @IsString() technicianNote?: string;
+  @IsUUID()
+  orderItemId: string;
+
+  @IsEnum(['confirmed', 'replaced', 'cancelled'])
+  status: string;
+
+  @IsOptional()
+  @IsUUID()
+  replacedSparepartId?: string;
+
+  @IsNumber()
+  @Min(0)
+  finalItemPrice: number;
+
+  @IsOptional()
+  @IsString()
+  technicianNote?: string;
 }
 
 export class SubmitDiagnosisDto {
-  @IsOptional() @IsString() diagnosisNote?: string;
-  @IsNumber() @Min(0) serviceFee: number;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => DiagnosisItemDto)
+  @IsOptional()
+  @IsString()
+  diagnosisNote?: string;
+
+  @IsNumber()
+  @Min(0)
+  serviceFee: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DiagnosisItemDto)
   items: DiagnosisItemDto[];
 }
 
@@ -59,5 +102,7 @@ export class UpdateOrderStatusDto {
   ])
   status: string;
 
-  @IsOptional() @IsString() note?: string;
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

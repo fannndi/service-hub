@@ -4,6 +4,8 @@ import { DisputesService } from './disputes.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
+import { CreateDisputeDto, RespondDisputeDto } from './dto/dispute.dto';
 
 @ApiTags('Disputes')
 @Controller('disputes')
@@ -14,16 +16,16 @@ export class DisputesController {
 
   @Post(':orderId')
   async createDispute(
-    @GetUser('id') userId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('orderId') orderId: string,
-    @Body() dto: any,
+    @Body() dto: CreateDisputeDto,
   ) {
-    return this.disputesService.createDispute(orderId, userId, dto);
+    return this.disputesService.createDispute(orderId, user.id, dto);
   }
 
   @Get()
-  async findMyDisputes(@GetUser('id') userId: string) {
-    return this.disputesService.findMyDisputes(userId);
+  async findMyDisputes(@GetUser() user: AuthenticatedUser) {
+    return this.disputesService.findMyDisputes(user.id);
   }
 }
 
@@ -35,17 +37,16 @@ export class StoreDisputesController {
   constructor(private readonly disputesService: DisputesService) {}
 
   @Get()
-  async findStoreDisputes(@GetUser('storeId') storeId: string) {
-    return this.disputesService.findStoreDisputes(storeId);
+  async findStoreDisputes(@GetUser() user: AuthenticatedUser) {
+    return this.disputesService.findStoreDisputes(user.storeId!);
   }
 
   @Post(':id/respond')
   async respondDispute(
-    @GetUser('id') adminId: string,
-    @GetUser('storeId') storeId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('id') disputeId: string,
-    @Body() dto: any,
+    @Body() dto: RespondDisputeDto,
   ) {
-    return this.disputesService.respondDispute(disputeId, adminId, storeId, dto);
+    return this.disputesService.respondDispute(disputeId, user.id, user.storeId!, dto);
   }
 }

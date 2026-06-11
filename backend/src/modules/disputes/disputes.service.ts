@@ -6,20 +6,8 @@ import {
   WarrantyExpiredException,
   DisputeAlreadyActiveException,
 } from '../../common/exceptions';
-import { customAlphabet } from 'nanoid';
-
-const nid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
-
-interface CreateDisputeDto {
-  disputeType: string;
-  description: string;
-  evidenceUrls?: string[];
-}
-
-interface RespondDisputeDto {
-  decision: 'store_accepted' | 'store_rejected';
-  storeResponse: string;
-}
+import { generateOrderNumber } from '../../common/utils';
+import { CreateDisputeDto, RespondDisputeDto } from './dto/dispute.dto';
 
 @Injectable()
 export class DisputesService {
@@ -45,8 +33,10 @@ export class DisputesService {
     const dispute = await this.prisma.$transaction(async (tx) => {
       const d = await tx.dispute.create({
         data: {
-          orderId, userId, storeId: order.storeId,
-          disputeType: dto.disputeType as any,
+          orderId,
+          userId,
+          storeId: order.storeId,
+          disputeType: dto.disputeType as 'warranty_claim' | 'service_quality' | 'wrong_diagnosis' | 'other',
           description: dto.description,
           evidenceUrls: dto.evidenceUrls ?? [],
           slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -54,14 +44,13 @@ export class DisputesService {
       });
       await tx.serviceOrder.update({
         where: { id: orderId },
-        data: {
-          status: 'disputed',
-          slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        },
+        data: { status: 'disputed', slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000) },
       });
       await tx.serviceTracking.create({
         data: {
-          orderId, status: 'disputed', createdByType: 'customer',
+          orderId,
+          status: 'disputed',
+          createdByType: 'customer',
           createdById: userId,
           note: `Klaim ${dto.disputeType} diajukan oleh pelanggan.`,
         },
@@ -71,15 +60,13 @@ export class DisputesService {
 
     await this.notif.send(
       order.store.phoneNumber,
-      `⚠️ Klaim garansi masuk untuk order ${order.orderNumber}. Respons dalam 24 jam.`,
+      `Klaim garansi masuk untuk order ${order.orderNumber}. Respons dalam 24 jam.`,
       'dispute_created',
     );
     return dispute;
   }
 
-  async respondDispute(
-    disputeId: string, adminId: string, storeId: string, dto: RespondDisputeDto,
-  ) {
+  async respondDispute(disputeId: string, adminId: string, storeId: string, dto: RespondDisputeDto) {
     const dispute = await this.prisma.dispute.findFirst({
       where: { id: disputeId, storeId, status: 'open' },
       include: { order: { include: { user: true, store: true, items: true } } },
@@ -91,12 +78,11 @@ export class DisputesService {
     await this.prisma.$transaction(async (tx) => {
       await tx.dispute.update({
         where: { id: disputeId },
-        data: { status: newStatus as any, storeResponse: dto.storeResponse, resolvedAt: new Date() },
+        data: { status: newStatus as 'store_accepted' | 'store_rejected', storeResponse: dto.storeResponse, resolvedAt: new Date() },
       });
 
       if (dto.decision === 'store_accepted') {
-        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const orderNumber = `SG-${dateStr}-${nid()}`;
+        const orderNumber = generateOrderNumber();
         const warrantyOrder = await tx.serviceOrder.create({
           data: {
             userId: dispute.order.userId,
@@ -131,8 +117,10 @@ export class DisputesService {
         });
         await tx.serviceTracking.create({
           data: {
-            orderId: warrantyOrder.id, status: 'waiting_device',
-            createdByType: 'system', createdById: 'system',
+            orderId: warrantyOrder.id,
+            status: 'waiting_device',
+            createdByType: 'system',
+            createdById: 'system',
             note: `Warranty order dari dispute ${disputeId}.`,
           },
         });
@@ -146,8 +134,8 @@ export class DisputesService {
     await this.notif.send(
       dispute.order.user.phoneNumber,
       dto.decision === 'store_accepted'
-        ? '✅ Klaim garansimu diterima! Order perbaikan ulang sudah dibuat.'
-        : `❌ Klaim garansimu ditolak. Alasan: ${dto.storeResponse}`,
+        ? 'Klaim garansimu diterima! Order perbaikan ulang sudah dibuat.'
+        : `Klaim garansimu ditolak. Alasan: ${dto.storeResponse}`,
       'dispute_responded',
     );
 

@@ -5,6 +5,8 @@ import { OrdersService } from '../orders/orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { FirstLoginGuard } from '../../common/guards/first-login.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
+import { UpdateProfileDto } from './dto/user.dto';
 
 @ApiTags('Users')
 @Controller('me')
@@ -17,45 +19,37 @@ export class UsersController {
   ) {}
 
   @Get()
-  async getProfile(@GetUser('id') userId: string) {
-    return this.usersService.getProfile(userId);
+  async getProfile(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.getProfile(user.id);
   }
 
   @Patch()
-  async updateProfile(
-    @GetUser('id') userId: string,
-    @Body() dto: { fullName?: string; address?: string; avatarUrl?: string },
-  ) {
-    return this.usersService.updateProfile(userId, dto);
+  async updateProfile(@GetUser() user: AuthenticatedUser, @Body() dto: UpdateProfileDto) {
+    return this.usersService.updateProfile(user.id, dto);
   }
 
   @Get('summary')
-  async getSummary(@GetUser('id') userId: string) {
-    return this.usersService.getSummary(userId);
+  async getSummary(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.getSummary(user.id);
   }
 
   @Get('coupons')
-  async getCoupons(@GetUser('id') userId: string) {
-    return this.usersService.getCoupons(userId);
+  async getCoupons(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.getCoupons(user.id);
   }
 
   @Get('orders')
-  async getMyOrders(
-    @GetUser('id') userId: string,
-  ) {
-    return this.ordersService.findMyOrders(userId);
+  async getMyOrders(@GetUser() user: AuthenticatedUser) {
+    return this.ordersService.findMyOrders(user.id);
   }
 
   @Get('orders/:id/progress')
-  async getOrderProgress(
-    @GetUser('id') userId: string,
-    @Param('id') orderId: string,
-  ) {
-    return this.ordersService.getOrderProgress(userId, orderId);
+  async getOrderProgress(@GetUser() user: AuthenticatedUser, @Param('id') orderId: string) {
+    return this.ordersService.getOrderProgress(user.id, orderId);
   }
 
   @Get('notifications')
-  async getNotifications(@GetUser('id') userId: string) {
-    return this.usersService.getNotifications(userId);
+  async getNotifications(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.getNotifications(user.id);
   }
 }

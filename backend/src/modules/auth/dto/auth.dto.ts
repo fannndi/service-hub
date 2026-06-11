@@ -1,27 +1,30 @@
 import { IsString, IsNotEmpty, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-
-export function normalizePhone(phone: string): string {
-  const d = phone.replace(/\D/g, '');
-  if (d.startsWith('62')) return `0${d.slice(2)}`;
-  if (d.startsWith('0'))  return d;
-  return `0${d}`;
-}
+import { normalizePhone } from '../../../common/utils';
 
 export class LoginDto {
-  @IsString() @IsNotEmpty()
-  @Transform(({ value }) => normalizePhone(value))
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: { value: string }) => normalizePhone(value))
   phoneNumber: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
 export class ChangePasswordDto {
-  @IsString() @IsNotEmpty() oldPassword: string;
-  @IsString() @MinLength(8) newPassword: string;
+  @IsString()
+  @IsNotEmpty()
+  oldPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
 }
 
 export class RefreshTokenDto {
-  @IsString() @IsNotEmpty() refreshToken: string;
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
 }

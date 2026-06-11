@@ -1,17 +1,24 @@
 import { IsString, IsNotEmpty, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { normalizePhone } from '../../auth/dto/auth.dto';
+import { normalizePhone } from '../../../common/utils';
 
 export class StoreLoginDto {
-  @IsString() @IsNotEmpty()
-  @Transform(({ value }) => normalizePhone(value))
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: { value: string }) => normalizePhone(value))
   phoneNumber: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
 export class StoreChangePasswordDto {
-  @IsString() @IsNotEmpty() oldPassword: string;
-  @IsString() @MinLength(8) newPassword: string;
+  @IsString()
+  @IsNotEmpty()
+  oldPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
 }

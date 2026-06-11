@@ -4,15 +4,24 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/exceptions';
-import { normalizePhone } from '../auth/dto/auth.dto';
+import { normalizePhone } from '../../common/utils';
 import { CreateStoreDto } from './dto/platform-admin.dto';
+import { JwtPayload } from '../../common/types/jwt-payload.type';
+import { AppConfig } from '../../config/configuration';
+
+interface StoreConfig {
+  service_fee: Record<string, number>;
+  warranty_days: number;
+  diagnosis_fee: number;
+  device_types: { android: boolean; ios: boolean };
+}
 
 @Injectable()
 export class PlatformAdminService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-    private config: ConfigService,
+    private config: ConfigService<AppConfig>,
   ) {}
 
   async login(username: string, password: string) {
@@ -33,9 +42,9 @@ export class PlatformAdminService {
       data: { lastLoginAt: new Date() },
     });
 
-    const payload = { sub: admin.id, role: 'platform_admin', username: admin.username };
+    const payload: JwtPayload = { sub: admin.id, role: 'platform_admin', username: admin.username };
     const token = this.jwt.sign(payload, {
-      secret: this.config.get('jwt.platformAdminSecret'),
+      secret: this.config.get('jwt.platformAdminSecret', { infer: true }),
       expiresIn: '12h',
     });
 
@@ -60,7 +69,7 @@ export class PlatformAdminService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const config: any = {
+    const config: StoreConfig = {
       service_fee: {
         screen_replacement: 50000,
         battery_replacement: 30000,

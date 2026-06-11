@@ -14,6 +14,18 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
+export const ACTION_STATUS_MAP: Record<string, string> = {
+  receive_device: 'device_received',
+  start_diagnosis: 'diagnosing',
+  sparepart_arrived: 'repairing',
+  start_repair: 'repairing',
+  complete_repair: 'quality_check',
+  start_qc: 'quality_check',
+  qc_ok: 'waiting_payment',
+  request_payment: 'waiting_payment',
+  mark_complete: 'completed',
+};
+
 export function assertValidTransition(from: string, to: string): void {
   const allowed = VALID_TRANSITIONS[from];
   if (!allowed || !allowed.includes(to)) {

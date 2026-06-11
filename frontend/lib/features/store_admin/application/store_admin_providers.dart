@@ -34,11 +34,11 @@ class StoreAuthController extends AsyncNotifier<StoreAdminSession?> {
     state = await AsyncValue.guard(() => ref.read(storeAuthRepositoryProvider).login(phoneNumber: phoneNumber, password: password));
   }
 
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(String oldPassword, String newPassword) async {
     final session = state.valueOrNull;
     if (session == null) return;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(storeAuthRepositoryProvider).changePassword(currentPassword, newPassword, session));
+    state = await AsyncValue.guard(() => ref.read(storeAuthRepositoryProvider).changePassword(oldPassword, newPassword, session));
   }
 
   Future<void> logout() async {

@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
+import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
 import { PaymentsService } from '../payments/payments.service';
 import { ReviewsService } from '../reviews/reviews.service';
 import { DisputesService } from '../disputes/disputes.service';
@@ -23,67 +24,67 @@ export class OrdersController {
 
   @Post()
   async createOrder(@Body() dto: CreateOrderDto) {
-    return this.ordersService.createOrder(dto as any);
+    return this.ordersService.createOrder(dto);
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async findMyOrders(@GetUser('id') userId: string) {
-    return this.ordersService.findMyOrders(userId);
+  async findMyOrders(@GetUser() user: AuthenticatedUser) {
+    return this.ordersService.findMyOrders(user.id);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async findById(@GetUser('id') userId: string, @Param('id') orderId: string) {
-    return this.ordersService.findMyOrderById(userId, orderId);
+  async findById(@GetUser() user: AuthenticatedUser, @Param('id') orderId: string) {
+    return this.ordersService.findMyOrderById(user.id, orderId);
   }
 
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async approve(@GetUser('id') userId: string, @Param('id') orderId: string) {
-    return this.ordersService.approveOrder(orderId, userId);
+  async approve(@GetUser() user: AuthenticatedUser, @Param('id') orderId: string) {
+    return this.ordersService.approveOrder(orderId, user.id);
   }
 
   @Post(':id/reject')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async reject(@GetUser('id') userId: string, @Param('id') orderId: string) {
-    return this.ordersService.rejectOrder(orderId, userId);
+  async reject(@GetUser() user: AuthenticatedUser, @Param('id') orderId: string) {
+    return this.ordersService.rejectOrder(orderId, user.id);
   }
 
   @Post(':id/payments')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async createPayment(
-    @GetUser('id') userId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('id') orderId: string,
     @Body() dto: CreatePaymentDto,
   ) {
-    return this.paymentsService.createPayment(orderId, userId, dto);
+    return this.paymentsService.createPayment(orderId, user.id, dto);
   }
 
   @Post(':id/reviews')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async createReview(
-    @GetUser('id') userId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('id') orderId: string,
     @Body() dto: CreateReviewDto,
   ) {
-    return this.reviewsService.createReview(orderId, userId, dto);
+    return this.reviewsService.createReview(orderId, user.id, dto);
   }
 
   @Post(':id/disputes')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async createDispute(
-    @GetUser('id') userId: string,
+    @GetUser() user: AuthenticatedUser,
     @Param('id') orderId: string,
     @Body() dto: CreateDisputeDto,
   ) {
-    return this.disputesService.createDispute(orderId, userId, dto);
+    return this.disputesService.createDispute(orderId, user.id, dto);
   }
 }

@@ -1,30 +1,38 @@
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, MinLength } from 'class-validator';
 
 export class AdminLoginDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   username: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
 export class CreateStoreDto {
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   storeName: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   address: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   storePhone: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   adminName: string;
 
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   adminPhone: string;
 
-  @IsString() @MinLength(8)
+  @IsString()
+  @MinLength(8)
   password: string;
 
   @IsBoolean()

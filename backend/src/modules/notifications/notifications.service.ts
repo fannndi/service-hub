@@ -2,30 +2,41 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import axios from 'axios';
+import { AppConfig } from '../../config/configuration';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
   constructor(
-    private config: ConfigService,
+    private config: ConfigService<AppConfig>,
     private prisma: PrismaService,
   ) {}
 
   async send(target: string, message: string, messageType: string): Promise<void> {
+    const gatewayUrl = this.config.get('wa.gatewayUrl', { infer: true });
+    const token = this.config.get('wa.token', { infer: true });
+
+    if (!gatewayUrl || !token) {
+      this.logger.warn(`WA gateway not configured, skipping notification to ${target}`);
+      return;
+    }
+
     const delays = [60_000, 300_000, 900_000];
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         await axios.post(
-          this.config.get<string>('wa.gatewayUrl')!,
+          gatewayUrl,
           { target, message, countryCode: '62' },
-          { headers: { Authorization: this.config.get('wa.token') }, timeout: 10_000 },
+          { headers: { Authorization: token }, timeout: 10_000 },
         );
         return;
-      } catch (err: any) {
-        this.logger.warn(`WA attempt ${attempt}/3 gagal -> ${target}: ${err.message}`);
-        if (attempt < 3) await new Promise((r) => setTimeout(r, delays[attempt - 1]));
-        else {
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`WA attempt ${attempt}/3 failed -> ${target}: ${errorMsg}`);
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, delays[attempt - 1]));
+        } else {
           await this.prisma.failedNotification
             .create({
               data: {
@@ -34,24 +45,24 @@ export class NotificationsService {
                 messageType,
                 payload: { target, message },
                 attemptCount: 3,
-                lastError: err.message,
+                lastError: errorMsg,
               },
             })
-            .catch((e) => this.logger.error('Log failed notif error:', e));
+            .catch((e: unknown) => this.logger.error('Log failed notif error:', e));
         }
       }
     }
   }
 
   async sendNewOrderToStore(
-    store: any,
-    order: any,
-    user: any,
+    store: { phoneNumber: string },
+    order: { orderNumber: string; deviceType: string; brand: string; deviceModel: string; deliveryMethod: string; totalEstimasi: unknown; deliveryAddress?: string | null },
+    user: { fullName: string; phoneNumber: string },
     isNew: boolean,
     rawPass?: string,
   ) {
     const lines = [
-      `🔔 *Order Baru!*`,
+      `Order Baru!`,
       `No: ${order.orderNumber}`,
       `Pelanggan: ${user.fullName} (${user.phoneNumber})`,
       `Device: ${order.deviceType} ${order.brand} ${order.deviceModel}`,
@@ -59,8 +70,7 @@ export class NotificationsService {
       `Estimasi: Rp ${Number(order.totalEstimasi).toLocaleString('id-ID')}`,
     ];
     if (order.deliveryAddress) lines.push(`Alamat: ${order.deliveryAddress}`);
-    lines.push(`---`);
-    lines.push(`Segera cek dashboard untuk detail.`);
+    lines.push('Segera cek dashboard untuk detail.');
     await this.send(store.phoneNumber, lines.join('\n'), 'new_order');
 
     if (isNew && rawPass) {
@@ -69,7 +79,6 @@ export class NotificationsService {
         `Akun ServisGadget kamu sudah dibuat otomatis.`,
         `Nomor HP: ${user.phoneNumber}`,
         `Password sementara: ${rawPass}`,
-        `---`,
         `Segera login dan ganti passwordmu.`,
         `Order #${order.orderNumber} akan segera diproses.`,
       ].join('\n');
@@ -82,23 +91,16 @@ export class NotificationsService {
       `Halo ${name}!`,
       `Pesanan #${orderNumber} sudah selesai diperbaiki.`,
       `Total biaya: Rp ${finalPrice.toLocaleString('id-ID')}`,
-      `---`,
       `Silakan lakukan pembayaran untuk menyelesaikan pesanan.`,
     ].join('\n');
     await this.send(phone, msg, 'waiting_payment');
   }
 
-  async sendDiagnosisResult(
-    phone: string,
-    name: string,
-    orderNumber: string,
-    finalPrice: number,
-  ) {
+  async sendDiagnosisResult(phone: string, name: string, orderNumber: string, finalPrice: number) {
     const msg = [
       `Halo ${name}!`,
       `Diagnosa untuk #${orderNumber} sudah berhasil.`,
       `Total biaya: Rp ${finalPrice.toLocaleString('id-ID')}`,
-      `---`,
       `Silakan cek aplikasi untuk menyetujui atau menolak diagnosa.`,
     ].join('\n');
     await this.send(phone, msg, 'diagnosis_result');
@@ -111,7 +113,6 @@ export class NotificationsService {
       deliveryMethod === 'walk_in'
         ? `Silakan ambil perangkatmu di toko.`
         : `Perangkat akan segera dikirim ke alamatmu.`,
-      `---`,
       `Terima kasih sudah menggunakan ServisGadget! Beri ulasan ya.`,
     ].join('\n');
     await this.send(phone, msg, 'order_completed');
