@@ -2,6 +2,7 @@
 
 > **Untuk AI Agent:** Baca file ini + dokumentasi di `docs/backend/` dan `docs/frontend/` sebelum mengerjakan.
 > Setiap task sudah self-contained — cukup baca konteks di sini + file yang disebutkan.
+> **Wajib:** Setelah selesai 1 task, update dokumentasi terkait di `docs/` agar sinkron dengan kode.
 
 ---
 
@@ -11,36 +12,35 @@
 
 **Goal:** Brand & device model di Service Now Step 1 dan StoreListScreen berisi data real-time dari sparepart di semua toko, bukan hardcoded.
 
-**Backend:**
+**Backend — `StoresController` (path `stores`):**
 
-1. **Buat endpoint baru** `GET /spareparts/device-models` di `spareparts.controller.ts`:
-   ```typescript
-   // spareparts.service.ts — method baru
-   async getDeviceModels() {
-     const results = await this.prisma.sparePart.findMany({
-       where: { status: { not: 'discontinued' } },
-       select: { brand: true, deviceModel: true },
-       distinct: ['brand', 'deviceModel'],
-       orderBy: [{ brand: 'asc' }, { deviceModel: 'asc' }],
-     });
-     const map = new Map<string, string[]>();
-     for (const r of results) {
-       if (!map.has(r.brand)) map.set(r.brand, []);
-       map.get(r.brand)!.push(r.deviceModel);
+1. **Tambah endpoint** `GET /stores/device-models` di `stores.controller.ts`:
+   - **Kenapa di `StoresController`?** Karena `SparepartsController` ada di path `store/spareparts` (namespace store admin, pakai auth guard). `StoresController` di path `stores` sudah public (tanpa `@UseGuards`). Lihat `src/modules/stores/stores.controller.ts:9-10`.
+   - Route: `@Get('device-models')`
+   - Method baru di `StoresService`:
+     ```typescript
+     async getDeviceModels() {
+       const results = await this.prisma.sparePart.findMany({
+         where: { status: { not: 'discontinued' } },
+         select: { brand: true, deviceModel: true },
+         distinct: ['brand', 'deviceModel'],
+         orderBy: [{ brand: 'asc' }, { deviceModel: 'asc' }],
+       });
+       const map = new Map<string, string[]>();
+       for (const r of results) {
+         if (!map.has(r.brand)) map.set(r.brand, []);
+         map.get(r.brand)!.push(r.deviceModel);
+       }
+       return Array.from(map.entries()).map(([brand, models]) => ({ brand, models }));
      }
-     return Array.from(map.entries()).map(([brand, models]) => ({ brand, models }));
-   }
-   ```
-   - Route: `GET /spareparts/device-models` → `sparepartsController.getDeviceModels()`
-   - Response: `{ data: [{ brand: "Google", models: ["Pixel 3", "Pixel 4"] }, ...] }`
-   - Query sparepart dengan `status != discontinued`, distinct `(brand, deviceModel)`
-   - Sort alphabetical by brand, then by device model
+     ```
+   - Response: `[{ brand: "Google", models: ["Pixel 3", "Pixel 4"] }, ...]`
+     (interceptor otomatis bungkus ke `{ success: true, data: [...], timestamp: "..." }`)
+   - No auth required (public endpoint)
 
-2. **Update `spareparts.controller.ts`:** tambah route baru
+**Frontend — Model baru:**
 
-**Frontend — Model:**
-
-3. **File baru:** `frontend/lib/features/customer/domain/device_model.dart`
+2. **File baru:** `frontend/lib/features/customer/domain/device_model.dart`
    ```dart
    class DeviceModelGroup {
      final String brand;
@@ -57,32 +57,56 @@
 
 **Frontend — Repository:**
 
-4. **Edit `customer_repositories.dart`:** tambah method `getDeviceModels()` → `GET /spareparts/device-models` → `List<DeviceModelGroup>`
+3. **Edit `customer_repositories.dart`** — tambah method di `StoreDiscoveryRepository`:
+   ```dart
+   Future<List<DeviceModelGroup>> getDeviceModels() async {
+     final response = await _api.publicDio.get('/stores/device-models');
+     return CustomerApiClient.unwrapList(response.data)
+         .map(DeviceModelGroup.fromJson)
+         .toList();
+   }
+   ```
+   **WAJIB** pakai `_api.publicDio` (bukan `authDio`) karena Service Now bisa diakses sebelum login. File `customer_repositories.dart:178` saat ini salah pake `authDio` untuk `getStores()` — jangan ditiru.
 
-**Frontend — ServiceFlowScreen Step 1 (line 810-837):**
+**Frontend — Provider baru:**
 
-5. **Edit `customer_screens.dart`** — ganti TextField Brand & Model jadi DropdownButtonFormField:
-   - Brand dropdown: isi dari `getDeviceModels()`, sorted alphabetical
-   - Model dropdown: isi dari `models` milik brand yang dipilih, sorted alphabetical
+4. **Edit `customer_providers.dart`** — tambah:
+   ```dart
+   final deviceModelsProvider = FutureProvider<List<DeviceModelGroup>>((ref) =>
+       ref.watch(storeDiscoveryRepositoryProvider).getDeviceModels());
+   ```
+
+**Frontend — ServiceFlowScreen Step 1 (`customer_screens.dart:810-837`):**
+
+5. **Edit class `_ServiceFlowScreenState`:**
+   - **Ganti state:** `final _brand = TextEditingController()` → `String? _selectedBrand`
+   - **Ganti state:** `final _model = TextEditingController()` → `String? _selectedModel`
+   - Hapus `_brand.dispose()` dan `_model.dispose()` dari `dispose()`
+   - **Ganti UI:** `TextField` → `DropdownButtonFormField<String>` untuk brand dan model
+   - Brand dropdown: `ref.watch(deviceModelsProvider)`, pilih brand → simpan di `_selectedBrand`
+   - Model dropdown: filter `models` dari brand yang dipilih, sorted alphabetical
    - User WAJIB klik (no auto-select, bahkan jika cuma 1 pilihan)
    - Loading state: `CircularProgressIndicator`
    - Empty state: "Belum ada sparepart tersedia"
-   - State management via `StatefulWidget` existing (gunakan `initState` untuk fetch data)
+   - Update `_matchStores()`: kirim `_selectedBrand!` dan `_selectedModel!` (bukan `_brand.text`)
+   - Update `_createBooking()`: kirim `_selectedBrand!` dan `_selectedModel!` (bukan `_brand.text`)
+   - Update `_nextStep()` (line 718): validasi `_selectedBrand != null && _selectedModel != null`
 
-6. **Edit `customer_screens.dart` (line 482-489)** — ganti hardcoded brand chips:
+**Frontend — StoreListScreen brand chips (line 482-489):**
+
+6. **Edit `StoreListScreen`:**
    ```dart
    // Sebelum:
    ['All', 'Samsung', 'Apple', 'Xiaomi', 'Oppo', 'Realme', 'Vivo']
    // Sesudah:
-   ['All', ...deviceModelGroups.map((g) => g.brand)]
+   final deviceModels = ref.watch(deviceModelsProvider);
+   final brands = deviceModels.valueOrNull?.map((g) => g.brand).toList() ?? [];
+   ['All', ...brands]
    ```
 
-**Verifikasi:**
-- `flutter analyze` — 0 errors
-- `flutter run` — app running di emulator
-- Step 1 Service Now: dropdown muncul dengan brand dari database
-- Pilih brand → model terfilter sesuai brand
-- StoreListScreen: brand chips dari database
+**Post-task:**
+- Update `docs/backend/BACKEND_API_REFERENCE.md` §4 — tambah endpoint `GET /stores/device-models`
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` — update §1 (tambah model `DeviceModelGroup`), §2 (method `getDeviceModels`), §4 (perubahan Step 1 UI)
 
 ---
 
@@ -125,25 +149,13 @@
 5. Hapus `customer_screens.dart` setelah semua dipindah
 6. Pastikan `flutter analyze` pass tanpa error
 
-**Referensi:** `docs/frontend/FRONTEND_CUSTOMER.md` §4 Screens
+**Post-task:**
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4 — update jadi file list (bukan 1 file)
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §2 — update tree structure
 
 ---
 
-### P0-2: Remove Dead Code
-
-**Files to check:**
-- `frontend/lib/network/dio_client.dart` — `dioClientProvider` tidak pernah dipakai. Setiap feature (customer, store_admin, platform_admin) buat Dio instance sendiri. **Hapus file ini** atau refactor semua feature untuk pakai shared Dio.
-- `frontend/lib/repositories/base_repository.dart` — `BaseRepository` tidak pernah di-extend. **Hapus file ini.**
-- `frontend/lib/models/api_response.dart` — `ApiResponse<T>` tidak pernah dipakai. **Hapus file ini.**
-- `frontend/lib/features/customer/presentation/routing/customer_router.dart` — `customerRouterProvider` dan `_RouterRefresh` tidak pernah dipakai (main.dart pakai `appRouterProvider`). **Hapus** `customerRouterProvider` dan `_RouterRefresh`, keep `customerRoutes` list saja.
-- `frontend/lib/features/store_admin/presentation/routing/store_admin_router.dart` — `storeAdminRouterProvider` dan `_RouterRefresh` tidak pernah dipakai. **Hapus** keduanya, keep `storeAdminRoutes` list saja.
-- `frontend/lib/features/platform_admin/presentation/routing/platform_admin_router.dart` — `adminRouterProvider` dan `_AdminRefresh` tidak pernah dipakai. **Hapus** keduanya, keep `adminRoutes` list saja.
-
-**Verifikasi:** `flutter analyze` harus pass, app harus bisa run.
-
----
-
-### P0-3: Fix `ServiceFlowScreen` Performance
+### P0-2: Fix `ServiceFlowScreen` Performance
 
 **File:** `frontend/lib/features/customer/presentation/screens/service_flow_screen.dart` (setelah P0-1 split)
 
@@ -155,6 +167,9 @@
 3. Parent `ServiceFlowScreen` simpan data per-step di `Map<String, dynamic> _stepData`
 4. Hanya rebuild step yang aktif (gunakan `IndexedStack` atau conditional rendering)
 5. Tambahkan `const` constructors di mana memungkinkan
+
+**Post-task:**
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4 — update deskripsi ServiceFlowScreen
 
 ---
 
@@ -175,7 +190,7 @@
 
 **Tugas:**
 1. Buat unified widgets di `shared_widgets/`:
-   - `status_badge.dart` — sudah ada, extend untuk support `OrderStatus` enum
+   - `status_badge.dart` — sudah ada, extend untuk support `OrderStatus` enum (warna otomatis per status)
    - `empty_state.dart` — sudah ada, pastikan API konsisten
    - `error_state.dart` — sudah ada, tambahkan `onRetry` callback
    - Buat `formatters.dart` baru — `rupiah(num)`, `shortDate(DateTime?)`
@@ -183,23 +198,78 @@
 2. Update `customer_widgets.dart` dan `store_admin_widgets.dart` untuk import dari `shared_widgets/`
 3. Hapus duplicate definitions
 
+**Post-task:**
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §5 — hapus duplicate widgets
+- Update `docs/frontend/FRONTEND_STORE_ADMIN.md` §5 — hapus duplicate widgets
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §7 — sinkronkan daftar shared_widgets
+
 ---
 
-### P1-2: Implement Sessions & Security Screens
+### P1-2: Implement Sessions Screen + Backend Endpoints
 
-**File:** `frontend/lib/features/customer/presentation/screens/sessions_screen.dart` (setelah P0-1 split)
+> **Gabungan P1-2 + P2-5.** Kedua task ini punya dependency: SessionsScreen butuh backend endpoints dulu.
 
-**Masalah:** `SessionsScreen` dan `SecurityScreen` masih stub — hanya tampilkan teks statis.
+**Backend — `UsersController` (path `me`):**
 
-**Tugas untuk SessionsScreen:**
-1. Tambah endpoint backend: `GET /v1/me/sessions` — return list `UserSession` (id, deviceInfo, ipAddress, lastActiveAt, isActive)
-2. Tambah endpoint backend: `DELETE /v1/me/sessions/:id` — revoke specific session
-3. Frontend: tampilkan list session aktif, tombol "Revoke" per session, "Logout All" button
-4. Repository method: `getSessions()`, `revokeSession(id)`, `logoutAll()`
+1. **Tambah `GET /me/sessions`** di `users.controller.ts`:
+   - Route: `@Get('sessions')`
+   - Service: query `UserSession` where `userId`, select `id, deviceInfo, ipAddress, lastActiveAt, isActive, createdAt`
+   - Order by `lastActiveAt: desc`
 
-**Tugas untuk SecurityScreen:**
-1. Tampilkan: last password change date, active sessions count, link ke change password
-2. Tambah toggle "Enable biometric login" (future feature, bisa stub dulu)
+2. **Tambah `DELETE /me/sessions/:id`** di `users.controller.ts`:
+   - Route: `@Delete('sessions/:id')`
+   - Service: `update` set `isActive: false` where `id` AND `userId` (security: cuma bisa hapus session sendiri)
+
+3. **Tambah `DELETE /me/sessions`** (logout all) di `users.controller.ts`:
+   - Route: `@Delete('sessions')`
+   - Service: `updateMany` set `isActive: false` where `userId`
+
+4. **Prisma:** Model `UserSession` sudah ada di `schema.prisma:504-516`.
+
+**Frontend — `UsersController` bagian session belum ada endpoint sessions. UsersController saat ini (users.controller.ts:1-55) cuma punya profile, summary, coupons, orders, notifications.**
+
+**Frontend — Repository:**
+
+5. **Tambah method di repo (customer/data atau buat baru):**
+   ```dart
+   Future<List<UserSession>> getSessions() async { ... }
+   Future<void> revokeSession(String id) async { ... }
+   Future<void> logoutAll() async { ... }
+   ```
+   Semua pake `_api.authDio` (perlu login).
+
+6. **Model baru `UserSession`:**
+   ```dart
+   class UserSession {
+     final String id;
+     final Map<String, dynamic>? deviceInfo;
+     final String? ipAddress;
+     final DateTime lastActiveAt;
+     final bool isActive;
+     final DateTime createdAt;
+   }
+   ```
+
+**Frontend — SessionsScreen (`customer_screens.dart:2107-2117` — saat ini stub):**
+
+7. **Rewrite `SessionsScreen`:**
+   - Fetch sessions via provider
+   - Tampilkan list session: device info, IP, last active, status badge
+   - Tombol "Revoke" per session (kecuali session saat ini)
+   - Tombol "Logout All" di AppBar
+   - Konfirmasi dialog sebelum revoke/logout all
+   - Loading/error state
+
+**Frontend — SecurityScreen (`customer_screens.dart:2120-2133` — saat ini stub):**
+
+8. **Rewrite `SecurityScreen`:**
+   - Tampilkan: last password change date, active sessions count
+   - Tombol "Ganti Password" (link ke `/change-password`)
+   - Informasi nomor HP (hanya bisa diubah via support)
+
+**Post-task:**
+- Update `docs/backend/BACKEND_API_REFERENCE.md` §3 — tambah `GET /me/sessions`, `DELETE /me/sessions/:id`, `DELETE /me/sessions`
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4 — update SessionsScreen, SecurityScreen
 
 ---
 
@@ -246,17 +316,22 @@
 
 **Setup:** Mock `PrismaService` dengan `jest.mock()`. Gunakan `@nestjs/testing` `Test.createTestingModule()`.
 
+**Post-task:**
+- Update `docs/backend/BACKEND_BUSINESS_LOGIC.md` — tambah catatan test coverage
+
 ---
 
 ### P1-4: Replace App Icon Placeholder
 
 **File:** `frontend/assets/images/logo.png`
 
-**Masalah:** File saat ini hanya placeholder text, bukan gambar asli.
+**Masalah:** File saat ini hanya placeholder text, bukan gambar asli. Di `main.dart:136` ada `errorBuilder` yang nangani kegagalan load (artinya icon memang rusak).
 
 **Tugas:**
-1. Desain app icon 1024x1024 PNG (atau minta desainer)
-2. Generate semua ukuran mipmap menggunakan `flutter_launcher_icons`:
+1. **Buat app icon 1024×1024 PNG** (gunakan AI image generator, Canva, atau minta desainer)
+   - Tema: teal/green "ServisGadget" — huruf "SG" atau ikon kunci+obeng
+2. Simpan sebagai `assets/images/logo.png` (TIMPA file placeholder yang ada)
+3. Generate semua ukuran mipmap menggunakan `flutter_launcher_icons`:
    ```yaml
    # Tambah ke pubspec.yaml dev_dependencies:
    flutter_launcher_icons: ^0.13.1
@@ -266,10 +341,13 @@
      android: true
      image_path: "assets/images/logo.png"
      adaptive_icon_background: "#00897B"
-     adaptive_icon_foreground: "assets/images/logo_foreground.png"
+     adaptive_icon_foreground: "assets/images/logo.png"
    ```
-3. Run `dart run flutter_launcher_icons`
-4. Verifikasi icon muncul di emulator
+4. Run `dart run flutter_launcher_icons`
+5. Verifikasi icon muncul di emulator (reboot app)
+
+**Post-task:**
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §2 — update assets tree
 
 ---
 
@@ -277,13 +355,66 @@
 
 **File:** `backend/src/modules/orders/orders.controller.ts`
 
-**Masalah:** `POST /orders` adalah endpoint publik (tanpa auth). Bisa di-spam untuk DoS.
+**Masalah:** `POST /orders` adalah endpoint publik (tanpa auth). Bisa di-spam untuk DoS. Lihat `orders.controller.ts:25-28`.
 
 **Tugas:**
 1. Import `@Throttle` dari `@nestjs/throttler`
 2. Tambahkan decorator `@Throttle({ default: { limit: 5, ttl: 60000 } })` di method `createOrder`
 3. Ini membatasi 5 request per menit per IP untuk endpoint ini
 4. Test: kirim 6 request berturut-turut, pastikan request ke-6 return 429
+
+**Post-task:**
+- Update `docs/backend/BACKEND_API_REFERENCE.md` §5 — tambah catatan rate limiting
+- Update `docs/backend/BACKEND_BUSINESS_LOGIC.md` §1 — tambah catatan di Order Creation
+
+---
+
+### P1-6: Consolidate Dio Client + Remove Dead Code
+
+> **Gabungan P0-2 + P2-2.** Kerjakan sequential: step 1-3 dulu (consolidate), baru step 4-6 (hapus).
+
+**Step 1 — Buat shared factory:**
+
+Buat `frontend/lib/network/api_client.dart`:
+```dart
+Dio createApiClient(String baseUrl, {Future<String?> Function()? readToken}) {
+  final dio = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 15), receiveTimeout: const Duration(seconds: 20)));
+  if (readToken != null) {
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await readToken();
+        if (token != null) options.headers['Authorization'] = 'Bearer $token';
+        handler.next(options);
+      },
+    ));
+  }
+  return dio;
+}
+```
+
+**Step 2 — Refactor 3 feature Dio instances:**
+
+- `CustomerApiClient` (`customer_repositories.dart:73-106`): ganti konstruksi Dio pake `createApiClient()`
+- `storeAdminDioProvider` (`store_admin_repositories.dart`): ganti pake factory
+- `AdminApiClient` (`platform_admin_repositories.dart`): ganti pake factory
+
+**Step 3 — Hapus file dead code:**
+- `frontend/lib/network/dio_client.dart` (27 baris) — `dioClientProvider` tidak dipakai siapapun
+- `frontend/lib/repositories/base_repository.dart` (7 baris) — tidak di-extend
+- `frontend/lib/models/api_response.dart` (5 baris) — tidak dipakai
+
+**Step 4 — Hapus 3 router provider yang tidak dipakai:**
+- `customer_router.dart:41-59` — `customerRouterProvider` tidak dipakai (main.dart pake `appRouterProvider`). Hapus `customerRouterProvider` dan `_RouterRefresh`, keep `customerRoutes` saja.
+- `store_admin_router.dart:30-44` — `storeAdminRouterProvider` tidak dipakai. Hapus `storeAdminRouterProvider` dan `_RouterRefresh`, keep `storeAdminRoutes` saja.
+- `platform_admin_router.dart:13-26` — `adminRouterProvider` tidak dipakai. Hapus `adminRouterProvider` dan `_AdminRefresh`, keep `adminRoutes` saja.
+
+**Verifikasi:** `flutter analyze` harus pass, app harus bisa run.
+
+**Post-task:**
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §6 — update Network Layer section
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §2 — hapus `dio_client.dart`
+- Update `docs/frontend/FRONTEND_STORE_ADMIN.md` §2 — update Dio reference
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §2 — remove `base_repository.dart` dan `api_response.dart` dari tree
 
 ---
 
@@ -320,16 +451,12 @@ jobs:
       - run: cd frontend && flutter test
 ```
 
-### P2-2: Consolidate Dio Client Setup
+**Post-task:**
+- Update `README.md` — tambah badge CI status
 
-**Masalah:** 3 Dio instances dibuat terpisah (customer, store_admin, platform_admin) dengan interceptor pattern yang sama.
+---
 
-**Tugas:**
-1. Buat `frontend/lib/network/api_client.dart` — factory function yang terima `tokenStorage` dan return configured `Dio`
-2. Refactor `CustomerApiClient`, `storeAdminDioProvider`, `AdminApiClient` untuk pakai factory ini
-3. Hapus `dio_client.dart` yang lama (sudah dead code)
-
-### P2-3: Add Widget Tests
+### P2-2: Add Widget Tests
 
 **Files to create:**
 - `frontend/test/screens/home_screen_test.dart`
@@ -345,9 +472,16 @@ jobs:
 4. StatusPill shows correct color per OrderStatus
 5. StoreCard shows store name, address, rating
 
-### P2-4: Implement Branded Splash Screen
+**Post-task:**
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` — tambah catatan test
+
+---
+
+### P2-3: Implement Branded Splash Screen
 
 **File:** `frontend/android/app/src/main/res/drawable/launch_background.xml`
+
+**Prasyarat:** P1-4 harus selesai dulu (file `logo.png` asli sudah ada).
 
 **Tugas:**
 1. Tambah `flutter_native_splash` ke dev_dependencies
@@ -361,15 +495,8 @@ jobs:
 3. Run `dart run flutter_native_splash:create`
 4. Verifikasi splash muncul sebelum app load
 
-### P2-5: Add `GET /me/sessions` and `DELETE /me/sessions/:id` Endpoints
-
-**File:** `backend/src/modules/users/users.controller.ts` dan `users.service.ts`
-
-**Tugas:**
-1. `GET /me/sessions` — return `UserSession[]` untuk userId, select: id, deviceInfo, ipAddress, lastActiveAt, isActive, createdAt
-2. `DELETE /me/sessions/:id` — set `isActive: false` untuk session dengan matching userId
-3. `DELETE /me/sessions` (logout all) — set `isActive: false` untuk semua session userId
-4. Add DTO: `SessionResponseDto` (exclude tokenHash dari response)
+**Post-task:**
+- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §8 — update Entry Point & Splash Logic
 
 ---
 
@@ -385,7 +512,7 @@ backend/
 
 frontend/
   lib/core/                  ← AppConfig, ApiException
-  lib/network/               ← Dio client, error mapper
+  lib/network/               ← Dio client, error mapper (api_client.dart setelah P1-6)
   lib/storage/               ← Token storage
   lib/shared_widgets/        ← Reusable widgets
   lib/features/customer/     ← Customer feature (clean architecture)
