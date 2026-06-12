@@ -4,11 +4,30 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreProperties = java.util.Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(keystorePropertiesFile.inputStream())
+fun loadProperties(path: String): Map<String, String> {
+    val props = mutableMapOf<String, String>()
+    val file = rootProject.file(path)
+    if (file.exists()) {
+        file.readLines().forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.isNotEmpty() && !trimmed.startsWith("#")) {
+                val eq = trimmed.indexOf('=')
+                if (eq > 0) {
+                    props[trimmed.substring(0, eq).trim()] = trimmed.substring(eq + 1).trim()
+                }
+            }
+        }
+    }
+    return props
 }
+
+val keystoreProps = loadProperties("key.properties")
+val storeFile = if (keystoreProps.containsKey("storeFile")) {
+    rootProject.file(keystoreProps["storeFile"]!!)
+} else {
+    null
+}
+val hasKeystore = storeFile != null && storeFile.exists()
 
 android {
     namespace = "id.servisgadget.servisgadget_foundation"
@@ -21,35 +40,31 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
         applicationId = "id.servisgadget.servisgadget_foundation"
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+    if (hasKeystore) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProps["keyAlias"]!!
+                keyPassword = keystoreProps["keyPassword"]!!
+                storeFile = storeFile!!
+                storePassword = keystoreProps["storePassword"]!!
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
