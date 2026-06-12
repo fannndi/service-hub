@@ -7,6 +7,85 @@
 
 ## P0 — Critical (Kerjakan Dulu)
 
+### P0-0: Implement Dynamic Device Model Dropdown from Sparepart Data
+
+**Goal:** Brand & device model di Service Now Step 1 dan StoreListScreen berisi data real-time dari sparepart di semua toko, bukan hardcoded.
+
+**Backend:**
+
+1. **Buat endpoint baru** `GET /spareparts/device-models` di `spareparts.controller.ts`:
+   ```typescript
+   // spareparts.service.ts — method baru
+   async getDeviceModels() {
+     const results = await this.prisma.sparePart.findMany({
+       where: { status: { not: 'discontinued' } },
+       select: { brand: true, deviceModel: true },
+       distinct: ['brand', 'deviceModel'],
+       orderBy: [{ brand: 'asc' }, { deviceModel: 'asc' }],
+     });
+     const map = new Map<string, string[]>();
+     for (const r of results) {
+       if (!map.has(r.brand)) map.set(r.brand, []);
+       map.get(r.brand)!.push(r.deviceModel);
+     }
+     return Array.from(map.entries()).map(([brand, models]) => ({ brand, models }));
+   }
+   ```
+   - Route: `GET /spareparts/device-models` → `sparepartsController.getDeviceModels()`
+   - Response: `{ data: [{ brand: "Google", models: ["Pixel 3", "Pixel 4"] }, ...] }`
+   - Query sparepart dengan `status != discontinued`, distinct `(brand, deviceModel)`
+   - Sort alphabetical by brand, then by device model
+
+2. **Update `spareparts.controller.ts`:** tambah route baru
+
+**Frontend — Model:**
+
+3. **File baru:** `frontend/lib/features/customer/domain/device_model.dart`
+   ```dart
+   class DeviceModelGroup {
+     final String brand;
+     final List<String> models;
+     const DeviceModelGroup({required this.brand, required this.models});
+
+     factory DeviceModelGroup.fromJson(Map<String, dynamic> json) =>
+         DeviceModelGroup(
+           brand: json['brand'] as String,
+           models: (json['models'] as List).cast<String>(),
+         );
+   }
+   ```
+
+**Frontend — Repository:**
+
+4. **Edit `customer_repositories.dart`:** tambah method `getDeviceModels()` → `GET /spareparts/device-models` → `List<DeviceModelGroup>`
+
+**Frontend — ServiceFlowScreen Step 1 (line 810-837):**
+
+5. **Edit `customer_screens.dart`** — ganti TextField Brand & Model jadi DropdownButtonFormField:
+   - Brand dropdown: isi dari `getDeviceModels()`, sorted alphabetical
+   - Model dropdown: isi dari `models` milik brand yang dipilih, sorted alphabetical
+   - User WAJIB klik (no auto-select, bahkan jika cuma 1 pilihan)
+   - Loading state: `CircularProgressIndicator`
+   - Empty state: "Belum ada sparepart tersedia"
+   - State management via `StatefulWidget` existing (gunakan `initState` untuk fetch data)
+
+6. **Edit `customer_screens.dart` (line 482-489)** — ganti hardcoded brand chips:
+   ```dart
+   // Sebelum:
+   ['All', 'Samsung', 'Apple', 'Xiaomi', 'Oppo', 'Realme', 'Vivo']
+   // Sesudah:
+   ['All', ...deviceModelGroups.map((g) => g.brand)]
+   ```
+
+**Verifikasi:**
+- `flutter analyze` — 0 errors
+- `flutter run` — app running di emulator
+- Step 1 Service Now: dropdown muncul dengan brand dari database
+- Pilih brand → model terfilter sesuai brand
+- StoreListScreen: brand chips dari database
+
+---
+
 ### P0-1: Split `customer_screens.dart` God File
 
 **File:** `frontend/lib/features/customer/presentation/screens/customer_screens.dart` (2162 baris)
