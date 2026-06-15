@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { EmailService } from './email.service';
 import axios from 'axios';
 import { AppConfig } from '../../config/configuration';
 
@@ -11,6 +12,7 @@ export class NotificationsService {
   constructor(
     private config: ConfigService<AppConfig>,
     private prisma: PrismaService,
+    private email: EmailService,
   ) {}
 
   async send(target: string, message: string, messageType: string): Promise<void> {
@@ -49,6 +51,17 @@ export class NotificationsService {
               },
             })
             .catch((e: unknown) => this.logger.error('Log failed notif error:', e));
+
+          // Email fallback for critical notifications
+          const emailCfg = this.config.get('email', { infer: true });
+          if (emailCfg?.storeEmail && ['new_order', 'waiting_payment'].includes(messageType)) {
+            const fallback = await this.email.send(emailCfg.storeEmail, `[ServisGadget] ${messageType}`, message);
+            if (fallback) {
+              this.logger.log(`Email fallback sent to ${emailCfg.storeEmail} for ${messageType}`);
+            } else {
+              this.logger.warn(`Email fallback also failed for ${messageType}`);
+            }
+          }
         }
       }
     }

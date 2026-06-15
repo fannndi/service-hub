@@ -15,6 +15,7 @@ export interface AppConfig {
   };
   credential: { encryptionKey: string };
   wa: { gatewayUrl: string; token: string; senderNumber: string };
+  email: { smtpHost: string; smtpPort: number; smtpUser: string; smtpPass: string; smtpFrom: string; storeEmail: string };
   storage: {
     endpoint: string;
     accessKey: string;
@@ -90,6 +91,15 @@ export default (): AppConfig => ({
     gatewayUrl: process.env.WA_GATEWAY_URL || '',
     token: process.env.WA_GATEWAY_TOKEN || '',
     senderNumber: process.env.WA_SENDER_NUMBER || '',
+  },
+
+  email: {
+    smtpHost: process.env.SMTP_HOST || '',
+    smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+    smtpUser: process.env.SMTP_USER || '',
+    smtpPass: process.env.SMTP_PASS || '',
+    smtpFrom: process.env.SMTP_FROM || 'noreply@servisgadget.com',
+    storeEmail: process.env.STORE_EMAIL || '',
   },
 
   storage: {
