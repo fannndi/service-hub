@@ -1,7 +1,30 @@
 import 'package:go_router/go_router.dart';
 
 import '../../domain/customer_models.dart';
+import '../screens/splash_screen.dart';
+import '../screens/welcome_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/service_flow_screen.dart';
+import '../screens/change_password_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/store_list_screen.dart';
+import '../screens/store_detail_screen.dart';
 import '../screens/booking_form_screen.dart';
+import '../screens/booking_success_screen.dart';
+import '../screens/order_list_screen.dart';
+import '../screens/order_detail_screen.dart';
+import '../screens/tracking_screen.dart';
+import '../screens/payment_upload_screen.dart';
+import '../screens/review_form_screen.dart';
+import '../screens/warranty_claim_screen.dart';
+import '../screens/review_success_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/sessions_screen.dart';
+import '../screens/security_screen.dart';
+import '../screens/coupons_screen.dart';
+import '../screens/notifications_screen.dart';
+import '../screens/notification_detail_screen.dart';
+import '../screens/notification_preferences_screen.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:servisgadget_foundation/features/customer/presentation/screens/booking_form_screen.dart';
+import 'package:servisgadget_foundation/features/customer/presentation/screens/welcome_screen.dart';
 import 'package:servisgadget_foundation/features/customer/presentation/widgets/customer_widgets.dart';
 import 'package:servisgadget_foundation/shared_widgets/status_badge.dart';
 import 'package:flutter/material.dart';

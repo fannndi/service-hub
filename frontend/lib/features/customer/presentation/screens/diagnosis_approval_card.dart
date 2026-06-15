@@ -1,0 +1,76 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../application/customer_providers.dart';
+import '../../data/customer_repositories.dart';
+import '../../domain/customer_models.dart';
+import '../../domain/user_session.dart';
+import '../../../../shared_widgets/error_state.dart';
+import '../../../../shared_widgets/status_badge.dart';
+import '../../../../shared_widgets/empty_state.dart';
+import '../../../../shared_widgets/formatters.dart';
+import '../widgets/customer_widgets.dart';
+
+class DiagnosisApprovalCard extends ConsumerStatefulWidget {
+  const DiagnosisApprovalCard({super.key, required this.order});
+  final CustomerOrder order;
+  @override
+  ConsumerState<DiagnosisApprovalCard> createState() =>
+      _DiagnosisApprovalCardState();
+}
+class _DiagnosisApprovalCardState extends ConsumerState<DiagnosisApprovalCard> {
+  bool _loading = false;
+  Future<void> _approve(bool approve) async {
+    setState(() => _loading = true);
+    try {
+      if (approve) {
+        await ref.read(orderRepositoryProvider).approveOrder(widget.order.id);
+      } else {
+        await ref.read(orderRepositoryProvider).rejectOrder(widget.order.id);
+      }
+      ref.invalidate(orderDetailProvider(widget.order.id));
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Card(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Hasil Diagnosa',
+                style: TextStyle(fontWeight: FontWeight.w900)),
+            if (widget.order.diagnosisNote != null)
+              Text(widget.order.diagnosisNote!),
+            const SizedBox(height: 8),
+            ...widget.order.items.map((item) => Text(
+                '${item.serviceType}: ${rupiah(item.finalItemPrice ?? item.itemPrice)}')),
+            if (widget.order.serviceFee != null)
+              Text('Service Fee: ${rupiah(widget.order.serviceFee!)}'),
+            const Divider(),
+            Text('Total: ${rupiah(widget.order.finalPrice ?? 0)}',
+                style: const TextStyle(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                  child: FilledButton(
+                      onPressed: _loading ? null : () => _approve(true),
+                      child: const Text('Setuju'))),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: OutlinedButton(
+                      onPressed: _loading ? null : () => _approve(false),
+                      child: const Text('Tolak'))),
+            ]),
+          ]),
+        ),
+      );
+}
