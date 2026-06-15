@@ -14,9 +14,9 @@
 
 ### 📊 Progress
 
-| Level | Total | Done | Remaining |
-|-------|-------|------|-----------|
-| P0 | 3 | 1 | 2 |
+| Level | Total | Done | Remaining | Notes |
+|-------|-------|------|-----------|-------|
+| P0 | 3 | 1 | 2 | P0-1 split incomplete — cleanup needed |
 | P1 | 6 | 1 | 5 |
 | P2 | 3 | 0 | 3 |
 | P3 | 10 | 0 | 10 |
@@ -32,6 +32,8 @@
 | P1-4 | 30m | App icon — generate PNG + `flutter_launcher_icons` |
 | P2-3 | 20m | Splash screen — `flutter_native_splash` |
 | P1-6 step 4-6 | 40m | Delete dead code files + unused routers |
+
+**Next recommended:** ⚠️ P0-1 cleanup — setiap file hasil split punya 17-48 class duplikat. Bersihin dulu sebelum tugas lain.
 
 ---
 
@@ -76,48 +78,33 @@
 
 ## P0 — Critical
 
-### P0-1: Split `customer_screens.dart` God File
+### ❌ P0-1: Split `customer_screens.dart` God File — INCOMPLETE
 
-**File:** `frontend/lib/features/customer/presentation/screens/customer_screens.dart` (2162 baris)
+**Done by:** AI Agent (2026-06-15) — hit context limit mid-split
+**Commit:** `11fd7e7`
 
-**Masalah:** 25 screen classes dalam 1 file. Sulit di-maintain, lambat di-compile, tidak scalable.
+**What's done:**
+- ✅ 25 screen files created (renamed `customer_screens.dart` → `booking_form_screen.dart`)
+- ✅ `customer_screens.dart` removed
+- ✅ Router import fixed (now imports individual screen files)
 
-**Tugas:**
-1. Buat folder `frontend/lib/features/customer/presentation/screens/` (sudah ada)
-2. Pecah setiap screen class ke file terpisah:
-   - `splash_screen.dart` — `SplashScreen`
-   - `welcome_screen.dart` — `WelcomeScreen`
-   - `login_screen.dart` — `LoginScreen`
-   - `change_password_screen.dart` — `ChangePasswordScreen`
-   - `home_screen.dart` — `HomeScreen`
-   - `store_list_screen.dart` — `StoreListScreen`
-   - `store_detail_screen.dart` — `StoreDetailScreen`
-   - `service_flow_screen.dart` — `ServiceFlowScreen` (5-step wizard, 482 baris sendiri)
-   - `booking_form_screen.dart` — `BookingFormScreen`
-   - `booking_success_screen.dart` — `BookingSuccessScreen`
-   - `order_list_screen.dart` — `OrderListScreen`
-   - `order_detail_screen.dart` — `OrderDetailScreen`
-   - `tracking_screen.dart` — `TrackingScreen`
-   - `payment_upload_screen.dart` — `PaymentUploadScreen`
-   - `review_form_screen.dart` — `ReviewFormScreen`
-   - `review_success_screen.dart` — `ReviewSuccessScreen`
-   - `warranty_claim_screen.dart` — `WarrantyClaimScreen`
-   - `profile_screen.dart` — `ProfileScreen`
-   - `coupons_screen.dart` — `CouponsScreen`
-   - `notifications_screen.dart` — `NotificationsScreen`
-   - `notification_detail_screen.dart` — `NotificationDetailScreen`
-   - `notification_preferences_screen.dart` — `NotificationPreferencesScreen`
-   - `sessions_screen.dart` — `SessionsScreen`
-   - `security_screen.dart` — `SecurityScreen`
-   - `diagnosis_approval_card.dart` — `DiagnosisApprovalCard` (widget, bukan screen)
-3. Setiap file harus import dari `../../domain/customer_models.dart` dan `../../application/customer_providers.dart`
-4. Update `customer_router.dart` untuk import dari file-file baru
-5. Hapus `customer_screens.dart` setelah semua dipindah
-6. Pastikan `flutter analyze` pass tanpa error
+**What's broken — CRITICAL:**
+- ❌ Setiap file berisi DUPLIKAT semua class dari file asal
+- ❌ `SplashScreen` class muncul 48× di 25 file berbeda
+- ❌ Setiap file seharusnya cuma berisi class screen-nya sendiri (2-3 class per file)
+- ❌ File size: 3000-4300 baris per file (harusnya < 500 baris)
+- ❌ Semua manfaat split (compile speed, maintainability, scalability) hilang
+
+**Tugas cleanup:**
+1. Untuk setiap file di `screens/`, hapus SEMUA class kecuali yang sesuai nama file
+2. Contoh: `home_screen.dart` harus cuma punya `HomeScreen` + `_HomeScreenState` + `_SummaryTile`
+3. Hapus class duplikat: `SplashScreen`, `WelcomeScreen`, `LoginScreen`, dll dari setiap file
+4. Pastikan setiap file punya import yang benar (`customer_models.dart`, `customer_providers.dart`, `shared_widgets/`)
+5. Verifikasi: `flutter analyze` → 0 errors
+6. Hapus `booking_form_screen.dart` (file asal) setelah semua screen ter-extract dengan benar
 
 **Post-task:**
-- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4 — update jadi file list (bukan 1 file)
-- Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §2 — update tree structure
+- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4
 
 ---
 
