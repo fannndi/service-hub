@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../screens/store_admin_screens.dart';
 
@@ -26,26 +24,3 @@ final storeAdminRoutes = <RouteBase>[
   GoRoute(path: '/store/settings', builder: (_, __) => const StoreSettingsScreen()),
   GoRoute(path: '/store/analytics', builder: (_, __) => const AnalyticsScreen()),
 ];
-
-final storeAdminRouterProvider = Provider<GoRouter>((ref) => GoRouter(
-      initialLocation: '/store/dashboard',
-      refreshListenable: _RouterRefresh(ref),
-      redirect: (context, state) {
-        final auth = ref.read(storeAuthControllerProvider);
-        final session = auth.valueOrNull;
-        final loc = state.matchedLocation;
-        if (auth.isLoading) return null;
-        if (session == null && loc != '/store-login' && loc != '/welcome' && loc != '/login' && loc != '/splash') return '/store-login';
-        if (session != null && session.isFirstLogin && loc != '/store/change-password') return '/store/change-password';
-        if (session != null && loc == '/store-login') return '/store/dashboard';
-        return null;
-      },
-      routes: storeAdminRoutes,
-    ));
-
-class _RouterRefresh extends ChangeNotifier {
-  _RouterRefresh(this.ref) {
-    ref.listen(storeAuthControllerProvider, (_, __) => notifyListeners());
-  }
-  final Ref ref;
-}

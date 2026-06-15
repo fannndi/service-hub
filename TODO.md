@@ -16,11 +16,11 @@
 
 | Level | Total | Done | Remaining | Notes |
 |-------|-------|------|-----------|-------|
-| P0 | 3 | 1 | 2 | P0-1 split incomplete — cleanup needed |
-| P1 | 6 | 1 | 5 |
-| P2 | 3 | 0 | 3 |
+| P0 | 3 | 1 | 2 | P0-1 split failed — reverted to monolithic |
+| P1 | 6 | 2 | 4 | P1-6 step 4-6 dead code cleanup done |
+| P2 | 3 | 1 | 2 |
 | P3 | 10 | 0 | 10 |
-| **Total** | **22** | **2** | **20** |
+| **Total** | **22** | **4** | **18** |
 
 **Next recommended:** P0-1 (Split `customer_screens.dart`) — maintainability, atau P1-3 (Integration Tests) — coverage.
 
@@ -74,37 +74,57 @@
 
 ---
 
+## ✅ Completed — P2-1: CI/CD Pipeline
+
+**Done by:** Reviewer (2026-06-15)
+
+### CI/CD
+- ✅ `.github/workflows/ci.yml` created
+- ✅ Backend job: checkout → setup Node 20 → npm ci → prisma generate → typecheck → test
+- ✅ Frontend job: checkout → setup Flutter 3.24 → pub get → analyze → test
+
 ---
 
-## P0 — Critical
+## ✅ Completed — P1-6 Step 4-6: Remove Dead Code
 
-### ❌ P0-1: Split `customer_screens.dart` God File — INCOMPLETE
+**Done by:** Reviewer (2026-06-15)
 
-**Done by:** AI Agent (2026-06-15) — hit context limit mid-split
-**Commit:** `11fd7e7`
+### Files deleted
+- ✅ `frontend/lib/network/dio_client.dart` — `dioClientProvider` not used
+- ✅ `frontend/lib/repositories/base_repository.dart` — not extended anywhere
+- ✅ `frontend/lib/models/api_response.dart` — not referenced
 
-**What's done:**
-- ✅ 25 screen files created (renamed `customer_screens.dart` → `booking_form_screen.dart`)
-- ✅ `customer_screens.dart` removed
-- ✅ Router import fixed (now imports individual screen files)
+### Unused routers cleaned
+- ✅ `customer_router.dart` — removed `customerRouterProvider` + `_RouterRefresh`
+- ✅ `store_admin_router.dart` — removed `storeAdminRouterProvider` + `_RouterRefresh`
+- ✅ `platform_admin_router.dart` — removed `adminRouterProvider` + `_AdminRefresh`
 
-**What's broken — CRITICAL:**
-- ❌ Setiap file berisi DUPLIKAT semua class dari file asal
-- ❌ `SplashScreen` class muncul 48× di 25 file berbeda
-- ❌ Setiap file seharusnya cuma berisi class screen-nya sendiri (2-3 class per file)
-- ❌ File size: 3000-4300 baris per file (harusnya < 500 baris)
-- ❌ Semua manfaat split (compile speed, maintainability, scalability) hilang
+### Verification
+- ✅ `flutter analyze` — 0 errors
 
-**Tugas cleanup:**
-1. Untuk setiap file di `screens/`, hapus SEMUA class kecuali yang sesuai nama file
-2. Contoh: `home_screen.dart` harus cuma punya `HomeScreen` + `_HomeScreenState` + `_SummaryTile`
-3. Hapus class duplikat: `SplashScreen`, `WelcomeScreen`, `LoginScreen`, dll dari setiap file
-4. Pastikan setiap file punya import yang benar (`customer_models.dart`, `customer_providers.dart`, `shared_widgets/`)
-5. Verifikasi: `flutter analyze` → 0 errors
-6. Hapus `booking_form_screen.dart` (file asal) setelah semua screen ter-extract dengan benar
+---
 
-**Post-task:**
-- Update `docs/frontend/FRONTEND_CUSTOMER.md` §4
+## ❌ P0-1: Split `customer_screens.dart` — FAILED
+
+**Attempted by:** AI Agent (2026-06-15) — split created ALL classes in EVERY file
+**Reverted by:** Reviewer (2026-06-15) — restored monolithic + deleted 22 broken files
+
+### What happened
+- AI agent copied entire original file into each new file (48× SplashScreen, 46× WelcomeScreen, etc.)
+- Python script cleaned most files (stripped duplicates), but 5 files were still broken (syntax errors)
+- Reviewer reverted: restored `booking_form_screen.dart` as monolithic source (all 31 classes)
+- Kept `splash_screen.dart` + `welcome_screen.dart` as proper standalone files
+
+### Why reverted
+- Automated cleanup produced broken Dart code in 5 files
+- Manual fixing of 22 files each with 3000-4300 lines is too time-consuming
+- Project compiles clean with monolithic approach (0 errors)
+
+### For future
+- Split properly with small PRs, one screen at a time
+- Start with simple screens (`SplashScreen`, `WelcomeScreen` — already done)
+- Each screen file: 1 screen class + its state + imports only
+- Verify `flutter analyze` pass after each split
 
 ---
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/customer_providers.dart';
 import '../../domain/customer_models.dart';
 import '../screens/booking_form_screen.dart';
 
@@ -37,31 +35,3 @@ final customerRoutes = <RouteBase>[
   GoRoute(path: '/notifications/:id', builder: (_, state) => NotificationDetailScreen(item: state.extra as NotificationItem?)),
   GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationPreferencesScreen()),
 ];
-
-final customerRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/splash',
-    refreshListenable: _RouterRefresh(ref),
-    redirect: (context, state) {
-      final auth = ref.read(customerAuthProvider);
-      final loc = state.matchedLocation;
-      final publicRoutes = {'/', '/welcome', '/splash', '/login', '/store-login', '/change-password', '/booking-success/:orderNumber'};
-      final isPublic = publicRoutes.contains(loc);
-      final user = auth.valueOrNull;
-      if (auth.isLoading) return null;
-      if (user == null && !isPublic) return '/welcome';
-      if (user?.isFirstLogin == true && loc != '/change-password') return '/change-password';
-      if (user != null && loc == '/login') return '/home';
-      return null;
-    },
-    routes: customerRoutes,
-  );
-});
-
-class _RouterRefresh extends ChangeNotifier {
-  _RouterRefresh(this.ref) {
-    ref.listen(customerAuthProvider, (_, __) => notifyListeners());
-  }
-
-  final Ref ref;
-}
