@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,2438 +10,2177 @@ import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
 
-class BookingFormScreen extends ConsumerStatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
+  const SplashScreen({super.key});
 
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
-  );
-    ),
-      ]),
-          )),
-            label: Text(_loading ? 'Membuat...' : 'Buat Booking'),
-            icon: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
-            onPressed: _loading ? null : _createBooking,
-          Expanded(child: FilledButton.icon(
-        if (_step == 4)
-          )),
-            label: Text(_step == 1 ? 'Cari Toko' : 'Lanjut'),
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: _loading ? null : _nextStep,
-          Expanded(child: FilledButton.icon(
-        if (_step < 4)
-        if (_step > 0) const SizedBox(width: 12),
-          )),
-            label: const Text('Kembali'),
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _loading ? null : _prevStep,
-          Expanded(child: OutlinedButton.icon(
-        if (_step > 0)
-      child: Row(children: [
-      padding: const EdgeInsets.all(16),
-    child: Padding(
-  Widget _buildBottomNav(ThemeData theme) => SafeArea(
 
-  );
-    ]),
-      Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-      SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    padding: const EdgeInsets.symmetric(vertical: 6),
-  Widget _confirmRow(ThemeData theme, String label, String value) => Padding(
-
-  );
-    ],
-      ),
-        decoration: const InputDecoration(labelText: 'Kode Kupon (opsional)', prefixIcon: Icon(Icons.local_offer_outlined), isDense: true),
-        controller: _coupon,
-      TextField(
-      const SizedBox(height: 16),
-      ),
-        ),
-          ]),
-            Text('* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-            const SizedBox(height: 4),
-            ]),
-              Text(rupiah(_estimateCost), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-              const Spacer(),
-              Text('Estimasi Biaya', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            Row(children: [
-            const Divider(height: 24),
-            _confirmRow(theme, 'Pengiriman', _delivery == 'walk_in' ? 'Antar ke Toko' : 'Pickup Kurir'),
-            const Divider(),
-            ],
-              _confirmRow(theme, 'Alamat', _address.text),
-              const Divider(),
-            if (_delivery == 'courier_pickup') ...[
-            _confirmRow(theme, 'WhatsApp', _phone.text),
-            const Divider(),
-            _confirmRow(theme, 'Nama', _name.text),
-            const Divider(),
-            _confirmRow(theme, 'Keluhan', _complaint.text),
-            const Divider(),
-            _confirmRow(theme, 'Layanan', _serviceTypeLabels[_serviceType]!),
-            const Divider(),
-            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'}'),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          padding: const EdgeInsets.all(16),
-        child: Padding(
-      Card(
-      const SizedBox(height: 16),
-      Text('Konfirmasi Booking', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep5(ThemeData theme) => ListView(
-
-  );
-    ],
-      ],
-        ),
-          decoration: const InputDecoration(labelText: 'Alamat Penjemputan', prefixIcon: Icon(Icons.location_on_outlined), alignLabelWithHint: true),
-          controller: _address, maxLines: 2, textCapitalization: TextCapitalization.sentences,
-        TextField(
-        const SizedBox(height: 16),
-      if (_delivery == 'courier_pickup') ...[
-      ),
-        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
-        controller: _phone, keyboardType: TextInputType.phone,
-      TextField(
-      const SizedBox(height: 16),
-      ),
-        decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outline)),
-        controller: _name, textCapitalization: TextCapitalization.words,
-      TextField(
-      const SizedBox(height: 24),
-      ),
-        showSelectedIcon: false,
-        onSelectionChanged: (v) => setState(() => _delivery = v.first),
-        selected: {_delivery},
-        ],
-          ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'), icon: Icon(Icons.local_shipping)),
-          ButtonSegment(value: 'walk_in', label: Text('Antar ke Toko'), icon: Icon(Icons.store)),
-        segments: const [
-      SegmentedButton<String>(
-      const SizedBox(height: 24),
-      Text('Data Diri & Pengiriman', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep4(ThemeData theme) => ListView(
-
-  }
-    );
-      ],
-        }),
-          );
-            ),
-              ),
-                ]),
-                  ]),
-                    Text('Estimasi awal: ${rupiah(store.estimatedCost)}', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.info_outline, size: 16),
-                  Row(children: [
-                  const Divider(height: 16),
-                  )),
-                    ]),
-                      Text(rupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 12),
-                      ),
-                        child: Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                        ),
-                          borderRadius: BorderRadius.circular(4),
-                          color: sp.status == 'available' ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                        decoration: BoxDecoration(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      Container(
-                      Expanded(child: Text(sp.partName, style: theme.textTheme.bodyMedium)),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.build, size: 14),
-                    child: Row(children: [
-                    padding: const EdgeInsets.only(top: 4),
-                  ...store.spareparts.map((sp) => Padding(
-                  const SizedBox(height: 8),
-                  ),
-                    child: Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall),
-                    ),
-                      borderRadius: BorderRadius.circular(8),
-                      color: theme.colorScheme.tertiaryContainer,
-                    decoration: BoxDecoration(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  Container(
-                  const SizedBox(height: 8),
-                  ]),
-                    Expanded(child: Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                  Row(children: [
-                  const SizedBox(height: 4),
-                  ]),
-                    ]),
-                      Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodyMedium),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.star, size: 18, color: Colors.amber),
-                    Row(children: [
-                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                  Row(children: [
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                padding: const EdgeInsets.all(16),
-              child: Padding(
-              onTap: () => _selectStore(store),
-              borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-            ),
-              side: selected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
-              borderRadius: BorderRadius.circular(12),
-            shape: RoundedRectangleBorder(
-            color: selected ? theme.colorScheme.primaryContainer : null,
-            margin: const EdgeInsets.only(bottom: 12),
-          return Card(
-          final selected = store.storeId == _selectedStoreId;
-        ..._matchedStores.map((store) {
-        const SizedBox(height: 16),
-        Text('${_matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
-      children: [
-      padding: const EdgeInsets.all(16),
-    return ListView(
-    }
-      );
-        ],
-          ),
-            label: const Text('Kembali'),
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _prevStep,
-          FilledButton.icon(
-          const SizedBox(height: 24),
-          Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 16),
-          Text('Tidak ada toko yang cocok untuk perangkat ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
-          const SizedBox(height: 16),
-          const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
-          const SizedBox(height: 24),
-          Text('Rekomendasi Toko Mitra', style: theme.textTheme.titleLarge),
-        children: [
-        padding: const EdgeInsets.all(16),
-      return ListView(
-    if (_matchedStores.isEmpty) {
-    }
-      return const Center(child: CircularProgressIndicator());
-    if (_loading && _matchedStores.isEmpty) {
-  Widget _buildStep3(ThemeData theme) {
-
-  );
-    ],
-      ),
-        ),
-          alignLabelWithHint: true,
-          prefixIcon: Padding(padding: EdgeInsets.only(bottom: 64), child: Icon(Icons.report_problem_outlined)),
-          hintText: 'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
-          labelText: 'Keluhan / Deskripsi Kerusakan',
-        decoration: const InputDecoration(
-        controller: _complaint, maxLines: 4, textCapitalization: TextCapitalization.sentences,
-      TextField(
-      const SizedBox(height: 24),
-      ),
-        )).toList(),
-          onSelected: (v) { if (v) setState(() => _serviceType = e.key); },
-          selected: _serviceType == e.key,
-          label: Text(e.value),
-        children: _serviceTypeLabels.entries.map((e) => ChoiceChip(
-        spacing: 8, runSpacing: 8,
-      Wrap(
-      const SizedBox(height: 24),
-      Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-      const SizedBox(height: 8),
-      Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep2(ThemeData theme) => ListView(
-
-  }
-    );
-      ],
-        ),
-          },
-            ]);
-              ),
-                onChanged: _selectedBrand == null ? null : (value) => setState(() => _selectedModel = value),
-                items: models.map((model) => DropdownMenuItem(value: model, child: Text(model))).toList(),
-                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
-                value: modelValue,
-              DropdownButtonFormField<String>(
-              const SizedBox(height: 16),
-              ),
-                }),
-                  _selectedModel = null;
-                  _selectedBrand = value;
-                onChanged: (value) => setState(() {
-                items: brands.map((brand) => DropdownMenuItem(value: brand, child: Text(brand))).toList(),
-                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
-                value: brandValue,
-              DropdownButtonFormField<String>(
-            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-            final modelValue = models.contains(_selectedModel) ? _selectedModel : null;
-            final brandValue = brands.contains(_selectedBrand) ? _selectedBrand : null;
-                : (selectedGroups.first.models.toSet().toList()..sort());
-                ? const <String>[]
-            final models = selectedGroups.isEmpty
-            final selectedGroups = groups.where((group) => group.brand == _selectedBrand).toList();
-            final brands = groups.map((group) => group.brand).toSet().toList()..sort();
-
-            }
-              return const EmptyMessage('Belum ada sparepart tersedia');
-            if (groups.isEmpty) {
-          data: (groups) {
-          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
-        deviceModels.when(
-        const SizedBox(height: 24),
-        ),
-          showSelectedIcon: false,
-          onSelectionChanged: (v) => setState(() => _deviceType = v.first),
-          selected: {_deviceType},
-          ],
-            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
-            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
-          segments: const [
-        SegmentedButton<String>(
-        const SizedBox(height: 24),
-        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
-      children: [
-      padding: const EdgeInsets.all(16),
-    return ListView(
-
-    final deviceModels = ref.watch(deviceModelsProvider);
-  Widget _buildStep1(ThemeData theme) {
-
-  }
-    );
-      ),
-        ),
-          ],
-            _buildBottomNav(theme),
-            ),
-              ),
-                ],
-                  _buildStep5(theme),
-                  _buildStep4(theme),
-                  _buildStep3(theme),
-                  _buildStep2(theme),
-                  _buildStep1(theme),
-                children: [
-                physics: const NeverScrollableScrollPhysics(),
-                controller: _pageController,
-              child: PageView(
-            Expanded(
-            const Divider(),
-            ),
-              ),
-                }),
-                  );
-                    ]),
-                      Text(steps[i], style: TextStyle(fontSize: 10, color: active || done ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
-                      const SizedBox(height: 2),
-                      ),
-                        ),
-                            : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
-                          child: done
-                        child: Center(
-                        ),
-                          color: done ? theme.colorScheme.primary : active ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        decoration: BoxDecoration(
-                        width: 28, height: 28,
-                      Container(
-                    child: Column(children: [
-                  return Expanded(
-                  final done = i < _step;
-                  final active = i == _step;
-                children: List.generate(steps.length, (i) {
-              child: Row(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            Padding(
-          children: [
-        child: Column(
-      body: SafeArea(
-      ),
-        ),
-          onPressed: () => context.go('/welcome'),
-          icon: const Icon(Icons.arrow_back),
-        leading: IconButton(
-        title: const Text('Service Now'),
-      appBar: AppBar(
-    return Scaffold(
-
-    final steps = ['Perangkat', 'Kerusakan', 'Toko', 'Data Diri', 'Konfirmasi'];
-    final theme = Theme.of(context);
-  Widget build(BuildContext context) {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
-
-  }
-    setState(() => _step -= 1);
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    _pageController.previousPage(
-    if (_step <= 0) return;
-  void _prevStep() {
-
-  }
-    setState(() => _step += 1);
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    _pageController.nextPage(
-
-    }
-      return;
-      });
-        }
-          setState(() => _step = 2);
-            duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-          _pageController.nextPage(
-        if (mounted) {
-      _matchStores().then((_) {
-    if (_step == 1) {
-
-    if (_step == 3 && (_name.text.isEmpty || _phone.text.isEmpty)) return;
-    if (_step == 2 && _selectedStoreId == null) return;
-    if (_step == 1 && _complaint.text.isEmpty) return;
-    if (_step == 0 && (_selectedBrand == null || _selectedModel == null)) return;
-    if (_step >= 4) return;
-  void _nextStep() {
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-      }
-        );
-          SnackBar(content: Text(parseApiError(error))),
-        ScaffoldMessenger.of(context).showSnackBar(
-      if (mounted) {
-    } catch (error) {
-      context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
-      if (!mounted) return;
-      final result = await ref.read(orderRepositoryProvider).createOrder(req);
-      );
-        ],
-          ),
-            price: _estimateCost,
-            sparepartId: _selectedPartId,
-            complaint: _complaint.text.trim(),
-            serviceType: _serviceType,
-          CreateOrderItemInput(
-        items: [
-        couponCode: _coupon.text.trim().isEmpty ? null : _coupon.text.trim(),
-        deliveryAddress: _delivery == 'courier_pickup' ? _address.text.trim() : null,
-        deliveryMethod: _delivery,
-        deviceModel: _selectedModel!,
-        brand: _selectedBrand!,
-        deviceType: _deviceType,
-        phoneNumber: normalizePhone(_phone.text.trim()),
-        fullName: _name.text.trim(),
-        storeId: _selectedStoreId!,
-      final req = CreateOrderRequest(
-    try {
-    setState(() => _loading = true);
-  Future<void> _createBooking() async {
-
-  }
-    });
-      _estimateCost = store.estimatedCost;
-      _selectedStoreId = store.storeId;
-    setState(() {
-  void _selectStore(StoreMatchResult store) {
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-      _matchedStores = const [];
-    } catch (_) {
-      );
-        partType: _serviceType,
-        deviceModel: _selectedModel!,
-        brand: _selectedBrand!,
-      _matchedStores = await repo.matchStores(
-      final repo = ref.read(storeDiscoveryRepositoryProvider);
-    try {
-    setState(() => _loading = true);
-    if (_selectedBrand == null || _selectedModel == null) return;
-  Future<void> _matchStores() async {
-
-  }
-    super.dispose();
-    _coupon.dispose();
-    _address.dispose();
-    _phone.dispose();
-    _name.dispose();
-    _complaint.dispose();
-    _pageController.dispose();
-  void dispose() {
-  @override
-
-  }
-    }
-      _address.text = user.address ?? '';
-      _phone.text = user.phoneNumber;
-      _name.text = user.fullName;
-    if (user != null) {
-    final user = ref.read(customerAuthProvider).valueOrNull;
-    super.initState();
   void initState() {
-  @override
-
-  };
-    'other': 'Lainnya',
-    'camera': 'Kamera',
-    'charging_port': 'Port Charger',
-    'battery_replacement': 'Ganti Baterai',
-    'screen_replacement': 'Ganti Layar',
-  final _serviceTypeLabels = const {
-
-  List<StoreMatchResult> _matchedStores = const [];
-  bool _loading = false;
-  double _estimateCost = 0;
-  String? _selectedPartId;
-  String? _selectedStoreId;
-  String _delivery = 'walk_in';
-  String _serviceType = 'screen_replacement';
-  String _deviceType = 'android';
-  final _coupon = TextEditingController();
-  final _address = TextEditingController();
-  final _phone = TextEditingController();
-  final _name = TextEditingController();
-  final _complaint = TextEditingController();
-  String? _selectedModel;
-  String? _selectedBrand;
-  int _step = 0;
-  final _pageController = PageController();
-class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
-
-}
-  ConsumerState<ServiceFlowScreen> createState() => _ServiceFlowScreenState();
-  @override
-  const ServiceFlowScreen({super.key});
-class ServiceFlowScreen extends ConsumerStatefulWidget {
-
-}
+    super.initState();
+    Future.microtask(_checkAuth);
   }
-    );
-      ),
-        ),
+
+  Future<void> _checkAuth() async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final token = await ref.read(customerSessionProvider).readAccessToken();
+    if (!mounted) return;
+    if (token == null) {
+      context.go('/login');
+      return;
+    }
+    try {
+      final user =
+          await ref.read(customerAuthProvider.notifier).restoreSession();
+      if (!mounted) return;
+      context.go(user.isFirstLogin ? '/change-password' : '/home');
+    } catch (_) {
+      await ref.read(customerSessionProvider).clearAll();
+      if (mounted) context.go('/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.handyman, size: 64),
+            SizedBox(height: 16),
+            Text('ServisGadget',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            SizedBox(height: 24),
+            CircularProgressIndicator(),
           ]),
-            ),
-              ]),
-                            .toList()),
-                                    Text(review.comment ?? 'Tanpa komentar')))
-                                subtitle:
-                                title: Text('${review.rating}/5'),
-                            .map((review) => ListTile(
-                        children: store.reviews
-                    : ListView(
-                    ? const EmptyMessage('Belum ada ulasan.')
-                store.reviews.isEmpty
-                ),
-                      const EmptyMessage('Sparepart gagal dimuat.'),
-                  error: (_, __) =>
-                  loading: () => const SkeletonList(),
-                              .toList()),
-                                      : rupiah(part.price))))
-                                      ? 'Habis'
-                                  trailing: Text(part.availableQty <= 0
-                                      Text('${part.brand} ${part.deviceModel}'),
-                                  subtitle:
-                                  title: Text(part.partName),
-                              .map((part) => ListTile(
-                          children: items
-                      : ListView(
-                      ? const EmptyMessage('Sparepart belum tersedia.')
-                  data: (items) => items.isEmpty
-                spareparts.when(
-              child: TabBarView(children: [
-            Expanded(
-            const TabBar(tabs: [Tab(text: 'Sparepart'), Tab(text: 'Ulasan')]),
-            ),
-                  ]),
-                        'Rating ${store.ratingAvg.toStringAsFixed(1)} - ${store.phoneNumber}${store.verifiedAt != null ? ' - Verified' : ''}'),
-                    Text(
-                    const SizedBox(height: 8),
-                    Text(store.address),
-                            ?.copyWith(fontWeight: FontWeight.w800)),
-                            .headlineSmall
-                            .textTheme
-                        style: Theme.of(context)
-                    Text(store.storeName,
-                  children: [
-                  crossAxisAlignment: CrossAxisAlignment.start,
-              child: Column(
-              padding: const EdgeInsets.all(16),
-            Padding(
-          child: Column(children: [
-          length: 2,
-        builder: (store) => DefaultTabController(
-        value: detail,
-      child: AsyncPage(
-          label: const Text('Buat Order')),
-          icon: const Icon(Icons.add),
-          onPressed: () => context.push('/booking/$storeId'),
-      floatingActionButton: FloatingActionButton.extended(
-      title: 'Detail Toko',
-    return CustomerScaffold(
-    final spareparts = ref.watch(sparepartsProvider(storeId));
-    final detail = ref.watch(storeDetailProvider(storeId));
-  Widget build(BuildContext context, WidgetRef ref) {
-  @override
-  final String storeId;
-  const StoreDetailScreen({super.key, required this.storeId});
-class StoreDetailScreen extends ConsumerWidget {
-
-}
-  }
-    );
-      ]),
-                            .toList()))),
-                                    context.push('/stores/${store.id}')))
-                                onTap: () =>
-                                store: store,
-                            .map((store) => StoreCard(
-                        children: items
-                    : ListView(
-                    ? const EmptyMessage('Toko tidak ditemukan.')
-                builder: (items) => items.isEmpty
-                value: stores,
-            child: AsyncPage(
-        Expanded(
         ),
-              onSubmitted: (_) => setState(() {})),
-                  border: OutlineInputBorder()),
-                  hintText: 'Cari model perangkat',
-                  prefixIcon: Icon(Icons.search),
-              decoration: const InputDecoration(
-              controller: _model,
-          child: TextField(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        Padding(
-        ),
-                  .toList()),
-                      ))
-                            onSelected: (_) => setState(() => _brand = brand)),
-                            selected: _brand == brand,
-                            label: Text(brand),
-                        child: FilterChip(
-                            horizontal: 4, vertical: 8),
-                        padding: const EdgeInsets.symmetric(
-                  .map((brand) => Padding(
-              children: ['All', ...brands]
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              scrollDirection: Axis.horizontal,
-          child: ListView(
-          height: 54,
-        SizedBox(
-      child: Column(children: [
-      title: 'Pilih Toko',
-    return CustomerScaffold(
-        ref.watch(storeListProvider((brand: _brand, model: _model.text)));
-    final stores =
-    brands.sort();
-    final brands = deviceModels.valueOrNull?.map((group) => group.brand).toSet().toList() ?? const <String>[];
-    final deviceModels = ref.watch(deviceModelsProvider);
-  Widget build(BuildContext context) {
-  @override
-  final _model = TextEditingController();
-  String _brand = 'All';
-class _StoreListScreenState extends ConsumerState<StoreListScreen> {
-
-}
-  ConsumerState<StoreListScreen> createState() => _StoreListScreenState();
-  @override
-  const StoreListScreen({super.key});
-class StoreListScreen extends ConsumerStatefulWidget {
-
-}
       );
-        ),
-          ),
-            ]),
-              Text(label)
-                      ?.copyWith(fontWeight: FontWeight.w900)),
-                      .headlineSmall
-                      .textTheme
-                  style: Theme.of(context)
-              Text(value,
-            child: Column(children: [
-            padding: const EdgeInsets.all(16),
-          child: Padding(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: Card(
-  Widget build(BuildContext context) => Expanded(
-  @override
-  final String value;
-  final String label;
-  const _SummaryTile({required this.label, required this.value});
-class _SummaryTile extends StatelessWidget {
-
 }
-  }
-    );
-      ),
-        ),
-          ],
-            ),
-              ),
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                    'Promo servis bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
-                child: Text(
-                padding: EdgeInsets.all(18),
-              child: const Padding(
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              margin: const EdgeInsets.all(16),
-            Card(
-            ),
-                  const EmptyMessage('Pesanan belum bisa dimuat.'),
-              error: (_, __) =>
-                  const SizedBox(height: 260, child: SkeletonList(count: 3)),
-              loading: () =>
-                          .toList()),
-                              onTap: () => context.push('/orders/${order.id}')))
-                              order: order,
-                          .map((order) => OrderCard(
-                      children: orders
-                  : Column(
-                  ? const EmptyMessage('Belum ada pesanan.')
-              data: (orders) => orders.isEmpty
-            recent.when(
-                    child: const Text('Lihat Semua'))),
-                    onPressed: () => context.push('/orders'),
-                action: TextButton(
-            SectionTitle('Pesanan Terbaru',
-            ),
-              ]),
-                        label: const Text('Kupon'))),
-                        icon: const Icon(Icons.local_offer),
-                        onPressed: () => context.push('/coupons'),
-                    child: OutlinedButton.icon(
-                Expanded(
-                const SizedBox(width: 8),
-                        label: const Text('Pesanan'))),
-                        icon: const Icon(Icons.inventory_2),
-                        onPressed: () => context.push('/orders'),
-                    child: OutlinedButton.icon(
-                Expanded(
-                const SizedBox(width: 8),
-                        label: const Text('Servis'))),
-                        icon: const Icon(Icons.build),
-                        onPressed: () => context.push('/stores'),
+
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.build, size: 80, color: theme.colorScheme.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    'ServisGadget',
+                    style: theme.textTheme.headlineLarge
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Servis smartphone cepat & terpercaya',
+                    style: theme.textTheme.bodyLarge
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
                     child: FilledButton.icon(
-                Expanded(
-              child: Row(children: [
-              padding: const EdgeInsets.all(16),
-            Padding(
+                      onPressed: () => context.go('/service'),
+                      icon: const Icon(Icons.build, size: 22),
+                      label: const Text('Service Now',
+                          style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push('/login'),
+                          icon: const Icon(Icons.person_outline, size: 20),
+                          label: const Text('Pelanggan'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push('/store-login'),
+                          icon: const Icon(Icons.store_outlined, size: 20),
+                          label: const Text('Toko'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/admin/login'),
+                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
+                      label: const Text('Admin'),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
-                  child: Text('Ringkasan belum tersedia.')),
-                  padding: EdgeInsets.all(16),
-              error: (_, __) => const Padding(
-                  child: Center(child: CircularProgressIndicator())),
-                  height: 88,
-              loading: () => const SizedBox(
-              ]),
-                    label: 'Garansi', value: data.activeWarranties.toString()),
-                _SummaryTile(
-                    label: 'Kupon', value: data.activeCoupons.toString()),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _phone = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
+  bool _loading = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      final result = await ref
+          .read(customerAuthProvider.notifier)
+          .login(_phone.text, _password.text);
+      if (!mounted) return;
+      context.go(result.isFirstLogin ? '/change-password' : '/home');
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  shrinkWrap: true,
+                  children: [
+                    const Icon(Icons.handyman, size: 56),
+                    const SizedBox(height: 16),
+                    Text('Masuk ke ServisGadget',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'Gunakan akun yang dikirim admin toko lewat WhatsApp.',
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _phone,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: 'Nomor HP',
+                          prefixIcon: Icon(Icons.phone),
+                          border: OutlineInputBorder()),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                              ? 'Nomor HP wajib diisi.'
+                              : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _password,
+                      obscureText: _obscure,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: const Icon(Icons.lock),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => _obscure = !_obscure),
+                            icon: Icon(_obscure
+                                ? Icons.visibility
+                                : Icons.visibility_off)),
+                      ),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Password wajib diisi.'
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                        onPressed: _loading ? null : _submit,
+                        child: _loading
+                            ? const CircularProgressIndicator()
+                            : const Text('Masuk')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+class ChangePasswordScreen extends ConsumerStatefulWidget {
+  const ChangePasswordScreen({super.key});
+  @override
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
+}
+
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _old = TextEditingController();
+  final _next = TextEditingController();
+  final _confirm = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(customerAuthProvider.notifier)
+          .changePassword(_old.text, _next.text);
+      if (mounted) context.go('/home');
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+        title: 'Ganti Password',
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Material(
+                  color: Colors.amber.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                          'Ganti password sementaramu sebelum melanjutkan.'))),
+              const SizedBox(height: 16),
+              TextFormField(
+                  controller: _old,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Password Lama', border: OutlineInputBorder()),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Wajib diisi.' : null),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _next,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Password Baru', border: OutlineInputBorder()),
+                  validator: (v) {
+                    if (v == null || v.length < 8) return 'Minimal 8 karakter.';
+                    if (v == _old.text)
+                      return 'Password baru tidak boleh sama.';
+                    return null;
+                  }),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _confirm,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Konfirmasi Password Baru',
+                      border: OutlineInputBorder()),
+                  validator: (v) =>
+                      v != _next.text ? 'Konfirmasi tidak sama.' : null),
+              const SizedBox(height: 20),
+              FilledButton(
+                  onPressed: _loading ? null : _submit,
+                  child: _loading
+                      ? const CircularProgressIndicator()
+                      : const Text('Simpan Password')),
+            ],
+          ),
+        ),
+      );
+}
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(customerAuthProvider).valueOrNull;
+    final summary = ref.watch(homeSummaryProvider);
+    final recent = ref.watch(customerOrdersProvider('recent'));
+    return CustomerScaffold(
+      title: 'ServisGadget',
+      actions: [
+        IconButton(
+            onPressed: () => context.push('/notifications'),
+            icon: const Icon(Icons.notifications_outlined)),
+        IconButton(
+            onPressed: () => context.push('/profile'),
+            icon: const Icon(Icons.person_outline)),
+      ],
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(homeSummaryProvider);
+          ref.invalidate(customerOrdersProvider('recent'));
+          ref.invalidate(featuredStoresProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Halo, ${user?.fullName ?? 'Pelanggan'}!',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w800)),
+            ),
+            summary.when(
+              data: (data) => Row(children: [
                 _SummaryTile(
                     label: 'Aktif', value: data.activeOrders.toString()),
                 _SummaryTile(
-              data: (data) => Row(children: [
-            summary.when(
+                    label: 'Kupon', value: data.activeCoupons.toString()),
+                _SummaryTile(
+                    label: 'Garansi', value: data.activeWarranties.toString()),
+              ]),
+              loading: () => const SizedBox(
+                  height: 88,
+                  child: Center(child: CircularProgressIndicator())),
+              error: (_, __) => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Ringkasan belum tersedia.')),
             ),
-                      ?.copyWith(fontWeight: FontWeight.w800)),
-                      .headlineSmall
-                      .textTheme
-                  style: Theme.of(context)
-              child: Text('Halo, ${user?.fullName ?? 'Pelanggan'}!',
-              padding: const EdgeInsets.all(16),
             Padding(
-          children: [
-          padding: const EdgeInsets.only(bottom: 24),
-        child: ListView(
-        },
-          ref.invalidate(featuredStoresProvider);
-          ref.invalidate(customerOrdersProvider('recent'));
-          ref.invalidate(homeSummaryProvider);
-        onRefresh: () async {
-      child: RefreshIndicator(
-      ],
-            icon: const Icon(Icons.person_outline)),
-            onPressed: () => context.push('/profile'),
-        IconButton(
-            icon: const Icon(Icons.notifications_outlined)),
-            onPressed: () => context.push('/notifications'),
-        IconButton(
-      actions: [
-      title: 'ServisGadget',
-    return CustomerScaffold(
-    final recent = ref.watch(customerOrdersProvider('recent'));
-    final summary = ref.watch(homeSummaryProvider);
-    final user = ref.watch(customerAuthProvider).valueOrNull;
-  Widget build(BuildContext context, WidgetRef ref) {
-  @override
-  const HomeScreen({super.key});
-class HomeScreen extends ConsumerWidget {
-
-}
-      );
-        ),
-          ),
-            ],
-                      : const Text('Simpan Password')),
-                      ? const CircularProgressIndicator()
-                  child: _loading
-                  onPressed: _loading ? null : _submit,
-              FilledButton(
-              const SizedBox(height: 20),
-                      v != _next.text ? 'Konfirmasi tidak sama.' : null),
-                  validator: (v) =>
-                      border: OutlineInputBorder()),
-                      labelText: 'Konfirmasi Password Baru',
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _confirm,
-              TextFormField(
-              const SizedBox(height: 12),
-                  }),
-                    return null;
-                      return 'Password baru tidak boleh sama.';
-                    if (v == _old.text)
-                    if (v == null || v.length < 8) return 'Minimal 8 karakter.';
-                  validator: (v) {
-                      labelText: 'Password Baru', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _next,
-              TextFormField(
-              const SizedBox(height: 12),
-                      v == null || v.isEmpty ? 'Wajib diisi.' : null),
-                  validator: (v) =>
-                      labelText: 'Password Lama', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _old,
-              TextFormField(
-              const SizedBox(height: 16),
-                          'Ganti password sementaramu sebelum melanjutkan.'))),
-                      child: Text(
-                      padding: EdgeInsets.all(16),
-                  child: const Padding(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.amber.withValues(alpha: 0.18),
-              Material(
-            children: [
-            padding: const EdgeInsets.all(16),
-          child: ListView(
-          key: _formKey,
-        child: Form(
-        title: 'Ganti Password',
-  Widget build(BuildContext context) => CustomerScaffold(
-  @override
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
-        ScaffoldMessenger.of(context)
-      if (mounted)
-    } catch (error) {
-      if (mounted) context.go('/home');
-          .changePassword(_old.text, _next.text);
-          .read(customerAuthProvider.notifier)
-      await ref
-    try {
-    setState(() => _loading = true);
-    if (!_formKey.currentState!.validate()) return;
-  Future<void> _submit() async {
-
-  bool _loading = false;
-  final _confirm = TextEditingController();
-  final _next = TextEditingController();
-  final _old = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
-
-}
-      _ChangePasswordScreenState();
-  ConsumerState<ChangePasswordScreen> createState() =>
-  @override
-  const ChangePasswordScreen({super.key});
-class ChangePasswordScreen extends ConsumerStatefulWidget {
-
-}
-      );
-        ),
-          ),
-            ),
-              ),
-                ),
-                  ],
-                            : const Text('Masuk')),
-                            ? const CircularProgressIndicator()
-                        child: _loading
-                        onPressed: _loading ? null : _submit,
-                    FilledButton(
-                    const SizedBox(height: 20),
-                    ),
-                          : null,
-                          ? 'Password wajib diisi.'
-                      validator: (value) => value == null || value.isEmpty
-                      ),
-                                : Icons.visibility_off)),
-                                ? Icons.visibility
-                            icon: Icon(_obscure
-                                setState(() => _obscure = !_obscure),
-                            onPressed: () =>
-                        suffixIcon: IconButton(
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.lock),
-                        labelText: 'Password',
-                      decoration: InputDecoration(
-                      obscureText: _obscure,
-                      controller: _password,
-                    TextFormField(
-                    const SizedBox(height: 12),
-                    ),
-                              : null,
-                              ? 'Nomor HP wajib diisi.'
-                          value == null || value.trim().isEmpty
-                      validator: (value) =>
-                          border: OutlineInputBorder()),
-                          prefixIcon: Icon(Icons.phone),
-                          labelText: 'Nomor HP',
-                      decoration: const InputDecoration(
-                      keyboardType: TextInputType.phone,
-                      controller: _phone,
-                    TextFormField(
-                    const SizedBox(height: 24),
-                        textAlign: TextAlign.center),
-                        'Gunakan akun yang dikirim admin toko lewat WhatsApp.',
-                    const Text(
-                    const SizedBox(height: 8),
-                            ?.copyWith(fontWeight: FontWeight.w800)),
-                            .headlineSmall
-                            .textTheme
-                        style: Theme.of(context)
-                        textAlign: TextAlign.center,
-                    Text('Masuk ke ServisGadget',
-                    const SizedBox(height: 16),
-                    const Icon(Icons.handyman, size: 56),
-                  children: [
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(24),
-                child: ListView(
-                key: _formKey,
-              child: Form(
-              constraints: const BoxConstraints(maxWidth: 420),
-            child: ConstrainedBox(
-          child: Center(
-        body: SafeArea(
-  Widget build(BuildContext context) => Scaffold(
-  @override
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
-        ScaffoldMessenger.of(context)
-      if (mounted)
-    } catch (error) {
-      context.go(result.isFirstLogin ? '/change-password' : '/home');
-      if (!mounted) return;
-          .login(_phone.text, _password.text);
-          .read(customerAuthProvider.notifier)
-      final result = await ref
-    try {
-    setState(() => _loading = true);
-    if (!_formKey.currentState!.validate()) return;
-  Future<void> _submit() async {
-
-  bool _loading = false;
-  bool _obscure = true;
-  final _password = TextEditingController();
-  final _phone = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-
-}
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
-  @override
-  const LoginScreen({super.key});
-class LoginScreen extends ConsumerStatefulWidget {
-
-}
-  }
-    );
-      ),
-        ),
-          ),
-            ),
-              ),
-                ],
-                  const SizedBox(height: 32),
-                  ),
-                    ),
-                      label: const Text('Admin'),
-                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
-                      onPressed: () => context.push('/admin/login'),
-                    child: OutlinedButton.icon(
-                    width: double.infinity,
-                  SizedBox(
-                  const SizedBox(height: 12),
-                  ),
-                    ],
-                      ),
-                        ),
-                          label: const Text('Toko'),
-                          icon: const Icon(Icons.store_outlined, size: 20),
-                          onPressed: () => context.push('/store-login'),
-                        child: OutlinedButton.icon(
-                      Expanded(
-                      const SizedBox(width: 12),
-                      ),
-                        ),
-                          label: const Text('Pelanggan'),
-                          icon: const Icon(Icons.person_outline, size: 20),
-                          onPressed: () => context.push('/login'),
-                        child: OutlinedButton.icon(
-                      Expanded(
-                    children: [
-                  Row(
-                  const SizedBox(height: 14),
-                  ),
-                    ),
-                          style: TextStyle(fontSize: 16)),
-                      label: const Text('Service Now',
-                      icon: const Icon(Icons.build, size: 22),
-                      onPressed: () => context.go('/service'),
+              padding: const EdgeInsets.all(16),
+              child: Row(children: [
+                Expanded(
                     child: FilledButton.icon(
-                    height: 52,
-                    width: double.infinity,
-                  SizedBox(
-                  const SizedBox(height: 48),
-                  ),
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    style: theme.textTheme.bodyLarge
-                    'Servis smartphone cepat & terpercaya',
-                  Text(
-                  const SizedBox(height: 8),
-                  ),
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                    style: theme.textTheme.headlineLarge
-                    'ServisGadget',
-                  Text(
-                  const SizedBox(height: 16),
-                  Icon(Icons.build, size: 80, color: theme.colorScheme.primary),
-                children: [
-                mainAxisSize: MainAxisSize.min,
-              child: Column(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Padding(
-            constraints: const BoxConstraints(maxWidth: 420),
-          child: ConstrainedBox(
-        child: Center(
-      body: SafeArea(
-    return Scaffold(
-    final theme = Theme.of(context);
-  Widget build(BuildContext context) {
-  @override
-
-  const WelcomeScreen({super.key});
-class WelcomeScreen extends StatelessWidget {
-
-}
-      );
+                        onPressed: () => context.push('/stores'),
+                        icon: const Icon(Icons.build),
+                        label: const Text('Servis'))),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: OutlinedButton.icon(
+                        onPressed: () => context.push('/orders'),
+                        icon: const Icon(Icons.inventory_2),
+                        label: const Text('Pesanan'))),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: OutlinedButton.icon(
+                        onPressed: () => context.push('/coupons'),
+                        icon: const Icon(Icons.local_offer),
+                        label: const Text('Kupon'))),
+              ]),
+            ),
+            SectionTitle('Pesanan Terbaru',
+                action: TextButton(
+                    onPressed: () => context.push('/orders'),
+                    child: const Text('Lihat Semua'))),
+            recent.when(
+              data: (orders) => orders.isEmpty
+                  ? const EmptyMessage('Belum ada pesanan.')
+                  : Column(
+                      children: orders
+                          .map((order) => OrderCard(
+                              order: order,
+                              onTap: () => context.push('/orders/${order.id}')))
+                          .toList()),
+              loading: () =>
+                  const SizedBox(height: 260, child: SkeletonList(count: 3)),
+              error: (_, __) =>
+                  const EmptyMessage('Pesanan belum bisa dimuat.'),
+            ),
+            Card(
+              margin: const EdgeInsets.all(16),
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: const Padding(
+                padding: EdgeInsets.all(18),
+                child: Text(
+                    'Promo servis bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
         ),
-          ]),
-            CircularProgressIndicator(),
-            SizedBox(height: 24),
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-            Text('ServisGadget',
-            SizedBox(height: 16),
-            Icon(Icons.handyman, size: 64),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-        body: Center(
-  Widget build(BuildContext context) => const Scaffold(
-  @override
-
-  }
-    }
-      if (mounted) context.go('/login');
-      await ref.read(customerSessionProvider).clearAll();
-    } catch (_) {
-      context.go(user.isFirstLogin ? '/change-password' : '/home');
-      if (!mounted) return;
-          await ref.read(customerAuthProvider.notifier).restoreSession();
-      final user =
-    try {
-    }
-      return;
-      context.go('/login');
-    if (token == null) {
-    if (!mounted) return;
-    final token = await ref.read(customerSessionProvider).readAccessToken();
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-  Future<void> _checkAuth() async {
-
-  }
-    Future.microtask(_checkAuth);
-    super.initState();
-  void initState() {
-  @override
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-
-}
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
-  @override
-
-  const SplashScreen({super.key});
-class SplashScreen extends ConsumerStatefulWidget {
-
-import '../widgets/customer_widgets.dart';
-import '../../domain/customer_models.dart';
-import '../../data/customer_repositories.dart';
-import '../../application/customer_providers.dart';
-
-import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/material.dart';
-}
-
-}
-      value == null || value.trim().isEmpty ? 'Wajib diisi.' : null;
-  String? _required(String? value) =>
-
-  }
-    );
       ),
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({required this.label, required this.value});
+  final String label;
+  final String value;
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(children: [
+              Text(value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w900)),
+              Text(label)
             ]),
-                      border: OutlineInputBorder())),
-                      labelText: 'Kode Kupon (opsional)',
-                  decoration: const InputDecoration(
-                  controller: _coupon,
-              TextFormField(
-              const SizedBox(height: 12),
-              ],
-                    validator: _required),
-                        border: OutlineInputBorder()),
-                        labelText: 'Alamat Pickup',
-                    decoration: const InputDecoration(
-                    controller: _address,
-                TextFormField(
-                const SizedBox(height: 12),
-              if (_delivery == 'courier_pickup') ...[
-                      setState(() => _delivery = v.first)),
-                  onSelectionChanged: (v) =>
-                  ],
-                        value: 'courier_pickup', label: Text('Pickup Kurir'))
-                    ButtonSegment(
-                        value: 'walk_in', label: Text('Antar Sendiri')),
-                    ButtonSegment(
-                  segments: const [
-                  },
-                    _delivery
-                  selected: {
-              SegmentedButton(
-              const SectionTitle('Pengiriman'),
-                  label: Text(_selectedPart?.partName ?? 'Pilih Sparepart')),
-                  icon: const Icon(Icons.inventory),
-                      spareparts.isEmpty ? null : () => _selectPart(spareparts),
-                  onPressed:
-              OutlinedButton.icon(
-              const SizedBox(height: 12),
-                      : null),
-                      ? 'Minimal 10 karakter.'
-                  validator: (v) => v == null || v.length < 10
-                      border: OutlineInputBorder()),
-                      labelText: 'Deskripsi kerusakan',
-                  decoration: const InputDecoration(
-                  maxLines: 5,
-                  minLines: 3,
-                  controller: _complaint,
-              TextFormField(
-              const SizedBox(height: 12),
-                  onChanged: (v) => setState(() => _serviceType = v!)),
-                  ],
-                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
-                    DropdownMenuItem(value: 'camera', child: Text('Kamera')),
-                        value: 'charging_port', child: Text('Port')),
-                    DropdownMenuItem(
-                        value: 'battery_replacement', child: Text('Baterai')),
-                    DropdownMenuItem(
-                        value: 'screen_replacement', child: Text('Layar')),
-                    DropdownMenuItem(
-                  items: const [
-                      labelText: 'Jenis Servis', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  value: _serviceType,
-              DropdownButtonFormField(
-              const SectionTitle('Kerusakan'),
-                  validator: _required),
-                      labelText: 'Model Device', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  controller: _model,
-              TextFormField(
-              const SizedBox(height: 12),
-                  validator: _required),
-                      labelText: 'Brand', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  controller: _brand,
-              TextFormField(
-              const SizedBox(height: 12),
-                      setState(() => _deviceType = v.first)),
-                  onSelectionChanged: (v) =>
-                  ],
-                    ButtonSegment(value: 'ios', label: Text('iOS'))
-                    ButtonSegment(value: 'android', label: Text('Android')),
-                  segments: const [
-                  },
-                    _deviceType
-                  selected: {
-              SegmentedButton(
-              const SectionTitle('Info Perangkat'),
-                  validator: _required),
-                      labelText: 'Nomor HP', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  keyboardType: TextInputType.phone,
-                  controller: _phone,
-              TextFormField(
-              const SizedBox(height: 12),
-                  validator: _required),
-                      labelText: 'Nama Lengkap', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  controller: _name,
-              TextFormField(
-              const SectionTitle('Info Pelanggan'),
-            children: [
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-        child: ListView(
-        key: _form,
-      child: Form(
-      ),
-                : 'Estimasi ${rupiah(_estimate)} - Buat Order')),
-                ? 'Membuat order...'
-            label: Text(_loading
-            icon: const Icon(Icons.check),
-            onPressed: _loading ? null : _submit,
-        child: FilledButton.icon(
-        margin: const EdgeInsets.only(left: 32),
-        width: double.infinity,
-      floatingActionButton: Container(
-      title: 'Buat Order',
-    return CustomerScaffold(
-            const <SparePart>[];
-        ref.watch(sparepartsProvider(widget.storeId)).valueOrNull ??
-    final spareparts =
-  Widget build(BuildContext context) {
-  @override
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
-        ScaffoldMessenger.of(context)
-      if (mounted)
-    } catch (error) {
-          extra: result.isNewCustomer);
-      context.go('/booking-success/${result.orderNumber}',
-      if (!mounted) return;
-      final result = await ref.read(orderRepositoryProvider).createOrder(req);
+          ),
+        ),
       );
-        ],
-              price: _estimate)
-              sparepartId: _selectedPart?.id,
-              complaint: _complaint.text,
-              serviceType: _serviceType,
-          CreateOrderItemInput(
-        items: [
-        couponCode: _coupon.text,
-        deliveryAddress: _delivery == 'courier_pickup' ? _address.text : null,
-        deliveryMethod: _delivery,
-        deviceModel: _model.text,
-        brand: _brand.text,
-        deviceType: _deviceType,
-        phoneNumber: normalizePhone(_phone.text),
-        fullName: _name.text,
-        storeId: widget.storeId,
-      final req = CreateOrderRequest(
-    try {
-    setState(() => _loading = true);
-    if (!_form.currentState!.validate()) return;
-  Future<void> _submit() async {
+}
 
-  }
-    if (part != null) setState(() => _selectedPart = part);
-    );
-      ),
-            .toList(),
-                ))
-                      : () => Navigator.pop(context, part),
-                      ? null
-                  onTap: part.availableQty <= 0
-                  trailing: Text(rupiah(part.price)),
-                  subtitle: Text('${part.availableQty} tersedia'),
-                  title: Text(part.partName),
-                  enabled: part.availableQty > 0,
-            .map((part) => ListTile(
-        children: parts
-        padding: const EdgeInsets.all(16),
-      builder: (context) => ListView(
-      context: context,
-    final part = await showModalBottomSheet<SparePart>(
-  Future<void> _selectPart(List<SparePart> parts) async {
-
-  }
-    }
-      _address.text = user.address ?? '';
-      _phone.text = user.phoneNumber;
-      _name.text = user.fullName;
-    if (user != null) {
-    final user = ref.read(customerAuthProvider).valueOrNull;
-    super.initState();
-  void initState() {
+class StoreListScreen extends ConsumerStatefulWidget {
+  const StoreListScreen({super.key});
   @override
+  ConsumerState<StoreListScreen> createState() => _StoreListScreenState();
+}
+
+class _StoreListScreenState extends ConsumerState<StoreListScreen> {
+  String _brand = 'All';
+  final _model = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    final deviceModels = ref.watch(deviceModelsProvider);
+    final brands = deviceModels.valueOrNull?.map((group) => group.brand).toSet().toList() ?? const <String>[];
+    brands.sort();
+    final stores =
+        ref.watch(storeListProvider((brand: _brand, model: _model.text)));
+    return CustomerScaffold(
+      title: 'Pilih Toko',
+      child: Column(children: [
+        SizedBox(
+          height: 54,
+          child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: ['All', ...brands]
+                  .map((brand) => Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 8),
+                        child: FilterChip(
+                            label: Text(brand),
+                            selected: _brand == brand,
+                            onSelected: (_) => setState(() => _brand = brand)),
+                      ))
+                  .toList()),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: TextField(
+              controller: _model,
+              decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Cari model perangkat',
+                  border: OutlineInputBorder()),
+              onSubmitted: (_) => setState(() {})),
+        ),
+        Expanded(
+            child: AsyncPage(
+                value: stores,
+                builder: (items) => items.isEmpty
+                    ? const EmptyMessage('Toko tidak ditemukan.')
+                    : ListView(
+                        children: items
+                            .map((store) => StoreCard(
+                                store: store,
+                                onTap: () =>
+                                    context.push('/stores/${store.id}')))
+                            .toList()))),
+      ]),
+    );
+  }
+}
+
+class StoreDetailScreen extends ConsumerWidget {
+  const StoreDetailScreen({super.key, required this.storeId});
+  final String storeId;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(storeDetailProvider(storeId));
+    final spareparts = ref.watch(sparepartsProvider(storeId));
+    return CustomerScaffold(
+      title: 'Detail Toko',
+      floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => context.push('/booking/$storeId'),
+          icon: const Icon(Icons.add),
+          label: const Text('Buat Order')),
+      child: AsyncPage(
+        value: detail,
+        builder: (store) => DefaultTabController(
+          length: 2,
+          child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(store.storeName,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w800)),
+                    Text(store.address),
+                    const SizedBox(height: 8),
+                    Text(
+                        'Rating ${store.ratingAvg.toStringAsFixed(1)} - ${store.phoneNumber}${store.verifiedAt != null ? ' - Verified' : ''}'),
+                  ]),
+            ),
+            const TabBar(tabs: [Tab(text: 'Sparepart'), Tab(text: 'Ulasan')]),
+            Expanded(
+              child: TabBarView(children: [
+                spareparts.when(
+                  data: (items) => items.isEmpty
+                      ? const EmptyMessage('Sparepart belum tersedia.')
+                      : ListView(
+                          children: items
+                              .map((part) => ListTile(
+                                  title: Text(part.partName),
+                                  subtitle:
+                                      Text('${part.brand} ${part.deviceModel}'),
+                                  trailing: Text(part.availableQty <= 0
+                                      ? 'Habis'
+                                      : rupiah(part.price))))
+                              .toList()),
+                  loading: () => const SkeletonList(),
+                  error: (_, __) =>
+                      const EmptyMessage('Sparepart gagal dimuat.'),
+                ),
+                store.reviews.isEmpty
+                    ? const EmptyMessage('Belum ada ulasan.')
+                    : ListView(
+                        children: store.reviews
+                            .map((review) => ListTile(
+                                title: Text('${review.rating}/5'),
+                                subtitle:
+                                    Text(review.comment ?? 'Tanpa komentar')))
+                            .toList()),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class ServiceFlowScreen extends ConsumerStatefulWidget {
+  const ServiceFlowScreen({super.key});
+  @override
+  ConsumerState<ServiceFlowScreen> createState() => _ServiceFlowScreenState();
+}
+
+class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
+  final _pageController = PageController();
+  int _step = 0;
+  String? _selectedBrand;
+  String? _selectedModel;
+  final _complaint = TextEditingController();
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  final _address = TextEditingController();
+  final _coupon = TextEditingController();
+  String _deviceType = 'android';
+  String _serviceType = 'screen_replacement';
+  String _delivery = 'walk_in';
+  String? _selectedStoreId;
+  String? _selectedPartId;
+  double _estimateCost = 0;
+  bool _loading = false;
+  List<StoreMatchResult> _matchedStores = const [];
+
+  final _serviceTypeLabels = const {
+    'screen_replacement': 'Ganti Layar',
+    'battery_replacement': 'Ganti Baterai',
+    'charging_port': 'Port Charger',
+    'camera': 'Kamera',
+    'other': 'Lainnya',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    final user = ref.read(customerAuthProvider).valueOrNull;
+    if (user != null) {
+      _name.text = user.fullName;
+      _phone.text = user.phoneNumber;
+      _address.text = user.address ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _complaint.dispose();
+    _name.dispose();
+    _phone.dispose();
+    _address.dispose();
+    _coupon.dispose();
+    super.dispose();
+  }
+
+  Future<void> _matchStores() async {
+    if (_selectedBrand == null || _selectedModel == null) return;
+    setState(() => _loading = true);
+    try {
+      final repo = ref.read(storeDiscoveryRepositoryProvider);
+      _matchedStores = await repo.matchStores(
+        brand: _selectedBrand!,
+        deviceModel: _selectedModel!,
+        partType: _serviceType,
+      );
+    } catch (_) {
+      _matchedStores = const [];
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _selectStore(StoreMatchResult store) {
+    setState(() {
+      _selectedStoreId = store.storeId;
+      _estimateCost = store.estimatedCost;
+    });
+  }
+
+  Future<void> _createBooking() async {
+    setState(() => _loading = true);
+    try {
+      final req = CreateOrderRequest(
+        storeId: _selectedStoreId!,
+        fullName: _name.text.trim(),
+        phoneNumber: normalizePhone(_phone.text.trim()),
+        deviceType: _deviceType,
+        brand: _selectedBrand!,
+        deviceModel: _selectedModel!,
+        deliveryMethod: _delivery,
+        deliveryAddress: _delivery == 'courier_pickup' ? _address.text.trim() : null,
+        couponCode: _coupon.text.trim().isEmpty ? null : _coupon.text.trim(),
+        items: [
+          CreateOrderItemInput(
+            serviceType: _serviceType,
+            complaint: _complaint.text.trim(),
+            sparepartId: _selectedPartId,
+            price: _estimateCost,
+          ),
+        ],
+      );
+      final result = await ref.read(orderRepositoryProvider).createOrder(req);
+      if (!mounted) return;
+      context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(parseApiError(error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _nextStep() {
+    if (_step >= 4) return;
+    if (_step == 0 && (_selectedBrand == null || _selectedModel == null)) return;
+    if (_step == 1 && _complaint.text.isEmpty) return;
+    if (_step == 2 && _selectedStoreId == null) return;
+    if (_step == 3 && (_name.text.isEmpty || _phone.text.isEmpty)) return;
+
+    if (_step == 1) {
+      _matchStores().then((_) {
+        if (mounted) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          setState(() => _step = 2);
+        }
+      });
+      return;
+    }
+
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    setState(() => _step += 1);
+  }
+
+  void _prevStep() {
+    if (_step <= 0) return;
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    setState(() => _step -= 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final steps = ['Perangkat', 'Kerusakan', 'Toko', 'Data Diri', 'Konfirmasi'];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Service Now'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/welcome'),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: List.generate(steps.length, (i) {
+                  final active = i == _step;
+                  final done = i < _step;
+                  return Expanded(
+                    child: Column(children: [
+                      Container(
+                        width: 28, height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: done ? theme.colorScheme.primary : active ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                        ),
+                        child: Center(
+                          child: done
+                            ? const Icon(Icons.check, size: 16, color: Colors.white)
+                            : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(steps[i], style: TextStyle(fontSize: 10, color: active || done ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+                    ]),
+                  );
+                }),
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildStep1(theme),
+                  _buildStep2(theme),
+                  _buildStep3(theme),
+                  _buildStep4(theme),
+                  _buildStep5(theme),
+                ],
+              ),
+            ),
+            _buildBottomNav(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep1(ThemeData theme) {
+    final deviceModels = ref.watch(deviceModelsProvider);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 24),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
+            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
+          ],
+          selected: {_deviceType},
+          onSelectionChanged: (v) => setState(() => _deviceType = v.first),
+          showSelectedIcon: false,
+        ),
+        const SizedBox(height: 24),
+        deviceModels.when(
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
+          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
+          data: (groups) {
+            if (groups.isEmpty) {
+              return const EmptyMessage('Belum ada sparepart tersedia');
+            }
+
+            final brands = groups.map((group) => group.brand).toSet().toList()..sort();
+            final selectedGroups = groups.where((group) => group.brand == _selectedBrand).toList();
+            final models = selectedGroups.isEmpty
+                ? const <String>[]
+                : (selectedGroups.first.models.toSet().toList()..sort());
+            final brandValue = brands.contains(_selectedBrand) ? _selectedBrand : null;
+            final modelValue = models.contains(_selectedModel) ? _selectedModel : null;
+
+            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              DropdownButtonFormField<String>(
+                value: brandValue,
+                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
+                items: brands.map((brand) => DropdownMenuItem(value: brand, child: Text(brand))).toList(),
+                onChanged: (value) => setState(() {
+                  _selectedBrand = value;
+                  _selectedModel = null;
+                }),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: modelValue,
+                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
+                items: models.map((model) => DropdownMenuItem(value: model, child: Text(model))).toList(),
+                onChanged: _selectedBrand == null ? null : (value) => setState(() => _selectedModel = value),
+              ),
+            ]);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep2(ThemeData theme) => ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
+      const SizedBox(height: 8),
+      Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      const SizedBox(height: 24),
+      Wrap(
+        spacing: 8, runSpacing: 8,
+        children: _serviceTypeLabels.entries.map((e) => ChoiceChip(
+          label: Text(e.value),
+          selected: _serviceType == e.key,
+          onSelected: (v) { if (v) setState(() => _serviceType = e.key); },
+        )).toList(),
+      ),
+      const SizedBox(height: 24),
+      TextField(
+        controller: _complaint, maxLines: 4, textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          labelText: 'Keluhan / Deskripsi Kerusakan',
+          hintText: 'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
+          prefixIcon: Padding(padding: EdgeInsets.only(bottom: 64), child: Icon(Icons.report_problem_outlined)),
+          alignLabelWithHint: true,
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildStep3(ThemeData theme) {
+    if (_loading && _matchedStores.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_matchedStores.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Rekomendasi Toko Mitra', style: theme.textTheme.titleLarge),
+          const SizedBox(height: 24),
+          const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text('Tidak ada toko yang cocok untuk perangkat ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 16),
+          Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _prevStep,
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Kembali'),
+          ),
+        ],
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Text('${_matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 16),
+        ..._matchedStores.map((store) {
+          final selected = store.storeId == _selectedStoreId;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            color: selected ? theme.colorScheme.primaryContainer : null,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: selected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _selectStore(store),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
+                    Row(children: [
+                      const Icon(Icons.star, size: 18, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodyMedium),
+                    ]),
+                  ]),
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall),
+                  ),
+                  const SizedBox(height: 8),
+                  ...store.spareparts.map((sp) => Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(children: [
+                      const Icon(Icons.build, size: 14),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(sp.partName, style: theme.textTheme.bodyMedium)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: sp.status == 'available' ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(rupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    ]),
+                  )),
+                  const Divider(height: 16),
+                  Row(children: [
+                    const Icon(Icons.info_outline, size: 16),
+                    const SizedBox(width: 4),
+                    Text('Estimasi awal: ${rupiah(store.estimatedCost)}', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                  ]),
+                ]),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildStep4(ThemeData theme) => ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      Text('Data Diri & Pengiriman', style: theme.textTheme.titleLarge),
+      const SizedBox(height: 24),
+      SegmentedButton<String>(
+        segments: const [
+          ButtonSegment(value: 'walk_in', label: Text('Antar ke Toko'), icon: Icon(Icons.store)),
+          ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'), icon: Icon(Icons.local_shipping)),
+        ],
+        selected: {_delivery},
+        onSelectionChanged: (v) => setState(() => _delivery = v.first),
+        showSelectedIcon: false,
+      ),
+      const SizedBox(height: 24),
+      TextField(
+        controller: _name, textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outline)),
+      ),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _phone, keyboardType: TextInputType.phone,
+        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
+      ),
+      if (_delivery == 'courier_pickup') ...[
+        const SizedBox(height: 16),
+        TextField(
+          controller: _address, maxLines: 2, textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(labelText: 'Alamat Penjemputan', prefixIcon: Icon(Icons.location_on_outlined), alignLabelWithHint: true),
+        ),
+      ],
+    ],
+  );
+
+  Widget _buildStep5(ThemeData theme) => ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      Text('Konfirmasi Booking', style: theme.textTheme.titleLarge),
+      const SizedBox(height: 16),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'}'),
+            const Divider(),
+            _confirmRow(theme, 'Layanan', _serviceTypeLabels[_serviceType]!),
+            const Divider(),
+            _confirmRow(theme, 'Keluhan', _complaint.text),
+            const Divider(),
+            _confirmRow(theme, 'Nama', _name.text),
+            const Divider(),
+            _confirmRow(theme, 'WhatsApp', _phone.text),
+            if (_delivery == 'courier_pickup') ...[
+              const Divider(),
+              _confirmRow(theme, 'Alamat', _address.text),
+            ],
+            const Divider(),
+            _confirmRow(theme, 'Pengiriman', _delivery == 'walk_in' ? 'Antar ke Toko' : 'Pickup Kurir'),
+            const Divider(height: 24),
+            Row(children: [
+              Text('Estimasi Biaya', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Text(rupiah(_estimateCost), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+            ]),
+            const SizedBox(height: 4),
+            Text('* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _coupon,
+        decoration: const InputDecoration(labelText: 'Kode Kupon (opsional)', prefixIcon: Icon(Icons.local_offer_outlined), isDense: true),
+      ),
+    ],
+  );
+
+  Widget _confirmRow(ThemeData theme, String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
+      Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
+    ]),
+  );
+
+  Widget _buildBottomNav(ThemeData theme) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(children: [
+        if (_step > 0)
+          Expanded(child: OutlinedButton.icon(
+            onPressed: _loading ? null : _prevStep,
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Kembali'),
+          )),
+        if (_step > 0) const SizedBox(width: 12),
+        if (_step < 4)
+          Expanded(child: FilledButton.icon(
+            onPressed: _loading ? null : _nextStep,
+            icon: const Icon(Icons.arrow_forward),
+            label: Text(_step == 1 ? 'Cari Toko' : 'Lanjut'),
+          )),
+        if (_step == 4)
+          Expanded(child: FilledButton.icon(
+            onPressed: _loading ? null : _createBooking,
+            icon: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
+            label: Text(_loading ? 'Membuat...' : 'Buat Booking'),
+          )),
+      ]),
+    ),
+  );
+}
+
+class BookingFormScreen extends ConsumerStatefulWidget {
+  const BookingFormScreen({super.key, required this.storeId});
+  final String storeId;
+  @override
+  ConsumerState<BookingFormScreen> createState() => _BookingFormScreenState();
+}
+
+class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
+  final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  final _brand = TextEditingController();
+  final _model = TextEditingController();
+  final _complaint = TextEditingController();
+  final _coupon = TextEditingController();
+  final _address = TextEditingController();
+  String _deviceType = 'android';
+  String _delivery = 'walk_in';
+  String _serviceType = 'screen_replacement';
+  SparePart? _selectedPart;
+  bool _loading = false;
 
   double get _estimate => _selectedPart?.price ?? 0;
 
-  bool _loading = false;
-  SparePart? _selectedPart;
-  String _serviceType = 'screen_replacement';
-  String _delivery = 'walk_in';
-  String _deviceType = 'android';
-  final _address = TextEditingController();
-  final _coupon = TextEditingController();
-  final _complaint = TextEditingController();
-  final _model = TextEditingController();
-  final _brand = TextEditingController();
-  final _phone = TextEditingController();
-  final _name = TextEditingController();
-  final _form = GlobalKey<FormState>();
-class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
-
-}
-  ConsumerState<BookingFormScreen> createState() => _BookingFormScreenState();
   @override
-  final String storeId;
-  const BookingFormScreen({super.key, required this.storeId});
-class BookingFormScreen extends ConsumerStatefulWidget {
-
-}
-  );
-    ),
-      ]),
-          )),
-            label: Text(_loading ? 'Membuat...' : 'Buat Booking'),
-            icon: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
-            onPressed: _loading ? null : _createBooking,
-          Expanded(child: FilledButton.icon(
-        if (_step == 4)
-          )),
-            label: Text(_step == 1 ? 'Cari Toko' : 'Lanjut'),
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: _loading ? null : _nextStep,
-          Expanded(child: FilledButton.icon(
-        if (_step < 4)
-        if (_step > 0) const SizedBox(width: 12),
-          )),
-            label: const Text('Kembali'),
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _loading ? null : _prevStep,
-          Expanded(child: OutlinedButton.icon(
-        if (_step > 0)
-      child: Row(children: [
-      padding: const EdgeInsets.all(16),
-    child: Padding(
-  Widget _buildBottomNav(ThemeData theme) => SafeArea(
-
-  );
-    ]),
-      Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-      SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    padding: const EdgeInsets.symmetric(vertical: 6),
-  Widget _confirmRow(ThemeData theme, String label, String value) => Padding(
-
-  );
-    ],
-      ),
-        decoration: const InputDecoration(labelText: 'Kode Kupon (opsional)', prefixIcon: Icon(Icons.local_offer_outlined), isDense: true),
-        controller: _coupon,
-      TextField(
-      const SizedBox(height: 16),
-      ),
-        ),
-          ]),
-            Text('* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-            const SizedBox(height: 4),
-            ]),
-              Text(rupiah(_estimateCost), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-              const Spacer(),
-              Text('Estimasi Biaya', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            Row(children: [
-            const Divider(height: 24),
-            _confirmRow(theme, 'Pengiriman', _delivery == 'walk_in' ? 'Antar ke Toko' : 'Pickup Kurir'),
-            const Divider(),
-            ],
-              _confirmRow(theme, 'Alamat', _address.text),
-              const Divider(),
-            if (_delivery == 'courier_pickup') ...[
-            _confirmRow(theme, 'WhatsApp', _phone.text),
-            const Divider(),
-            _confirmRow(theme, 'Nama', _name.text),
-            const Divider(),
-            _confirmRow(theme, 'Keluhan', _complaint.text),
-            const Divider(),
-            _confirmRow(theme, 'Layanan', _serviceTypeLabels[_serviceType]!),
-            const Divider(),
-            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'}'),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          padding: const EdgeInsets.all(16),
-        child: Padding(
-      Card(
-      const SizedBox(height: 16),
-      Text('Konfirmasi Booking', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep5(ThemeData theme) => ListView(
-
-  );
-    ],
-      ],
-        ),
-          decoration: const InputDecoration(labelText: 'Alamat Penjemputan', prefixIcon: Icon(Icons.location_on_outlined), alignLabelWithHint: true),
-          controller: _address, maxLines: 2, textCapitalization: TextCapitalization.sentences,
-        TextField(
-        const SizedBox(height: 16),
-      if (_delivery == 'courier_pickup') ...[
-      ),
-        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
-        controller: _phone, keyboardType: TextInputType.phone,
-      TextField(
-      const SizedBox(height: 16),
-      ),
-        decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outline)),
-        controller: _name, textCapitalization: TextCapitalization.words,
-      TextField(
-      const SizedBox(height: 24),
-      ),
-        showSelectedIcon: false,
-        onSelectionChanged: (v) => setState(() => _delivery = v.first),
-        selected: {_delivery},
-        ],
-          ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'), icon: Icon(Icons.local_shipping)),
-          ButtonSegment(value: 'walk_in', label: Text('Antar ke Toko'), icon: Icon(Icons.store)),
-        segments: const [
-      SegmentedButton<String>(
-      const SizedBox(height: 24),
-      Text('Data Diri & Pengiriman', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep4(ThemeData theme) => ListView(
-
-  }
-    );
-      ],
-        }),
-          );
-            ),
-              ),
-                ]),
-                  ]),
-                    Text('Estimasi awal: ${rupiah(store.estimatedCost)}', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.info_outline, size: 16),
-                  Row(children: [
-                  const Divider(height: 16),
-                  )),
-                    ]),
-                      Text(rupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 12),
-                      ),
-                        child: Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                        ),
-                          borderRadius: BorderRadius.circular(4),
-                          color: sp.status == 'available' ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                        decoration: BoxDecoration(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      Container(
-                      Expanded(child: Text(sp.partName, style: theme.textTheme.bodyMedium)),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.build, size: 14),
-                    child: Row(children: [
-                    padding: const EdgeInsets.only(top: 4),
-                  ...store.spareparts.map((sp) => Padding(
-                  const SizedBox(height: 8),
-                  ),
-                    child: Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall),
-                    ),
-                      borderRadius: BorderRadius.circular(8),
-                      color: theme.colorScheme.tertiaryContainer,
-                    decoration: BoxDecoration(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  Container(
-                  const SizedBox(height: 8),
-                  ]),
-                    Expanded(child: Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                  Row(children: [
-                  const SizedBox(height: 4),
-                  ]),
-                    ]),
-                      Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodyMedium),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.star, size: 18, color: Colors.amber),
-                    Row(children: [
-                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                  Row(children: [
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                padding: const EdgeInsets.all(16),
-              child: Padding(
-              onTap: () => _selectStore(store),
-              borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-            ),
-              side: selected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
-              borderRadius: BorderRadius.circular(12),
-            shape: RoundedRectangleBorder(
-            color: selected ? theme.colorScheme.primaryContainer : null,
-            margin: const EdgeInsets.only(bottom: 12),
-          return Card(
-          final selected = store.storeId == _selectedStoreId;
-        ..._matchedStores.map((store) {
-        const SizedBox(height: 16),
-        Text('${_matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
-      children: [
-      padding: const EdgeInsets.all(16),
-    return ListView(
-    }
-      );
-        ],
-          ),
-            label: const Text('Kembali'),
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _prevStep,
-          FilledButton.icon(
-          const SizedBox(height: 24),
-          Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 16),
-          Text('Tidak ada toko yang cocok untuk perangkat ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
-          const SizedBox(height: 16),
-          const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
-          const SizedBox(height: 24),
-          Text('Rekomendasi Toko Mitra', style: theme.textTheme.titleLarge),
-        children: [
-        padding: const EdgeInsets.all(16),
-      return ListView(
-    if (_matchedStores.isEmpty) {
-    }
-      return const Center(child: CircularProgressIndicator());
-    if (_loading && _matchedStores.isEmpty) {
-  Widget _buildStep3(ThemeData theme) {
-
-  );
-    ],
-      ),
-        ),
-          alignLabelWithHint: true,
-          prefixIcon: Padding(padding: EdgeInsets.only(bottom: 64), child: Icon(Icons.report_problem_outlined)),
-          hintText: 'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
-          labelText: 'Keluhan / Deskripsi Kerusakan',
-        decoration: const InputDecoration(
-        controller: _complaint, maxLines: 4, textCapitalization: TextCapitalization.sentences,
-      TextField(
-      const SizedBox(height: 24),
-      ),
-        )).toList(),
-          onSelected: (v) { if (v) setState(() => _serviceType = e.key); },
-          selected: _serviceType == e.key,
-          label: Text(e.value),
-        children: _serviceTypeLabels.entries.map((e) => ChoiceChip(
-        spacing: 8, runSpacing: 8,
-      Wrap(
-      const SizedBox(height: 24),
-      Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-      const SizedBox(height: 8),
-      Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
-    children: [
-    padding: const EdgeInsets.all(16),
-  Widget _buildStep2(ThemeData theme) => ListView(
-
-  }
-    );
-      ],
-        ),
-          },
-            ]);
-              ),
-                onChanged: _selectedBrand == null ? null : (value) => setState(() => _selectedModel = value),
-                items: models.map((model) => DropdownMenuItem(value: model, child: Text(model))).toList(),
-                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
-                value: modelValue,
-              DropdownButtonFormField<String>(
-              const SizedBox(height: 16),
-              ),
-                }),
-                  _selectedModel = null;
-                  _selectedBrand = value;
-                onChanged: (value) => setState(() {
-                items: brands.map((brand) => DropdownMenuItem(value: brand, child: Text(brand))).toList(),
-                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
-                value: brandValue,
-              DropdownButtonFormField<String>(
-            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-
-            final modelValue = models.contains(_selectedModel) ? _selectedModel : null;
-            final brandValue = brands.contains(_selectedBrand) ? _selectedBrand : null;
-                : (selectedGroups.first.models.toSet().toList()..sort());
-                ? const <String>[]
-            final models = selectedGroups.isEmpty
-            final selectedGroups = groups.where((group) => group.brand == _selectedBrand).toList();
-            final brands = groups.map((group) => group.brand).toSet().toList()..sort();
-
-            }
-              return const EmptyMessage('Belum ada sparepart tersedia');
-            if (groups.isEmpty) {
-          data: (groups) {
-          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
-        deviceModels.when(
-        const SizedBox(height: 24),
-        ),
-          showSelectedIcon: false,
-          onSelectionChanged: (v) => setState(() => _deviceType = v.first),
-          selected: {_deviceType},
-          ],
-            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
-            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
-          segments: const [
-        SegmentedButton<String>(
-        const SizedBox(height: 24),
-        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
-      children: [
-      padding: const EdgeInsets.all(16),
-    return ListView(
-
-    final deviceModels = ref.watch(deviceModelsProvider);
-  Widget _buildStep1(ThemeData theme) {
-
-  }
-    );
-      ),
-        ),
-          ],
-            _buildBottomNav(theme),
-            ),
-              ),
-                ],
-                  _buildStep5(theme),
-                  _buildStep4(theme),
-                  _buildStep3(theme),
-                  _buildStep2(theme),
-                  _buildStep1(theme),
-                children: [
-                physics: const NeverScrollableScrollPhysics(),
-                controller: _pageController,
-              child: PageView(
-            Expanded(
-            const Divider(),
-            ),
-              ),
-                }),
-                  );
-                    ]),
-                      Text(steps[i], style: TextStyle(fontSize: 10, color: active || done ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
-                      const SizedBox(height: 2),
-                      ),
-                        ),
-                            : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
-                          child: done
-                        child: Center(
-                        ),
-                          color: done ? theme.colorScheme.primary : active ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        decoration: BoxDecoration(
-                        width: 28, height: 28,
-                      Container(
-                    child: Column(children: [
-                  return Expanded(
-                  final done = i < _step;
-                  final active = i == _step;
-                children: List.generate(steps.length, (i) {
-              child: Row(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            Padding(
-          children: [
-        child: Column(
-      body: SafeArea(
-      ),
-        ),
-          onPressed: () => context.go('/welcome'),
-          icon: const Icon(Icons.arrow_back),
-        leading: IconButton(
-        title: const Text('Service Now'),
-      appBar: AppBar(
-    return Scaffold(
-
-    final steps = ['Perangkat', 'Kerusakan', 'Toko', 'Data Diri', 'Konfirmasi'];
-    final theme = Theme.of(context);
-  Widget build(BuildContext context) {
-  @override
-
-  }
-    setState(() => _step -= 1);
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    _pageController.previousPage(
-    if (_step <= 0) return;
-  void _prevStep() {
-
-  }
-    setState(() => _step += 1);
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    _pageController.nextPage(
-
-    }
-      return;
-      });
-        }
-          setState(() => _step = 2);
-            duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-          _pageController.nextPage(
-        if (mounted) {
-      _matchStores().then((_) {
-    if (_step == 1) {
-
-    if (_step == 3 && (_name.text.isEmpty || _phone.text.isEmpty)) return;
-    if (_step == 2 && _selectedStoreId == null) return;
-    if (_step == 1 && _complaint.text.isEmpty) return;
-    if (_step == 0 && (_selectedBrand == null || _selectedModel == null)) return;
-    if (_step >= 4) return;
-  void _nextStep() {
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-      }
-        );
-          SnackBar(content: Text(parseApiError(error))),
-        ScaffoldMessenger.of(context).showSnackBar(
-      if (mounted) {
-    } catch (error) {
-      context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
-      if (!mounted) return;
-      final result = await ref.read(orderRepositoryProvider).createOrder(req);
-      );
-        ],
-          ),
-            price: _estimateCost,
-            sparepartId: _selectedPartId,
-            complaint: _complaint.text.trim(),
-            serviceType: _serviceType,
-          CreateOrderItemInput(
-        items: [
-        couponCode: _coupon.text.trim().isEmpty ? null : _coupon.text.trim(),
-        deliveryAddress: _delivery == 'courier_pickup' ? _address.text.trim() : null,
-        deliveryMethod: _delivery,
-        deviceModel: _selectedModel!,
-        brand: _selectedBrand!,
-        deviceType: _deviceType,
-        phoneNumber: normalizePhone(_phone.text.trim()),
-        fullName: _name.text.trim(),
-        storeId: _selectedStoreId!,
-      final req = CreateOrderRequest(
-    try {
-    setState(() => _loading = true);
-  Future<void> _createBooking() async {
-
-  }
-    });
-      _estimateCost = store.estimatedCost;
-      _selectedStoreId = store.storeId;
-    setState(() {
-  void _selectStore(StoreMatchResult store) {
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-      _matchedStores = const [];
-    } catch (_) {
-      );
-        partType: _serviceType,
-        deviceModel: _selectedModel!,
-        brand: _selectedBrand!,
-      _matchedStores = await repo.matchStores(
-      final repo = ref.read(storeDiscoveryRepositoryProvider);
-    try {
-    setState(() => _loading = true);
-    if (_selectedBrand == null || _selectedModel == null) return;
-  Future<void> _matchStores() async {
-
-  }
-    super.dispose();
-    _coupon.dispose();
-    _address.dispose();
-    _phone.dispose();
-    _name.dispose();
-    _complaint.dispose();
-    _pageController.dispose();
-  void dispose() {
-  @override
-
-  }
-    }
-      _address.text = user.address ?? '';
-      _phone.text = user.phoneNumber;
-      _name.text = user.fullName;
-    if (user != null) {
+  void initState() {
+    super.initState();
     final user = ref.read(customerAuthProvider).valueOrNull;
-    super.initState();
-  void initState() {
-  @override
-
-  };
-    'other': 'Lainnya',
-    'camera': 'Kamera',
-    'charging_port': 'Port Charger',
-    'battery_replacement': 'Ganti Baterai',
-    'screen_replacement': 'Ganti Layar',
-  final _serviceTypeLabels = const {
-
-  List<StoreMatchResult> _matchedStores = const [];
-  bool _loading = false;
-  double _estimateCost = 0;
-  String? _selectedPartId;
-  String? _selectedStoreId;
-  String _delivery = 'walk_in';
-  String _serviceType = 'screen_replacement';
-  String _deviceType = 'android';
-  final _coupon = TextEditingController();
-  final _address = TextEditingController();
-  final _phone = TextEditingController();
-  final _name = TextEditingController();
-  final _complaint = TextEditingController();
-  String? _selectedModel;
-  String? _selectedBrand;
-  int _step = 0;
-  final _pageController = PageController();
-class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
-
-}
-  ConsumerState<ServiceFlowScreen> createState() => _ServiceFlowScreenState();
-  @override
-  const ServiceFlowScreen({super.key});
-class ServiceFlowScreen extends ConsumerStatefulWidget {
-
-}
+    if (user != null) {
+      _name.text = user.fullName;
+      _phone.text = user.phoneNumber;
+      _address.text = user.address ?? '';
+    }
   }
-    );
+
+  Future<void> _selectPart(List<SparePart> parts) async {
+    final part = await showModalBottomSheet<SparePart>(
+      context: context,
+      builder: (context) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: parts
+            .map((part) => ListTile(
+                  enabled: part.availableQty > 0,
+                  title: Text(part.partName),
+                  subtitle: Text('${part.availableQty} tersedia'),
+                  trailing: Text(rupiah(part.price)),
+                  onTap: part.availableQty <= 0
+                      ? null
+                      : () => Navigator.pop(context, part),
+                ))
+            .toList(),
       ),
-        ),
-          ]),
-            ),
-              ]),
-                            .toList()),
-                                    Text(review.comment ?? 'Tanpa komentar')))
-                                subtitle:
-                                title: Text('${review.rating}/5'),
-                            .map((review) => ListTile(
-                        children: store.reviews
-                    : ListView(
-                    ? const EmptyMessage('Belum ada ulasan.')
-                store.reviews.isEmpty
-                ),
-                      const EmptyMessage('Sparepart gagal dimuat.'),
-                  error: (_, __) =>
-                  loading: () => const SkeletonList(),
-                              .toList()),
-                                      : rupiah(part.price))))
-                                      ? 'Habis'
-                                  trailing: Text(part.availableQty <= 0
-                                      Text('${part.brand} ${part.deviceModel}'),
-                                  subtitle:
-                                  title: Text(part.partName),
-                              .map((part) => ListTile(
-                          children: items
-                      : ListView(
-                      ? const EmptyMessage('Sparepart belum tersedia.')
-                  data: (items) => items.isEmpty
-                spareparts.when(
-              child: TabBarView(children: [
-            Expanded(
-            const TabBar(tabs: [Tab(text: 'Sparepart'), Tab(text: 'Ulasan')]),
-            ),
-                  ]),
-                        'Rating ${store.ratingAvg.toStringAsFixed(1)} - ${store.phoneNumber}${store.verifiedAt != null ? ' - Verified' : ''}'),
-                    Text(
-                    const SizedBox(height: 8),
-                    Text(store.address),
-                            ?.copyWith(fontWeight: FontWeight.w800)),
-                            .headlineSmall
-                            .textTheme
-                        style: Theme.of(context)
-                    Text(store.storeName,
-                  children: [
-                  crossAxisAlignment: CrossAxisAlignment.start,
-              child: Column(
-              padding: const EdgeInsets.all(16),
-            Padding(
-          child: Column(children: [
-          length: 2,
-        builder: (store) => DefaultTabController(
-        value: detail,
-      child: AsyncPage(
-          label: const Text('Buat Order')),
-          icon: const Icon(Icons.add),
-          onPressed: () => context.push('/booking/$storeId'),
-      floatingActionButton: FloatingActionButton.extended(
-      title: 'Detail Toko',
-    return CustomerScaffold(
-    final spareparts = ref.watch(sparepartsProvider(storeId));
-    final detail = ref.watch(storeDetailProvider(storeId));
-  Widget build(BuildContext context, WidgetRef ref) {
-  @override
-  final String storeId;
-  const StoreDetailScreen({super.key, required this.storeId});
-class StoreDetailScreen extends ConsumerWidget {
-
-}
-  }
     );
-      ]),
-                            .toList()))),
-                                    context.push('/stores/${store.id}')))
-                                onTap: () =>
-                                store: store,
-                            .map((store) => StoreCard(
-                        children: items
-                    : ListView(
-                    ? const EmptyMessage('Toko tidak ditemukan.')
-                builder: (items) => items.isEmpty
-                value: stores,
-            child: AsyncPage(
-        Expanded(
-        ),
-              onSubmitted: (_) => setState(() {})),
-                  border: OutlineInputBorder()),
-                  hintText: 'Cari model perangkat',
-                  prefixIcon: Icon(Icons.search),
-              decoration: const InputDecoration(
-              controller: _model,
-          child: TextField(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        Padding(
-        ),
-                  .toList()),
-                      ))
-                            onSelected: (_) => setState(() => _brand = brand)),
-                            selected: _brand == brand,
-                            label: Text(brand),
-                        child: FilterChip(
-                            horizontal: 4, vertical: 8),
-                        padding: const EdgeInsets.symmetric(
-                  .map((brand) => Padding(
-              children: ['All', ...brands]
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              scrollDirection: Axis.horizontal,
-          child: ListView(
-          height: 54,
-        SizedBox(
-      child: Column(children: [
-      title: 'Pilih Toko',
-    return CustomerScaffold(
-        ref.watch(storeListProvider((brand: _brand, model: _model.text)));
-    final stores =
-    brands.sort();
-    final brands = deviceModels.valueOrNull?.map((group) => group.brand).toSet().toList() ?? const <String>[];
-    final deviceModels = ref.watch(deviceModelsProvider);
-  Widget build(BuildContext context) {
-  @override
-  final _model = TextEditingController();
-  String _brand = 'All';
-class _StoreListScreenState extends ConsumerState<StoreListScreen> {
+    if (part != null) setState(() => _selectedPart = part);
+  }
 
-}
-  ConsumerState<StoreListScreen> createState() => _StoreListScreenState();
-  @override
-  const StoreListScreen({super.key});
-class StoreListScreen extends ConsumerStatefulWidget {
-
-}
+  Future<void> _submit() async {
+    if (!_form.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      final req = CreateOrderRequest(
+        storeId: widget.storeId,
+        fullName: _name.text,
+        phoneNumber: normalizePhone(_phone.text),
+        deviceType: _deviceType,
+        brand: _brand.text,
+        deviceModel: _model.text,
+        deliveryMethod: _delivery,
+        deliveryAddress: _delivery == 'courier_pickup' ? _address.text : null,
+        couponCode: _coupon.text,
+        items: [
+          CreateOrderItemInput(
+              serviceType: _serviceType,
+              complaint: _complaint.text,
+              sparepartId: _selectedPart?.id,
+              price: _estimate)
+        ],
       );
-        ),
-          ),
-            ]),
-              Text(label)
-                      ?.copyWith(fontWeight: FontWeight.w900)),
-                      .headlineSmall
-                      .textTheme
-                  style: Theme.of(context)
-              Text(value,
-            child: Column(children: [
-            padding: const EdgeInsets.all(16),
-          child: Padding(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: Card(
-  Widget build(BuildContext context) => Expanded(
-  @override
-  final String value;
-  final String label;
-  const _SummaryTile({required this.label, required this.value});
-class _SummaryTile extends StatelessWidget {
-
-}
+      final result = await ref.read(orderRepositoryProvider).createOrder(req);
+      if (!mounted) return;
+      context.go('/booking-success/${result.orderNumber}',
+          extra: result.isNewCustomer);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
-    );
+
+  @override
+  Widget build(BuildContext context) {
+    final spareparts =
+        ref.watch(sparepartsProvider(widget.storeId)).valueOrNull ??
+            const <SparePart>[];
+    return CustomerScaffold(
+      title: 'Buat Order',
+      floatingActionButton: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(left: 32),
+        child: FilledButton.icon(
+            onPressed: _loading ? null : _submit,
+            icon: const Icon(Icons.check),
+            label: Text(_loading
+                ? 'Membuat order...'
+                : 'Estimasi ${rupiah(_estimate)} - Buat Order')),
       ),
-        ),
-          ],
-            ),
-              ),
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-                    'Promo servis bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
-                child: Text(
-                padding: EdgeInsets.all(18),
-              child: const Padding(
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              margin: const EdgeInsets.all(16),
-            Card(
-            ),
-                  const EmptyMessage('Pesanan belum bisa dimuat.'),
-              error: (_, __) =>
-                  const SizedBox(height: 260, child: SkeletonList(count: 3)),
-              loading: () =>
-                          .toList()),
-                              onTap: () => context.push('/orders/${order.id}')))
-                              order: order,
-                          .map((order) => OrderCard(
-                      children: orders
-                  : Column(
-                  ? const EmptyMessage('Belum ada pesanan.')
-              data: (orders) => orders.isEmpty
-            recent.when(
-                    child: const Text('Lihat Semua'))),
-                    onPressed: () => context.push('/orders'),
-                action: TextButton(
-            SectionTitle('Pesanan Terbaru',
-            ),
-              ]),
-                        label: const Text('Kupon'))),
-                        icon: const Icon(Icons.local_offer),
-                        onPressed: () => context.push('/coupons'),
-                    child: OutlinedButton.icon(
-                Expanded(
-                const SizedBox(width: 8),
-                        label: const Text('Pesanan'))),
-                        icon: const Icon(Icons.inventory_2),
-                        onPressed: () => context.push('/orders'),
-                    child: OutlinedButton.icon(
-                Expanded(
-                const SizedBox(width: 8),
-                        label: const Text('Servis'))),
-                        icon: const Icon(Icons.build),
-                        onPressed: () => context.push('/stores'),
-                    child: FilledButton.icon(
-                Expanded(
-              child: Row(children: [
-              padding: const EdgeInsets.all(16),
-            Padding(
-            ),
-                  child: Text('Ringkasan belum tersedia.')),
-                  padding: EdgeInsets.all(16),
-              error: (_, __) => const Padding(
-                  child: Center(child: CircularProgressIndicator())),
-                  height: 88,
-              loading: () => const SizedBox(
-              ]),
-                    label: 'Garansi', value: data.activeWarranties.toString()),
-                _SummaryTile(
-                    label: 'Kupon', value: data.activeCoupons.toString()),
-                _SummaryTile(
-                    label: 'Aktif', value: data.activeOrders.toString()),
-                _SummaryTile(
-              data: (data) => Row(children: [
-            summary.when(
-            ),
-                      ?.copyWith(fontWeight: FontWeight.w800)),
-                      .headlineSmall
-                      .textTheme
-                  style: Theme.of(context)
-              child: Text('Halo, ${user?.fullName ?? 'Pelanggan'}!',
-              padding: const EdgeInsets.all(16),
-            Padding(
-          children: [
-          padding: const EdgeInsets.only(bottom: 24),
+      child: Form(
+        key: _form,
         child: ListView(
-        },
-          ref.invalidate(featuredStoresProvider);
-          ref.invalidate(customerOrdersProvider('recent'));
-          ref.invalidate(homeSummaryProvider);
-        onRefresh: () async {
-      child: RefreshIndicator(
-      ],
-            icon: const Icon(Icons.person_outline)),
-            onPressed: () => context.push('/profile'),
-        IconButton(
-            icon: const Icon(Icons.notifications_outlined)),
-            onPressed: () => context.push('/notifications'),
-        IconButton(
-      actions: [
-      title: 'ServisGadget',
-    return CustomerScaffold(
-    final recent = ref.watch(customerOrdersProvider('recent'));
-    final summary = ref.watch(homeSummaryProvider);
-    final user = ref.watch(customerAuthProvider).valueOrNull;
-  Widget build(BuildContext context, WidgetRef ref) {
-  @override
-  const HomeScreen({super.key});
-class HomeScreen extends ConsumerWidget {
-
-}
-      );
-        ),
-          ),
-            ],
-                      : const Text('Simpan Password')),
-                      ? const CircularProgressIndicator()
-                  child: _loading
-                  onPressed: _loading ? null : _submit,
-              FilledButton(
-              const SizedBox(height: 20),
-                      v != _next.text ? 'Konfirmasi tidak sama.' : null),
-                  validator: (v) =>
-                      border: OutlineInputBorder()),
-                      labelText: 'Konfirmasi Password Baru',
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _confirm,
-              TextFormField(
-              const SizedBox(height: 12),
-                  }),
-                    return null;
-                      return 'Password baru tidak boleh sama.';
-                    if (v == _old.text)
-                    if (v == null || v.length < 8) return 'Minimal 8 karakter.';
-                  validator: (v) {
-                      labelText: 'Password Baru', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _next,
-              TextFormField(
-              const SizedBox(height: 12),
-                      v == null || v.isEmpty ? 'Wajib diisi.' : null),
-                  validator: (v) =>
-                      labelText: 'Password Lama', border: OutlineInputBorder()),
-                  decoration: const InputDecoration(
-                  obscureText: true,
-                  controller: _old,
-              TextFormField(
-              const SizedBox(height: 16),
-                          'Ganti password sementaramu sebelum melanjutkan.'))),
-                      child: Text(
-                      padding: EdgeInsets.all(16),
-                  child: const Padding(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.amber.withValues(alpha: 0.18),
-              Material(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
             children: [
-            padding: const EdgeInsets.all(16),
-          child: ListView(
-          key: _formKey,
-        child: Form(
-        title: 'Ganti Password',
-  Widget build(BuildContext context) => CustomerScaffold(
-  @override
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
-        ScaffoldMessenger.of(context)
-      if (mounted)
-    } catch (error) {
-      if (mounted) context.go('/home');
-          .changePassword(_old.text, _next.text);
-          .read(customerAuthProvider.notifier)
-      await ref
-    try {
-    setState(() => _loading = true);
-    if (!_formKey.currentState!.validate()) return;
-  Future<void> _submit() async {
-
-  bool _loading = false;
-  final _confirm = TextEditingController();
-  final _next = TextEditingController();
-  final _old = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
-
-}
-      _ChangePasswordScreenState();
-  ConsumerState<ChangePasswordScreen> createState() =>
-  @override
-  const ChangePasswordScreen({super.key});
-class ChangePasswordScreen extends ConsumerStatefulWidget {
-
-}
-      );
-        ),
-          ),
-            ),
-              ),
-                ),
+              const SectionTitle('Info Pelanggan'),
+              TextFormField(
+                  controller: _name,
+                  decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap', border: OutlineInputBorder()),
+                  validator: _required),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                      labelText: 'Nomor HP', border: OutlineInputBorder()),
+                  validator: _required),
+              const SectionTitle('Info Perangkat'),
+              SegmentedButton(
+                  selected: {
+                    _deviceType
+                  },
+                  segments: const [
+                    ButtonSegment(value: 'android', label: Text('Android')),
+                    ButtonSegment(value: 'ios', label: Text('iOS'))
                   ],
-                            : const Text('Masuk')),
-                            ? const CircularProgressIndicator()
-                        child: _loading
-                        onPressed: _loading ? null : _submit,
-                    FilledButton(
-                    const SizedBox(height: 20),
-                    ),
-                          : null,
-                          ? 'Password wajib diisi.'
-                      validator: (value) => value == null || value.isEmpty
-                      ),
-                                : Icons.visibility_off)),
-                                ? Icons.visibility
-                            icon: Icon(_obscure
-                                setState(() => _obscure = !_obscure),
-                            onPressed: () =>
-                        suffixIcon: IconButton(
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.lock),
-                        labelText: 'Password',
-                      decoration: InputDecoration(
-                      obscureText: _obscure,
-                      controller: _password,
-                    TextFormField(
-                    const SizedBox(height: 12),
-                    ),
-                              : null,
-                              ? 'Nomor HP wajib diisi.'
-                          value == null || value.trim().isEmpty
-                      validator: (value) =>
-                          border: OutlineInputBorder()),
-                          prefixIcon: Icon(Icons.phone),
-                          labelText: 'Nomor HP',
-                      decoration: const InputDecoration(
-                      keyboardType: TextInputType.phone,
-                      controller: _phone,
-                    TextFormField(
-                    const SizedBox(height: 24),
-                        textAlign: TextAlign.center),
-                        'Gunakan akun yang dikirim admin toko lewat WhatsApp.',
-                    const Text(
-                    const SizedBox(height: 8),
-                            ?.copyWith(fontWeight: FontWeight.w800)),
-                            .headlineSmall
-                            .textTheme
-                        style: Theme.of(context)
-                        textAlign: TextAlign.center,
-                    Text('Masuk ke ServisGadget',
-                    const SizedBox(height: 16),
-                    const Icon(Icons.handyman, size: 56),
-                  children: [
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(24),
-                child: ListView(
-                key: _formKey,
-              child: Form(
-              constraints: const BoxConstraints(maxWidth: 420),
-            child: ConstrainedBox(
-          child: Center(
-        body: SafeArea(
-  Widget build(BuildContext context) => Scaffold(
-  @override
-
-  }
-    }
-      if (mounted) setState(() => _loading = false);
-    } finally {
-            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
-        ScaffoldMessenger.of(context)
-      if (mounted)
-    } catch (error) {
-      context.go(result.isFirstLogin ? '/change-password' : '/home');
-      if (!mounted) return;
-          .login(_phone.text, _password.text);
-          .read(customerAuthProvider.notifier)
-      final result = await ref
-    try {
-    setState(() => _loading = true);
-    if (!_formKey.currentState!.validate()) return;
-  Future<void> _submit() async {
-
-  bool _loading = false;
-  bool _obscure = true;
-  final _password = TextEditingController();
-  final _phone = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-
-}
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
-  @override
-  const LoginScreen({super.key});
-class LoginScreen extends ConsumerStatefulWidget {
-
-}
-  }
-    );
+                  onSelectionChanged: (v) =>
+                      setState(() => _deviceType = v.first)),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _brand,
+                  decoration: const InputDecoration(
+                      labelText: 'Brand', border: OutlineInputBorder()),
+                  validator: _required),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _model,
+                  decoration: const InputDecoration(
+                      labelText: 'Model Device', border: OutlineInputBorder()),
+                  validator: _required),
+              const SectionTitle('Kerusakan'),
+              DropdownButtonFormField(
+                  value: _serviceType,
+                  decoration: const InputDecoration(
+                      labelText: 'Jenis Servis', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'screen_replacement', child: Text('Layar')),
+                    DropdownMenuItem(
+                        value: 'battery_replacement', child: Text('Baterai')),
+                    DropdownMenuItem(
+                        value: 'charging_port', child: Text('Port')),
+                    DropdownMenuItem(value: 'camera', child: Text('Kamera')),
+                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                  ],
+                  onChanged: (v) => setState(() => _serviceType = v!)),
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _complaint,
+                  minLines: 3,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                      labelText: 'Deskripsi kerusakan',
+                      border: OutlineInputBorder()),
+                  validator: (v) => v == null || v.length < 10
+                      ? 'Minimal 10 karakter.'
+                      : null),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                  onPressed:
+                      spareparts.isEmpty ? null : () => _selectPart(spareparts),
+                  icon: const Icon(Icons.inventory),
+                  label: Text(_selectedPart?.partName ?? 'Pilih Sparepart')),
+              const SectionTitle('Pengiriman'),
+              SegmentedButton(
+                  selected: {
+                    _delivery
+                  },
+                  segments: const [
+                    ButtonSegment(
+                        value: 'walk_in', label: Text('Antar Sendiri')),
+                    ButtonSegment(
+                        value: 'courier_pickup', label: Text('Pickup Kurir'))
+                  ],
+                  onSelectionChanged: (v) =>
+                      setState(() => _delivery = v.first)),
+              if (_delivery == 'courier_pickup') ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _address,
+                    decoration: const InputDecoration(
+                        labelText: 'Alamat Pickup',
+                        border: OutlineInputBorder()),
+                    validator: _required),
+              ],
+              const SizedBox(height: 12),
+              TextFormField(
+                  controller: _coupon,
+                  decoration: const InputDecoration(
+                      labelText: 'Kode Kupon (opsional)',
+                      border: OutlineInputBorder())),
+            ]),
       ),
-        ),
-          ),
-            ),
-              ),
-                ],
-                  const SizedBox(height: 32),
-                  ),
-                    ),
-                      label: const Text('Admin'),
-                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
-                      onPressed: () => context.push('/admin/login'),
-                    child: OutlinedButton.icon(
-                    width: double.infinity,
-                  SizedBox(
-                  const SizedBox(height: 12),
-                  ),
-                    ],
-                      ),
-                        ),
-                          label: const Text('Toko'),
-                          icon: const Icon(Icons.store_outlined, size: 20),
-                          onPressed: () => context.push('/store-login'),
-                        child: OutlinedButton.icon(
-                      Expanded(
-                      const SizedBox(width: 12),
-                      ),
-                        ),
-                          label: const Text('Pelanggan'),
-                          icon: const Icon(Icons.person_outline, size: 20),
-                          onPressed: () => context.push('/login'),
-                        child: OutlinedButton.icon(
-                      Expanded(
-                    children: [
-                  Row(
-                  const SizedBox(height: 14),
-                  ),
-                    ),
-                          style: TextStyle(fontSize: 16)),
-                      label: const Text('Service Now',
-                      icon: const Icon(Icons.build, size: 22),
-                      onPressed: () => context.go('/service'),
-                    child: FilledButton.icon(
-                    height: 52,
-                    width: double.infinity,
-                  SizedBox(
-                  const SizedBox(height: 48),
-                  ),
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    style: theme.textTheme.bodyLarge
-                    'Servis smartphone cepat & terpercaya',
-                  Text(
-                  const SizedBox(height: 8),
-                  ),
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                    style: theme.textTheme.headlineLarge
-                    'ServisGadget',
-                  Text(
-                  const SizedBox(height: 16),
-                  Icon(Icons.build, size: 80, color: theme.colorScheme.primary),
-                children: [
-                mainAxisSize: MainAxisSize.min,
-              child: Column(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Padding(
-            constraints: const BoxConstraints(maxWidth: 420),
-          child: ConstrainedBox(
-        child: Center(
-      body: SafeArea(
-    return Scaffold(
-    final theme = Theme.of(context);
-  Widget build(BuildContext context) {
-  @override
+    );
+  }
 
-  const WelcomeScreen({super.key});
-class WelcomeScreen extends StatelessWidget {
-
+  String? _required(String? value) =>
+      value == null || value.trim().isEmpty ? 'Wajib diisi.' : null;
 }
+
+class BookingSuccessScreen extends StatelessWidget {
+  const BookingSuccessScreen(
+      {super.key, required this.orderNumber, required this.isNewCustomer});
+  final String orderNumber;
+  final bool isNewCustomer;
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+        title: 'Order Berhasil',
+        child: ListView(padding: const EdgeInsets.all(24), children: [
+          const Icon(Icons.check_circle, size: 84, color: Colors.green),
+          const SizedBox(height: 16),
+          Text('Order berhasil dibuat!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          SelectableText(orderNumber, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          const Text('Admin toko akan segera mengkonfirmasi perangkatmu.',
+              textAlign: TextAlign.center),
+          if (isNewCustomer)
+            const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Card(
+                    child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                            'Cek WhatsApp kamu. Admin toko akan mengirimkan informasi akun ServisGadget.')))),
+          const SizedBox(height: 24),
+          FilledButton(
+              onPressed: () => context.go('/orders'),
+              child: const Text('Lihat Pesanan Saya')),
+          OutlinedButton(
+              onPressed: () => context.go('/home'),
+              child: const Text('Kembali ke Beranda')),
+        ]),
       );
-        ),
+}
+
+class OrderListScreen extends ConsumerStatefulWidget {
+  const OrderListScreen({super.key});
+  @override
+  ConsumerState<OrderListScreen> createState() => _OrderListScreenState();
+}
+
+class _OrderListScreenState extends ConsumerState<OrderListScreen> {
+  @override
+  Widget build(BuildContext context) => const CustomerScaffold(
+        title: 'Pesanan Saya',
+        child: DefaultTabController(
+          length: 3,
+          child: Column(children: [
+            TabBar(tabs: [
+              Tab(text: 'Aktif'),
+              Tab(text: 'Selesai'),
+              Tab(text: 'Dibatalkan')
+            ]),
+            Expanded(
+                child: TabBarView(children: [
+              _OrderTab('active'),
+              _OrderTab('completed'),
+              _OrderTab('cancelled')
+            ])),
           ]),
-            CircularProgressIndicator(),
-            SizedBox(height: 24),
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-            Text('ServisGadget',
-            SizedBox(height: 16),
-            Icon(Icons.handyman, size: 64),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-        body: Center(
-  Widget build(BuildContext context) => const Scaffold(
-  @override
+        ),
+      );
+}
 
+class _OrderTab extends ConsumerWidget {
+  const _OrderTab(this.group);
+  final String group;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final orders = ref.watch(customerOrdersProvider(group));
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(customerOrdersProvider(group)),
+      child: AsyncPage(
+          value: orders,
+          builder: (items) => items.isEmpty
+              ? const EmptyMessage('Tidak ada pesanan.')
+              : ListView(
+                  children: items
+                      .map((order) => OrderCard(
+                          order: order,
+                          onTap: () => context.push('/orders/${order.id}')))
+                      .toList())),
+    );
   }
-    }
-      if (mounted) context.go('/login');
-      await ref.read(customerSessionProvider).clearAll();
-    } catch (_) {
-      context.go(user.isFirstLogin ? '/change-password' : '/home');
-      if (!mounted) return;
-          await ref.read(customerAuthProvider.notifier).restoreSession();
-      final user =
+}
+
+class OrderDetailScreen extends ConsumerWidget {
+  const OrderDetailScreen({super.key, required this.orderId});
+  final String orderId;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final orderValue = ref.watch(orderDetailProvider(orderId));
+    return CustomerScaffold(
+      title: 'Detail Pesanan',
+      child: AsyncPage(
+        value: orderValue,
+        builder: (order) => RefreshIndicator(
+          onRefresh: () async => ref.invalidate(orderDetailProvider(orderId)),
+          child: ListView(padding: const EdgeInsets.all(16), children: [
+            Row(children: [
+              Expanded(
+                  child: SelectableText(order.orderNumber,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w800))),
+              StatusPill(order.status)
+            ]),
+            const SizedBox(height: 16),
+            _InfoCard(title: 'Perangkat', rows: {
+              'Brand': order.brand,
+              'Model': order.deviceModel,
+              'Jenis': order.deviceType,
+              'Pengiriman': order.deliveryMethod,
+              if (order.deliveryAddress != null)
+                'Alamat': order.deliveryAddress!
+            }),
+            _InfoCard(title: 'Toko', rows: {
+              'Nama': order.storeName ?? '-',
+              'Alamat': order.storeAddress ?? '-',
+              'Telepon': order.storePhone ?? '-'
+            }),
+            _InfoCard(title: 'Harga', rows: {
+              'Estimasi': rupiah(order.totalEstimasi),
+              if (order.discountAmount > 0)
+                'Diskon': '-${rupiah(order.discountAmount)}',
+              if (order.finalPrice != null) 'Final': rupiah(order.finalPrice!)
+            }),
+            const SectionTitle('Item Order'),
+            ...order.items.map((item) => ListTile(
+                title: Text(item.serviceType),
+                subtitle: Text(item.complaint),
+                trailing: Text(rupiah(item.finalItemPrice ?? item.itemPrice)))),
+            if (order.slaDeadline != null)
+              Card(
+                  child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                          'Batas waktu: ${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(order.slaDeadline!)}'))),
+            if (order.status == OrderStatus.waitingApproval)
+              DiagnosisApprovalCard(order: order),
+            const SectionTitle('Tracking', action: null),
+            OrderStatusTimeline(entries: order.tracking.take(3).toList()),
+            TextButton(
+                onPressed: () => context.push('/orders/$orderId/tracking'),
+                child: const Text('Lihat Semua Tracking')),
+            const SectionTitle('Pembayaran'),
+            if (order.payments.isEmpty)
+              const Text('Belum ada pembayaran.')
+            else
+              ...order.payments.map((p) => ListTile(
+                  title: Text(rupiah(p.amount)),
+                  subtitle: Text('${p.paymentMethod} - ${p.status}'))),
+            _OrderActions(order: order),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class DiagnosisApprovalCard extends ConsumerStatefulWidget {
+  const DiagnosisApprovalCard({super.key, required this.order});
+  final CustomerOrder order;
+  @override
+  ConsumerState<DiagnosisApprovalCard> createState() =>
+      _DiagnosisApprovalCardState();
+}
+
+class _DiagnosisApprovalCardState extends ConsumerState<DiagnosisApprovalCard> {
+  bool _loading = false;
+  Future<void> _approve(bool approve) async {
+    setState(() => _loading = true);
     try {
+      if (approve) {
+        await ref.read(orderRepositoryProvider).approveOrder(widget.order.id);
+      } else {
+        await ref.read(orderRepositoryProvider).rejectOrder(widget.order.id);
+      }
+      ref.invalidate(orderDetailProvider(widget.order.id));
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-      return;
-      context.go('/login');
-    if (token == null) {
-    if (!mounted) return;
-    final token = await ref.read(customerSessionProvider).readAccessToken();
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-  Future<void> _checkAuth() async {
-
   }
-    Future.microtask(_checkAuth);
-    super.initState();
-  void initState() {
+
   @override
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-
+  Widget build(BuildContext context) => Card(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Hasil Diagnosa',
+                style: TextStyle(fontWeight: FontWeight.w900)),
+            if (widget.order.diagnosisNote != null)
+              Text(widget.order.diagnosisNote!),
+            const SizedBox(height: 8),
+            ...widget.order.items.map((item) => Text(
+                '${item.serviceType}: ${rupiah(item.finalItemPrice ?? item.itemPrice)}')),
+            if (widget.order.serviceFee != null)
+              Text('Service Fee: ${rupiah(widget.order.serviceFee!)}'),
+            const Divider(),
+            Text('Total: ${rupiah(widget.order.finalPrice ?? 0)}',
+                style: const TextStyle(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                  child: FilledButton(
+                      onPressed: _loading ? null : () => _approve(true),
+                      child: const Text('Setuju'))),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: OutlinedButton(
+                      onPressed: _loading ? null : () => _approve(false),
+                      child: const Text('Tolak'))),
+            ]),
+          ]),
+        ),
+      );
 }
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+
+class _OrderActions extends StatelessWidget {
+  const _OrderActions({required this.order});
+  final CustomerOrder order;
   @override
-
-  const SplashScreen({super.key});
-class SplashScreen extends ConsumerStatefulWidget {
-
-import '../widgets/customer_widgets.dart';
-import '../../domain/customer_models.dart';
-import '../../data/customer_repositories.dart';
-import '../../application/customer_providers.dart';
-
-import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/material.dart';
+  Widget build(BuildContext context) => Column(children: [
+        if (order.status == OrderStatus.waitingPayment)
+          FilledButton.icon(
+              onPressed: () => context.push('/orders/${order.id}/payment'),
+              icon: const Icon(Icons.payment),
+              label: const Text('Upload Bukti Bayar')),
+        if (order.status == OrderStatus.completed && !order.reviewed)
+          FilledButton.icon(
+              onPressed: () => context.push('/orders/${order.id}/review'),
+              icon: const Icon(Icons.star),
+              label: const Text('Beri Ulasan')),
+        if (order.status == OrderStatus.completed &&
+            order.warrantyExpiredAt != null &&
+            DateTime.now().isBefore(order.warrantyExpiredAt!))
+          OutlinedButton.icon(
+              onPressed: () =>
+                  context.push('/orders/${order.id}/warranty-claim'),
+              icon: const Icon(Icons.shield),
+              label: const Text('Klaim Garansi')),
+      ]);
 }
 
+class TrackingScreen extends ConsumerWidget {
+  const TrackingScreen({super.key, required this.orderId});
+  final String orderId;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tracking = ref.watch(orderTrackingProvider(orderId));
+    return CustomerScaffold(
+      title: 'Tracking',
+      child: tracking.when(
+        data: (order) => ListView(padding: const EdgeInsets.all(16), children: [
+          OrderStatusTimeline(entries: order.tracking),
+          const SizedBox(height: 12),
+          Text(
+              'Diperbarui: ${DateFormat('HH:mm', 'id_ID').format(DateTime.now())}',
+              textAlign: TextAlign.center),
+        ]),
+        loading: () => const SkeletonList(),
+        error: (error, _) => Center(child: Text(parseApiError(error))),
+      ),
+    );
+  }
+}
+
+class PaymentUploadScreen extends ConsumerStatefulWidget {
+  const PaymentUploadScreen({super.key, required this.orderId});
+  final String orderId;
+  @override
+  ConsumerState<PaymentUploadScreen> createState() =>
+      _PaymentUploadScreenState();
+}
+
+class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
+  final _amount = TextEditingController();
+  String _method = 'transfer_bank';
+  String _type = 'final_payment';
+  XFile? _file;
+  double _progress = 0;
+  bool _loading = false;
+
+  Future<void> _submit(CustomerOrder order) async {
+    final amount =
+        double.tryParse(_amount.text.replaceAll(RegExp(r'\D'), '')) ?? 0;
+    if (amount <= 0) return;
+    if (_method == 'transfer_bank' && _file == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bukti transfer wajib diunggah.')));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final proofUrl = _file == null
+          ? null
+          : await ref.read(uploadRepositoryProvider).uploadFile(
+              _file!, 'payments', (p) => setState(() => _progress = p));
+      await ref.read(paymentRepositoryProvider).createPayment(
+          orderId: order.id,
+          amount: amount,
+          method: _method,
+          type: _type,
+          proofUrl: proofUrl);
+      ref.invalidate(orderDetailProvider(order.id));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Pembayaran dikirim, menunggu konfirmasi toko.')));
+        context.pop();
+      }
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final orderValue = ref.watch(orderDetailProvider(widget.orderId));
+    return CustomerScaffold(
+      title: 'Pembayaran',
+      child: AsyncPage(
+        value: orderValue,
+        builder: (order) {
+          final confirmed = order.payments
+              .where((p) => p.status == 'confirmed')
+              .fold<double>(0, (sum, p) => sum + p.amount);
+          final due = (order.finalPrice ?? order.totalEstimasi) - confirmed;
+          if (_amount.text.isEmpty)
+            _amount.text = due.clamp(0, double.infinity).toStringAsFixed(0);
+          return ListView(padding: const EdgeInsets.all(16), children: [
+            _InfoCard(title: 'Tagihan', rows: {
+              'Order': order.orderNumber,
+              'Final': rupiah(order.finalPrice ?? order.totalEstimasi),
+              'Sudah Bayar': rupiah(confirmed),
+              'Sisa': rupiah(due)
+            }),
+            DropdownButtonFormField(
+                initialValue: _method,
+                decoration:
+                    const InputDecoration(labelText: 'Metode Pembayaran'),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'transfer_bank', child: Text('Transfer Bank')),
+                  DropdownMenuItem(value: 'qris', child: Text('QRIS')),
+                  DropdownMenuItem(value: 'cash', child: Text('Tunai')),
+                  DropdownMenuItem(value: 'ewallet', child: Text('E-Wallet')),
+                ],
+                onChanged: (v) => setState(() => _method = v!)),
+            DropdownButtonFormField(
+                initialValue: _type,
+                decoration:
+                    const InputDecoration(labelText: 'Jenis Pembayaran'),
+                items: const [
+                  DropdownMenuItem(value: 'deposit', child: Text('Uang Muka')),
+                  DropdownMenuItem(
+                      value: 'final_payment', child: Text('Pelunasan Final')),
+                ],
+                onChanged: (v) => setState(() => _type = v!)),
+            TextField(
+                controller: _amount,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Nominal')),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+                onPressed: () async => setState(() => _file = null),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Hapus Foto')),
+            OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 72,
+                      maxWidth: 1600);
+                  if (picked != null) setState(() => _file = picked);
+                },
+                icon: const Icon(Icons.image),
+                label: Text(_file?.name ?? 'Ambil dari Galeri')),
+            if (_file != null) Text('Dipilih: ${_file!.name}'),
+            if (_progress > 0 && _progress < 1)
+              LinearProgressIndicator(value: _progress),
+            const SizedBox(height: 20),
+            FilledButton(
+                onPressed: _loading ? null : () => _submit(order),
+                child: Text(_loading ? 'Mengirim...' : 'Kirim Pembayaran')),
+          ]);
+        },
+      ),
+    );
+  }
+}
+
+class ReviewFormScreen extends ConsumerStatefulWidget {
+  const ReviewFormScreen({super.key, required this.orderId});
+  final String orderId;
+  @override
+  ConsumerState<ReviewFormScreen> createState() => _ReviewFormScreenState();
+}
+
+class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
+  final _comment = TextEditingController();
+  int _rating = 5;
+  bool _loading = false;
+  Future<void> _submit() async {
+    setState(() => _loading = true);
+    try {
+      final result = await ref.read(reviewRepositoryProvider).createReview(
+          orderId: widget.orderId, rating: _rating, comment: _comment.text);
+      ref.invalidate(orderDetailProvider(widget.orderId));
+      if (mounted) context.go('/review-success', extra: result);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+        title: 'Beri Ulasan',
+        child: ListView(padding: const EdgeInsets.all(16), children: [
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                  5,
+                  (index) => IconButton(
+                      iconSize: 38,
+                      onPressed: () => setState(() => _rating = index + 1),
+                      icon: Icon(
+                          index < _rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber)))),
+          Text(
+              [
+                '',
+                'Sangat Buruk',
+                'Buruk',
+                'Biasa',
+                'Bagus',
+                'Sangat Bagus'
+              ][_rating],
+              textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          TextField(
+              controller: _comment,
+              maxLength: 500,
+              minLines: 4,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                  labelText: 'Komentar', border: OutlineInputBorder())),
+          FilledButton(
+              onPressed: _loading ? null : _submit,
+              child: Text(_loading ? 'Mengirim...' : 'Kirim Ulasan')),
+        ]),
+      );
+}
+
+class ReviewSuccessScreen extends StatelessWidget {
+  const ReviewSuccessScreen({super.key, required this.result});
+  final ReviewResult result;
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+        title: 'Ulasan Berhasil',
+        child: ListView(padding: const EdgeInsets.all(24), children: [
+          const Icon(Icons.celebration, size: 80, color: Colors.orange),
+          Text('Ulasan berhasil dikirim!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800)),
+          if (result.coupon != null) CouponRewardBanner(coupon: result.coupon!),
+          FilledButton(
+              onPressed: () => context.go('/coupons'),
+              child: const Text('Lihat Kupon Saya')),
+          OutlinedButton(
+              onPressed: () => context.go('/orders'),
+              child: const Text('Kembali ke Pesanan')),
+        ]),
+      );
+}
+
+class WarrantyClaimScreen extends ConsumerStatefulWidget {
+  const WarrantyClaimScreen({super.key, required this.orderId});
+  final String orderId;
+  @override
+  ConsumerState<WarrantyClaimScreen> createState() =>
+      _WarrantyClaimScreenState();
+}
+
+class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
+  final _description = TextEditingController();
+  String _type = 'warranty_claim';
+  final _files = <XFile>[];
+  bool _loading = false;
+
+  Future<void> _submit() async {
+    if (_description.text.length < 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Deskripsi minimal 20 karakter.')));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final urls = <String>[];
+      for (final file in _files) {
+        urls.add(await ref
+            .read(uploadRepositoryProvider)
+            .uploadFile(file, 'evidence', null));
+      }
+      await ref.read(disputeRepositoryProvider).createDispute(
+          orderId: widget.orderId,
+          disputeType: _type,
+          description: _description.text,
+          evidenceUrls: urls);
+      ref.invalidate(orderDetailProvider(widget.orderId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Klaim diterima. Admin toko akan merespons dalam 24 jam.')));
+        context.pop();
+      }
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final order = ref.watch(orderDetailProvider(widget.orderId));
+    return CustomerScaffold(
+      title: 'Klaim Garansi',
+      child: AsyncPage(
+          value: order,
+          builder: (data) {
+            if (data.warrantyExpiredAt == null ||
+                DateTime.now().isAfter(data.warrantyExpiredAt!)) {
+              return EmptyMessage(
+                  'Garansi sudah berakhir pada ${shortDate(data.warrantyExpiredAt)}.');
+            }
+            return ListView(padding: const EdgeInsets.all(16), children: [
+              Text('Garansi aktif s/d ${shortDate(data.warrantyExpiredAt)}'),
+              DropdownButtonFormField(
+                  initialValue: _type,
+                  decoration: const InputDecoration(labelText: 'Jenis Masalah'),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'warranty_claim', child: Text('Klaim Garansi')),
+                    DropdownMenuItem(
+                        value: 'service_quality',
+                        child: Text('Kualitas Servis')),
+                    DropdownMenuItem(
+                        value: 'wrong_diagnosis',
+                        child: Text('Diagnosa Salah')),
+                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                  ],
+                  onChanged: (v) => setState(() => _type = v!)),
+              TextField(
+                  controller: _description,
+                  minLines: 4,
+                  maxLines: 7,
+                  decoration: const InputDecoration(
+                      labelText: 'Deskripsi Masalah',
+                      border: OutlineInputBorder())),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                  onPressed: _files.length >= 5
+                      ? null
+                      : () async {
+                          final picked = await ImagePicker().pickImage(
+                              source: ImageSource.gallery,
+                              imageQuality: 72,
+                              maxWidth: 1600);
+                          if (picked != null)
+                            setState(() => _files.add(picked));
+                        },
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Tambah Foto')),
+              Wrap(
+                  spacing: 8,
+                  children: _files
+                      .map((file) => InputChip(
+                          label: Text(file.name),
+                          onDeleted: () => setState(() => _files.remove(file))))
+                      .toList()),
+              const SizedBox(height: 20),
+              FilledButton(
+                  onPressed: _loading ? null : _submit,
+                  child: Text(_loading ? 'Mengirim...' : 'Kirim Klaim')),
+            ]);
+          }),
+    );
+  }
+}
+
+class ProfileScreen extends ConsumerStatefulWidget {
+  const ProfileScreen({super.key});
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final _name = TextEditingController();
+  final _address = TextEditingController();
+  bool _dirty = false;
+  bool _loading = false;
+
+  Future<void> _save() async {
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(customerAuthProvider.notifier)
+          .updateProfile(fullName: _name.text, address: _address.text);
+      setState(() => _dirty = false);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(customerAuthProvider).valueOrNull;
+    if (user != null && !_dirty && _name.text.isEmpty) {
+      _name.text = user.fullName;
+      _address.text = user.address ?? '';
+    }
+    return CustomerScaffold(
+      title: 'Profil',
+      child: ListView(padding: const EdgeInsets.all(16), children: [
+        CircleAvatar(
+            radius: 44,
+            child: Text((user?.fullName.isNotEmpty ?? false)
+                ? user!.fullName[0]
+                : 'S')),
+        const SizedBox(height: 16),
+        TextFormField(
+            controller: _name,
+            decoration: const InputDecoration(
+                labelText: 'Nama Lengkap', border: OutlineInputBorder()),
+            onChanged: (_) => setState(() => _dirty = true)),
+        const SizedBox(height: 12),
+        TextFormField(
+            initialValue: user?.phoneNumber ?? '-',
+            readOnly: true,
+            decoration: const InputDecoration(
+                labelText: 'Nomor HP (tidak bisa diubah)',
+                border: OutlineInputBorder())),
+        const SizedBox(height: 12),
+        TextFormField(
+            controller: _address,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+                labelText: 'Alamat', border: OutlineInputBorder()),
+            onChanged: (_) => setState(() => _dirty = true)),
+        if (_dirty)
+          FilledButton(
+              onPressed: _loading ? null : _save, child: const Text('Simpan')),
+        const Divider(),
+        ListTile(
+            leading: const Icon(Icons.inventory),
+            title: const Text('Pesanan Saya'),
+            onTap: () => context.push('/orders')),
+        ListTile(
+            leading: const Icon(Icons.local_offer),
+            title: const Text('Kupon Saya'),
+            onTap: () => context.push('/coupons')),
+        ListTile(
+            leading: const Icon(Icons.notifications),
+            title: const Text('Preferensi Notifikasi'),
+            onTap: () => context.push('/notification-preferences')),
+        ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Ganti Password'),
+            onTap: () => context.push('/change-password')),
+        ListTile(
+            leading: const Icon(Icons.devices),
+            title: const Text('Sesi Login'),
+            onTap: () => context.push('/sessions')),
+        ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            textColor: Colors.red,
+            iconColor: Colors.red,
+            onTap: () async {
+              await ref.read(customerAuthProvider.notifier).logout();
+              if (context.mounted) context.go('/login');
+            }),
+      ]),
+    );
+  }
+}
+
+class SimpleListScreens {
+  const SimpleListScreens._();
+}
+
+class CouponsScreen extends ConsumerWidget {
+  const CouponsScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => CustomerScaffold(
+        title: 'Kupon Saya',
+        child: AsyncPage(
+            value: ref.watch(couponsProvider),
+            builder: (items) => items.isEmpty
+                ? const EmptyMessage('Belum ada kupon.')
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: items
+                        .map((coupon) => CouponRewardBanner(coupon: coupon))
+                        .toList())),
+      );
+}
+
+class NotificationsScreen extends ConsumerWidget {
+  const NotificationsScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => CustomerScaffold(
+        title: 'Notifikasi',
+        child: AsyncPage(
+            value: ref.watch(notificationsProvider),
+            builder: (items) => items.isEmpty
+                ? const EmptyMessage('Belum ada notifikasi.')
+                : ListView(
+                    children: items
+                        .map((item) => ListTile(
+                            leading: Icon(item.isRead
+                                ? Icons.mark_email_read
+                                : Icons.mark_email_unread),
+                            title: Text(item.title),
+                            subtitle: Text(item.message),
+                            onTap: () => context.push(
+                                '/notifications/${item.id}',
+                                extra: item)))
+                        .toList())),
+      );
+}
+
+class NotificationDetailScreen extends StatelessWidget {
+  const NotificationDetailScreen({super.key, this.item});
+  final NotificationItem? item;
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+      title: 'Detail Notifikasi',
+      child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: item == null
+              ? const EmptyMessage('Notifikasi tidak ditemukan.')
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(item!.title,
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 12),
+                  Text(item!.message)
+                ])));
+}
+
+class NotificationPreferencesScreen extends ConsumerWidget {
+  const NotificationPreferencesScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(notificationPreferenceProvider);
+    return CustomerScaffold(
+      title: 'Preferensi Notifikasi',
+      child: enabled.when(
+        data: (value) => SwitchListTile(
+            title: const Text('Notifikasi WhatsApp dan aplikasi'),
+            value: value,
+            onChanged: (next) async {
+              await ref
+                  .read(customerSessionProvider)
+                  .saveNotificationPreference(next);
+              ref.invalidate(notificationPreferenceProvider);
+            }),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const EmptyMessage('Preferensi belum bisa dimuat.'),
+      ),
+    );
+  }
+}
+
+class SessionsScreen extends StatelessWidget {
+  const SessionsScreen({super.key});
+  @override
+  Widget build(BuildContext context) => const CustomerScaffold(
+        title: 'Sesi Login',
+        child: ListTile(
+            leading: Icon(Icons.phone_android),
+            title: Text('Perangkat ini'),
+            subtitle: Text(
+                'Sesi aktif saat ini. Logout dari profil untuk menghapus sesi.')),
+      );
+}
+
+class SecurityScreen extends StatelessWidget {
+  const SecurityScreen({super.key});
+  @override
+  Widget build(BuildContext context) => CustomerScaffold(
+      title: 'Keamanan',
+      child: ListView(children: [
+        ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Ganti Password'),
+            onTap: () => context.push('/change-password')),
+        const ListTile(
+            leading: Icon(Icons.verified_user),
+            title: Text('Nomor HP hanya dapat diubah melalui support.'))
+      ]));
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({required this.title, required this.rows});
+  final String title;
+  final Map<String, String> rows;
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            ...rows.entries.map((row) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 94, child: Text(row.key)),
+                      Expanded(
+                          child: Text(row.value,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)))
+                    ]))),
+          ]),
+        ),
+      );
+}
