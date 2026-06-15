@@ -544,15 +544,12 @@ cd frontend && flutter run         # Run on emulator
 
 ---
 
-## P3 — AI Agent Tasks (ECC-Powered)
+## P3 — Quality & Infrastructure Tasks
 
-> Tasks ini dirancang untuk AI agent partner. Setiap task menunjuk skill ECC yang relevan.
-> Baca `opencode-setup/Skill/skill-list.md` untuk detail skill.
-> Baca `docs/` project untuk konteks bisnis sebelum mulai.
+> Untuk AI agent (Codex/Claude/etc). Setiap task self-contained — baca `docs/` sebelum mulai.
+> Update dokumentasi di `docs/` setelah selesai.
 
 ### P3-1: Full Security Audit
-
-**ECC Skills:** `security-review`
 
 **Scope:** 3 auth systems, payment flow, public endpoints, file uploads, secrets.
 
@@ -579,8 +576,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-2: Add Structured Logging
 
-**ECC Skills:** `error-handling`
-
 **Files:**
 - `backend/src/common/logger/` — New Pino logger module
 - `backend/src/common/filters/global-exception-filter.ts` — Enhance
@@ -595,8 +590,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-3: Redis Caching Layer
 
-**ECC Skills:** `redis-patterns`
-
 **Files:** `backend/src/modules/redis/` (empty placeholder → implement)
 
 **Tugas:**
@@ -610,8 +603,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-4: Production Readiness Audit
 
-**ECC Skills:** `production-audit`, `deployment-patterns`, `docker-patterns`
-
 **Files to audit:**
 - `backend/Dockerfile` — Non-root, multi-stage, size
 - `docker-compose.yml` — Resource limits, restart
@@ -622,8 +613,6 @@ cd frontend && flutter run         # Run on emulator
 ---
 
 ### P3-5: Database Query Optimization
-
-**ECC Skills:** `postgres-patterns`, `prisma-patterns`
 
 **Files:** `prisma/schema.prisma` + all service files
 
@@ -636,8 +625,6 @@ cd frontend && flutter run         # Run on emulator
 ---
 
 ### P3-6: E2E API Tests
-
-**ECC Skills:** `e2e-testing`
 
 **Files:** `backend/test/e2e/` (new)
 
@@ -652,8 +639,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-7: Code Quality Audit
 
-**ECC Skills:** `refactor-cleaner`, `coding-standards`
-
 **Tugas:**
 1. Scan unused imports, `any` types
 2. Replace `print()` with logger
@@ -665,8 +650,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-8: Monitoring Metrics
 
-**ECC Skills:** `dashboard-builder`
-
 **Tugas:**
 1. `@nestjs/terminus` + Prometheus metrics
 2. Export: request count/duration, order rate, payment rate
@@ -675,8 +658,6 @@ cd frontend && flutter run         # Run on emulator
 ---
 
 ### P3-9: Flutter Performance
-
-**ECC Skills:** `dart-flutter-patterns`
 
 **Tugas:**
 1. Add missing `const` constructors
@@ -689,8 +670,6 @@ cd frontend && flutter run         # Run on emulator
 
 ### P3-10: WhatsApp Notification Fallback
 
-**ECC Skills:** `error-handling`
-
 **Current:** 3x retry Fonnte WhatsApp, no fallback.
 
 **Tugas:**
@@ -702,15 +681,15 @@ cd frontend && flutter run         # Run on emulator
 
 ### Priority Reference
 
-| Task | ECC Skill | Effort | Impact |
-|------|-----------|--------|--------|
-| P3-1: Security Audit | security-review | 2h | 🔴 Production safety |
-| P3-2: Structured Logging | error-handling | 3h | 🔴 Debugging |
-| P3-3: Redis Caching | redis-patterns | 4h | 🟡 Performance |
-| P3-4: Production Audit | production-audit | 2h | 🔴 Deployment safety |
-| P3-5: DB Optimization | postgres-patterns | 3h | 🟡 Query speed |
-| P3-6: E2E Tests | e2e-testing | 6h | 🟢 Reliability |
-| P3-7: Code Quality | refactor-cleaner | 2h | 🟢 Maintainability |
-| P3-8: Monitoring | dashboard-builder | 4h | 🔴 Observability |
-| P3-9: Flutter Perf | dart-flutter-patterns | 3h | 🟡 App speed |
-| P3-10: WA Fallback | error-handling | 5h | 🟡 Reliability |
+| Task | Effort | Impact |
+|------|--------|--------|
+| P3-1: Security Audit | 2h | 🔴 Production safety |
+| P3-2: Structured Logging | 3h | 🔴 Debugging |
+| P3-3: Redis Caching | 4h | 🟡 Performance |
+| P3-4: Production Audit | 2h | 🔴 Deployment safety |
+| P3-5: DB Optimization | 3h | 🟡 Query speed |
+| P3-6: E2E Tests | 6h | 🟢 Reliability |
+| P3-7: Code Quality | 2h | 🟢 Maintainability |
+| P3-8: Monitoring | 4h | 🔴 Observability |
+| P3-9: Flutter Perf | 3h | 🟡 App speed |
+| P3-10: WA Fallback | 5h | 🟡 Reliability |
