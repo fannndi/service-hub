@@ -5,7 +5,6 @@ import '../../../core/app_config.dart';
 import '../data/customer_repositories.dart';
 import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
-import '../domain/user_session.dart';
 
 final customerSessionProvider = Provider<CustomerSessionStorage>((ref) => const CustomerSessionStorage(FlutterSecureStorage()));
 final customerApiClientProvider = Provider<CustomerApiClient>((ref) => CustomerApiClient(ref.watch(appConfigProvider), ref.watch(customerSessionProvider)));

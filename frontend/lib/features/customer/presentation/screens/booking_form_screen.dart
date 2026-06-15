@@ -2240,7 +2240,6 @@ class SecurityScreen extends ConsumerStatefulWidget {
 class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return CustomerScaffold(
       title: 'Keamanan',
       child: ListView(
