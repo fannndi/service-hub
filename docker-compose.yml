@@ -2,6 +2,7 @@
   postgres:
     image: postgres:16-alpine
     container_name: servisgadget_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: servisgadget
       POSTGRES_PASSWORD: servisgadget
@@ -15,10 +16,15 @@
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   redis:
     image: redis:7-alpine
     container_name: servisgadget_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     healthcheck:
@@ -26,11 +32,16 @@
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   backend:
     build:
       context: ./backend
     container_name: servisgadget_backend
+    restart: unless-stopped
     env_file:
       - .env
     ports:
@@ -40,7 +51,15 @@
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: sh -c "npm run prisma:generate && npm run start"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/v1/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 volumes:
   postgres_data:
