@@ -12,109 +12,46 @@
 
 ---
 
-## P0 — Critical (Kerjakan Dulu)
+### 📊 Progress
 
-### P0-0: Implement Dynamic Device Model Dropdown from Sparepart Data
+| Level | Total | Done | Remaining |
+|-------|-------|------|-----------|
+| P0 | 3 | 1 | 2 |
+| P1 | 6 | 0 | 6 |
+| P2 | 3 | 0 | 3 |
+| P3 | 10 | 0 | 10 |
+| **Total** | **22** | **1** | **21** |
 
-**Goal:** Brand & device model di Service Now Step 1 dan StoreListScreen berisi data real-time dari sparepart di semua toko, bukan hardcoded.
-
-**Backend — `StoresController` (path `stores`):**
-
-1. **Tambah endpoint** `GET /stores/device-models` di `stores.controller.ts`:
-   - **Kenapa di `StoresController`?** Karena `SparepartsController` ada di path `store/spareparts` (namespace store admin, pakai auth guard). `StoresController` di path `stores` sudah public (tanpa `@UseGuards`). Lihat `src/modules/stores/stores.controller.ts:9-10`.
-   - Route: `@Get('device-models')`
-   - Method baru di `StoresService`:
-     ```typescript
-     async getDeviceModels() {
-       const results = await this.prisma.sparePart.findMany({
-         where: { status: { not: 'discontinued' } },
-         select: { brand: true, deviceModel: true },
-         distinct: ['brand', 'deviceModel'],
-         orderBy: [{ brand: 'asc' }, { deviceModel: 'asc' }],
-       });
-       const map = new Map<string, string[]>();
-       for (const r of results) {
-         if (!map.has(r.brand)) map.set(r.brand, []);
-         map.get(r.brand)!.push(r.deviceModel);
-       }
-       return Array.from(map.entries()).map(([brand, models]) => ({ brand, models }));
-     }
-     ```
-   - Response: `[{ brand: "Google", models: ["Pixel 3", "Pixel 4"] }, ...]`
-     (interceptor otomatis bungkus ke `{ success: true, data: [...], timestamp: "..." }`)
-   - No auth required (public endpoint)
-
-**Frontend — Model baru:**
-
-2. **File baru:** `frontend/lib/features/customer/domain/device_model.dart`
-   ```dart
-   class DeviceModelGroup {
-     final String brand;
-     final List<String> models;
-     const DeviceModelGroup({required this.brand, required this.models});
-
-     factory DeviceModelGroup.fromJson(Map<String, dynamic> json) =>
-         DeviceModelGroup(
-           brand: json['brand'] as String,
-           models: (json['models'] as List).cast<String>(),
-         );
-   }
-   ```
-
-**Frontend — Repository:**
-
-3. **Edit `customer_repositories.dart`** — tambah method di `StoreDiscoveryRepository`:
-   ```dart
-   Future<List<DeviceModelGroup>> getDeviceModels() async {
-     final response = await _api.publicDio.get('/stores/device-models');
-     return CustomerApiClient.unwrapList(response.data)
-         .map(DeviceModelGroup.fromJson)
-         .toList();
-   }
-   ```
-   **WAJIB** pakai `_api.publicDio` (bukan `authDio`) karena Service Now bisa diakses sebelum login. File `customer_repositories.dart:178` saat ini salah pake `authDio` untuk `getStores()` — jangan ditiru.
-
-**Frontend — Provider baru:**
-
-4. **Edit `customer_providers.dart`** — tambah:
-   ```dart
-   final deviceModelsProvider = FutureProvider<List<DeviceModelGroup>>((ref) =>
-       ref.watch(storeDiscoveryRepositoryProvider).getDeviceModels());
-   ```
-
-**Frontend — ServiceFlowScreen Step 1 (`customer_screens.dart:810-837`):**
-
-5. **Edit class `_ServiceFlowScreenState`:**
-   - **Ganti state:** `final _brand = TextEditingController()` → `String? _selectedBrand`
-   - **Ganti state:** `final _model = TextEditingController()` → `String? _selectedModel`
-   - Hapus `_brand.dispose()` dan `_model.dispose()` dari `dispose()`
-   - **Ganti UI:** `TextField` → `DropdownButtonFormField<String>` untuk brand dan model
-   - Brand dropdown: `ref.watch(deviceModelsProvider)`, pilih brand → simpan di `_selectedBrand`
-   - Model dropdown: filter `models` dari brand yang dipilih, sorted alphabetical
-   - User WAJIB klik (no auto-select, bahkan jika cuma 1 pilihan)
-   - Loading state: `CircularProgressIndicator`
-   - Empty state: "Belum ada sparepart tersedia"
-   - Update `_matchStores()`: kirim `_selectedBrand!` dan `_selectedModel!` (bukan `_brand.text`)
-   - Update `_createBooking()`: kirim `_selectedBrand!` dan `_selectedModel!` (bukan `_brand.text`)
-   - Update `_nextStep()` (line 718): validasi `_selectedBrand != null && _selectedModel != null`
-
-**Frontend — StoreListScreen brand chips (line 482-489):**
-
-6. **Edit `StoreListScreen`:**
-   ```dart
-   // Sebelum:
-   ['All', 'Samsung', 'Apple', 'Xiaomi', 'Oppo', 'Realme', 'Vivo']
-   // Sesudah:
-   final deviceModels = ref.watch(deviceModelsProvider);
-   final brands = deviceModels.valueOrNull?.map((g) => g.brand).toList() ?? [];
-   ['All', ...brands]
-   ```
-
-**Post-task:**
-- Update `docs/backend/BACKEND_API_REFERENCE.md` §4 — tambah endpoint `GET /stores/device-models`
-- Update `docs/frontend/FRONTEND_CUSTOMER.md` — update §1 (tambah model `DeviceModelGroup`), §2 (method `getDeviceModels`), §4 (perubahan Step 1 UI)
+**Next recommended:** P1-3 (Integration Tests) — effort 4h, high impact, langsung bisa verify hasil.
+Atau P1-5 (Rate Limiting) — 30 menit, quick win.
 
 ---
+
+## ✅ Completed — P0-0: Dynamic Device Model Dropdown
+
+**Done by:** AI Agent (2026-06-15)
+**Commit:** `5f6710b`
+
+### Backend
+- ✅ `GET /stores/device-models` endpoint
+- ✅ `getDeviceModels()` service method (distinct brand/model, not discontinued)
+- ✅ Docs updated in `BACKEND_API_REFERENCE.md`
+
+### Frontend  
+- ✅ `DeviceModelGroup` model created
+- ✅ `getDeviceModels()` in `StoreDiscoveryRepository` (uses `publicDio`)
+- ✅ `deviceModelsProvider` in customer_providers
+- ✅ ServiceFlowScreen Step 1: TextField → DropdownButtonFormField
+- ✅ StoreListScreen brand chips: hardcoded → live data
+- ✅ Fixed `getStores()` bug: `authDio` → `publicDio`
+- ✅ Loading/error/empty states handled
+- ✅ Docs updated in `FRONTEND_CUSTOMER.md`
+
+---
+
+---
+
+## P0 — Critical
 
 ### P0-1: Split `customer_screens.dart` God File
 
