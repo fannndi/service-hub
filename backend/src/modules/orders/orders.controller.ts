@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
@@ -23,6 +24,7 @@ export class OrdersController {
   ) {}
 
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async createOrder(@Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder(dto);
   }

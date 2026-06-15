@@ -63,6 +63,8 @@
 
 ### Order Creation Logic
 
+`POST /orders` adalah endpoint publik untuk stealth booking, jadi controller membatasi traffic dengan `@Throttle({ default: { limit: 5, ttl: 60000 } })`. Business logic tetap berada di `OrdersService`; rate limiting hanya melindungi permukaan publik dari spam per IP.
+
 ```typescript
 async createOrder(userId: string | null, dto: CreateOrderDto) {
   // dto: { storeId, deviceType, brand, deviceModel, deliveryMethod,

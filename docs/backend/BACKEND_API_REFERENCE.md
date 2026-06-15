@@ -217,6 +217,7 @@ Error response:
 
 ### `POST /orders`
 - **Auth:** Tidak perlu (stealth account — akun dibuat otomatis jika belum ada)
+- **Rate limit:** 5 request per menit per IP. Request berikutnya dalam jendela yang sama akan ditolak oleh Throttler dengan HTTP 429.
 - **Body:**
 ```json
 {

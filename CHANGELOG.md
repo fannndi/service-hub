@@ -1,5 +1,15 @@
 ﻿# Changelog
 
+## 2026-06-15 — Public Order Rate Limit
+
+### Changed
+- Added Nest throttling to public `POST /v1/orders`, limiting booking creation to 5 requests per minute per IP.
+
+### Docs
+- Documented the public order rate limit in backend API and business logic docs.
+
+---
+
 ## 2026-06-15 — Dynamic Customer Device Models
 
 ### Added

@@ -17,13 +17,12 @@
 | Level | Total | Done | Remaining |
 |-------|-------|------|-----------|
 | P0 | 3 | 1 | 2 |
-| P1 | 6 | 0 | 6 |
+| P1 | 6 | 1 | 5 |
 | P2 | 3 | 0 | 3 |
 | P3 | 10 | 0 | 10 |
-| **Total** | **22** | **1** | **21** |
+| **Total** | **22** | **2** | **20** |
 
-**Next recommended:** P1-3 (Integration Tests) — effort 4h, high impact, langsung bisa verify hasil.
-Atau P1-5 (Rate Limiting) — 30 menit, quick win.
+**Next recommended:** P0-1 (Split `customer_screens.dart`) untuk mengurangi risiko maintainability, atau P1-3 (Integration Tests) untuk coverage backend.
 
 ---
 
@@ -46,6 +45,21 @@ Atau P1-5 (Rate Limiting) — 30 menit, quick win.
 - ✅ Fixed `getStores()` bug: `authDio` → `publicDio`
 - ✅ Loading/error/empty states handled
 - ✅ Docs updated in `FRONTEND_CUSTOMER.md`
+
+---
+
+## ✅ Completed — P1-5: Add Rate Limiting for POST /orders
+
+**Done by:** AI Agent (2026-06-15)
+
+### Backend
+- ✅ Added `@Throttle({ default: { limit: 5, ttl: 60000 } })` to public `POST /orders`
+- ✅ Kept order creation business logic unchanged in `OrdersService`
+
+### Docs
+- ✅ Documented 5 requests/minute/IP limit in `BACKEND_API_REFERENCE.md`
+- ✅ Documented public endpoint protection in `BACKEND_BUSINESS_LOGIC.md`
+- ✅ Updated `CHANGELOG.md`
 
 ---
 
@@ -291,24 +305,6 @@ Atau P1-5 (Rate Limiting) — 30 menit, quick win.
 
 **Post-task:**
 - Update `docs/frontend/FRONTEND_ARCHITECTURE.md` §2 — update assets tree
-
----
-
-### P1-5: Add Rate Limiting for POST /orders
-
-**File:** `backend/src/modules/orders/orders.controller.ts`
-
-**Masalah:** `POST /orders` adalah endpoint publik (tanpa auth). Bisa di-spam untuk DoS. Lihat `orders.controller.ts:25-28`.
-
-**Tugas:**
-1. Import `@Throttle` dari `@nestjs/throttler`
-2. Tambahkan decorator `@Throttle({ default: { limit: 5, ttl: 60000 } })` di method `createOrder`
-3. Ini membatasi 5 request per menit per IP untuk endpoint ini
-4. Test: kirim 6 request berturut-turut, pastikan request ke-6 return 429
-
-**Post-task:**
-- Update `docs/backend/BACKEND_API_REFERENCE.md` §5 — tambah catatan rate limiting
-- Update `docs/backend/BACKEND_BUSINESS_LOGIC.md` §1 — tambah catatan di Order Creation
 
 ---
 
