@@ -8,6 +8,7 @@ import '../../../core/app_config.dart';
 import '../../../network/api_client.dart';
 import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
+import '../domain/user_session.dart';
 
 String normalizePhone(String value) {
   final digits = value.replaceAll(RegExp(r'\D'), '');
@@ -308,5 +309,23 @@ class NotificationRepository {
   Future<List<NotificationItem>> getNotifications() async {
     final response = await _api.authDio.get('/me/notifications');
     return CustomerApiClient.unwrapList(response.data).map(NotificationItem.fromJson).toList();
+  }
+}
+
+class SessionRepository {
+  SessionRepository(this._api);
+  final CustomerApiClient _api;
+
+  Future<List<UserSession>> getSessions() async {
+    final response = await _api.authDio.get('/me/sessions');
+    return CustomerApiClient.unwrapList(response.data).map(UserSession.fromJson).toList();
+  }
+
+  Future<void> revokeSession(String id) async {
+    await _api.authDio.delete('/me/sessions/$id');
+  }
+
+  Future<void> logoutAll() async {
+    await _api.authDio.delete('/me/sessions');
   }
 }

@@ -5,6 +5,7 @@ import '../../../core/app_config.dart';
 import '../data/customer_repositories.dart';
 import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
+import '../domain/user_session.dart';
 
 final customerSessionProvider = Provider<CustomerSessionStorage>((ref) => const CustomerSessionStorage(FlutterSecureStorage()));
 final customerApiClientProvider = Provider<CustomerApiClient>((ref) => CustomerApiClient(ref.watch(appConfigProvider), ref.watch(customerSessionProvider)));
@@ -16,6 +17,7 @@ final paymentRepositoryProvider = Provider<PaymentRepository>((ref) => PaymentRe
 final reviewRepositoryProvider = Provider<ReviewRepository>((ref) => ReviewRepository(ref.watch(customerApiClientProvider)));
 final disputeRepositoryProvider = Provider<DisputeRepository>((ref) => DisputeRepository(ref.watch(customerApiClientProvider)));
 final notificationRepositoryProvider = Provider<NotificationRepository>((ref) => NotificationRepository(ref.watch(customerApiClientProvider)));
+final sessionRepositoryProvider = Provider<SessionRepository>((ref) => SessionRepository(ref.watch(customerApiClientProvider)));
 
 class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   @override

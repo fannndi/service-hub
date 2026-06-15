@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { OrdersService } from '../orders/orders.service';
@@ -51,5 +51,20 @@ export class UsersController {
   @Get('notifications')
   async getNotifications(@GetUser() user: AuthenticatedUser) {
     return this.usersService.getNotifications(user.id);
+  }
+
+  @Get('sessions')
+  async getSessions(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.getSessions(user.id);
+  }
+
+  @Delete('sessions/:id')
+  async revokeSession(@GetUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.usersService.revokeSession(user.id, id);
+  }
+
+  @Delete('sessions')
+  async revokeAllSessions(@GetUser() user: AuthenticatedUser) {
+    return this.usersService.revokeAllSessions(user.id);
   }
 }

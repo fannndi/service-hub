@@ -86,4 +86,26 @@ export class UsersService {
       take: 50,
     });
   }
+
+  async getSessions(userId: string) {
+    return this.prisma.userSession.findMany({
+      where: { userId },
+      select: { id: true, deviceInfo: true, ipAddress: true, lastActiveAt: true, isActive: true, createdAt: true },
+      orderBy: { lastActiveAt: 'desc' },
+    });
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    return this.prisma.userSession.updateMany({
+      where: { id: sessionId, userId },
+      data: { isActive: false },
+    });
+  }
+
+  async revokeAllSessions(userId: string) {
+    return this.prisma.userSession.updateMany({
+      where: { userId, isActive: true },
+      data: { isActive: false },
+    });
+  }
 }

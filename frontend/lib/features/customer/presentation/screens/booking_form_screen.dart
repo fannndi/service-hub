@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
+import '../../domain/user_session.dart';
+import '../../../../shared_widgets/error_state.dart';
 import '../widgets/customer_widgets.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -2128,33 +2130,159 @@ class NotificationPreferencesScreen extends ConsumerWidget {
   }
 }
 
-class SessionsScreen extends StatelessWidget {
+class SessionsScreen extends ConsumerStatefulWidget {
   const SessionsScreen({super.key});
   @override
-  Widget build(BuildContext context) => const CustomerScaffold(
-        title: 'Sesi Login',
-        child: ListTile(
-            leading: Icon(Icons.phone_android),
-            title: Text('Perangkat ini'),
-            subtitle: Text(
-                'Sesi aktif saat ini. Logout dari profil untuk menghapus sesi.')),
-      );
+  ConsumerState<SessionsScreen> createState() => _SessionsScreenState();
 }
 
-class SecurityScreen extends StatelessWidget {
+class _SessionsScreenState extends ConsumerState<SessionsScreen> {
+  Future<List<UserSession>> _fetch() => ref.read(sessionRepositoryProvider).getSessions();
+
+  Future<void> _revoke(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Revoke Sesi'),
+        content: const Text('Sesi ini akan diakhiri. Lanjutkan?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Revoke')),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await ref.read(sessionRepositoryProvider).revokeSession(id);
+      setState(() {});
+    }
+  }
+
+  Future<void> _logoutAll() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Logout Semua'),
+        content: const Text('Semua sesi akan diakhiri kecuali sesi saat ini. Lanjutkan?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Logout All')),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await ref.read(sessionRepositoryProvider).logoutAll();
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return CustomerScaffold(
+      title: 'Sesi Login',
+      actions: [
+        IconButton(icon: const Icon(Icons.logout), onPressed: _logoutAll, tooltip: 'Logout Semua'),
+      ],
+      child: FutureBuilder<List<UserSession>>(
+        future: _fetch(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return ErrorState(message: 'Gagal memuat sesi: ${snapshot.error}', onRetry: () => setState(() {}));
+          }
+          final sessions = snapshot.data ?? [];
+          if (sessions.isEmpty) {
+            return const EmptyMessage('Tidak ada sesi aktif');
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: sessions.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              final s = sessions[index];
+              final deviceName = s.deviceInfo?['device'] as String? ?? 'Perangkat tidak dikenal';
+              return ListTile(
+                leading: Icon(s.isActive ? Icons.phone_android : Icons.phone_android, color: s.isActive ? Colors.green : Colors.grey),
+                title: Text(deviceName, style: theme.textTheme.bodyLarge),
+                subtitle: Text(
+                  '${s.ipAddress ?? '-'} • ${_formatDate(s.lastActiveAt)}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                trailing: s.isActive
+                    ? TextButton(onPressed: () => _revoke(s.id), child: const Text('Revoke'))
+                    : const Icon(Icons.check_circle, size: 18, color: Colors.grey),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'baru saja';
+    if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
+    if (diff.inDays < 1) return '${diff.inHours}h lalu';
+    return '${diff.inDays}h lalu';
+  }
+}
+
+class SecurityScreen extends ConsumerStatefulWidget {
   const SecurityScreen({super.key});
   @override
-  Widget build(BuildContext context) => CustomerScaffold(
+  ConsumerState<SecurityScreen> createState() => _SecurityScreenState();
+}
+
+class _SecurityScreenState extends ConsumerState<SecurityScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return CustomerScaffold(
       title: 'Keamanan',
-      child: ListView(children: [
-        ListTile(
-            leading: const Icon(Icons.lock),
-            title: const Text('Ganti Password'),
-            onTap: () => context.push('/change-password')),
-        const ListTile(
-            leading: Icon(Icons.verified_user),
-            title: Text('Nomor HP hanya dapat diubah melalui support.'))
-      ]));
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Ganti Password'),
+              subtitle: const Text('Perbarui password akun Anda'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/change-password'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: FutureBuilder<List<UserSession>>(
+              future: ref.read(sessionRepositoryProvider).getSessions(),
+              builder: (context, snapshot) {
+                final active = snapshot.data?.where((s) => s.isActive).length ?? 0;
+                return ListTile(
+                  leading: const Icon(Icons.devices),
+                  title: const Text('Perangkat Aktif'),
+                  subtitle: Text('$active perangkat terhubung'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/sessions'),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.phone),
+              title: const Text('Nomor HP'),
+              subtitle: const Text('Hubungi support untuk mengubah nomor HP'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _InfoCard extends StatelessWidget {
