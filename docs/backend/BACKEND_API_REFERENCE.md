@@ -48,14 +48,19 @@ Error response:
 
 ---
 
-## 1. Health
+## 1. Health & Monitoring
 
 ### `GET /health`
 - **Auth:** Tidak perlu
 - **Response:**
 ```json
-{ "status": "ok", "service": "servisgadget-foundation" }
+{ "status": "ok", "service": "servisgadget-foundation", "database": "ok", "uptime": 12345, "memory": { "rss": 123, "heapTotal": 456, "heapUsed": 789 } }
 ```
+
+### `GET /v1/metrics`
+- **Auth:** Tidak perlu
+- **Deskripsi:** Prometheus metrics (default metrics + request count, memory usage)
+- **Response:** `text/plain` Prometheus format
 
 ---
 
@@ -155,6 +160,18 @@ Error response:
 
 ### `GET /me/notifications`
 - **Response:** 50 notifikasi terbaru dari `service_tracking` (30 hari terakhir)
+
+### `GET /me/sessions`
+- **Auth:** `Bearer Token`
+- **Response:** Semua sesi login user (deviceInfo, ipAddress, lastActiveAt, isActive)
+
+### `DELETE /me/sessions/:id`
+- **Auth:** `Bearer Token`
+- **Deskripsi:** Revoke sesi tertentu. Hanya bisa revoke session milik sendiri (`userId` validation)
+
+### `DELETE /me/sessions`
+- **Auth:** `Bearer Token`
+- **Deskripsi:** Logout dari semua perangkat
 
 ---
 

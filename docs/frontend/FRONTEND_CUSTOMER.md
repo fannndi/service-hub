@@ -494,14 +494,16 @@ final notificationPreferenceProvider = FutureProvider<bool>((ref) async { ... })
 | `NotificationsScreen` | `/notifications` | List notifikasi |
 | `NotificationDetailScreen` | `/notifications/:id` | Detail notifikasi (via `state.extra`) |
 | `NotificationPreferencesScreen` | `/notification-preferences` | Setelan notifikasi |
-| `SessionsScreen` | `/sessions` | Active sessions |
-| `SecurityScreen` | `/security` | Security settings |
+| `SessionsScreen` | `/sessions` | List sesi login aktif, revoke per session, logout all (konfirmasi dialog) |
+| `SecurityScreen` | `/security` | Ganti password, jumlah perangkat aktif, info nomor HP |
 
 **Notes:**
 - `NotificationDetailScreen` menerima parameter via `state.extra as NotificationItem?` (bukan path parameter)
 - `ReviewSuccessScreen` menerima parameter via `state.extra as ReviewResult`
 - `ServiceFlowScreen` Step 1 memakai dropdown brand dan model dari `deviceModelsProvider`, bukan hardcoded text field. User wajib memilih brand dan model; pilihan tidak di-auto-select walaupun hanya ada satu opsi.
 - `StoreListScreen` brand chips memakai daftar brand dari `deviceModelsProvider` dengan tambahan chip `All`.
+- `SessionsScreen` menampilkan: nama perangkat, IP, last active, status aktif. Tombol revoke per session (kecuali session saat ini). Tombol "Logout Semua" di AppBar.
+- `SecurityScreen` menampilkan: jumlah perangkat aktif (link ke sessions), ganti password (link ke change-password), info bahwa nomor HP hanya bisa diubah via support.
 
 ---
 
