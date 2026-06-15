@@ -126,6 +126,23 @@ export class StoresService {
     return results;
   }
 
+  async getDeviceModels() {
+    const results = await this.prisma.sparePart.findMany({
+      where: { status: { not: 'discontinued' } },
+      select: { brand: true, deviceModel: true },
+      distinct: ['brand', 'deviceModel'],
+      orderBy: [{ brand: 'asc' }, { deviceModel: 'asc' }],
+    });
+
+    const map = new Map<string, string[]>();
+    for (const result of results) {
+      if (!map.has(result.brand)) map.set(result.brand, []);
+      map.get(result.brand)!.push(result.deviceModel);
+    }
+
+    return Array.from(map.entries()).map(([brand, models]) => ({ brand, models }));
+  }
+
   async findById(id: string) {
     return this.prisma.store.findUniqueOrThrow({
       where: { id },

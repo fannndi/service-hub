@@ -1,5 +1,21 @@
 ﻿# Changelog
 
+## 2026-06-15 — Dynamic Customer Device Models
+
+### Added
+- Added public `GET /v1/stores/device-models` endpoint backed by non-discontinued sparepart brand/model data.
+- Added `DeviceModelGroup`, `StoreDiscoveryRepository.getDeviceModels()`, and `deviceModelsProvider`.
+
+### Changed
+- Customer Service Now Step 1 now uses required dynamic dropdowns for brand and device model instead of free-text inputs.
+- Customer Store List brand filter chips now come from live sparepart device-model data.
+- `StoreDiscoveryRepository.getStores()` now uses the public Dio client because store discovery is public.
+
+### Docs
+- Updated backend API reference and frontend customer docs for device-model discovery.
+
+---
+
 ## 2026-06-11 — Major Refactor (Production Readiness)
 
 ### Backend Rewrite (Phase 1-5)

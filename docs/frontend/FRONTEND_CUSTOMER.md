@@ -104,6 +104,18 @@ class SparePart {
 
 **Note:** Tidak ada field `status` di model ini.
 
+#### DeviceModelGroup
+> File: `lib/features/customer/domain/device_model.dart`
+
+```dart
+class DeviceModelGroup {
+  final String brand;
+  final List<String> models;
+}
+```
+
+**Usage:** Source of truth untuk dropdown brand dan model perangkat di Service Now Step 1 dan brand chips di Store List. Data diambil dari public endpoint `GET /stores/device-models`.
+
 #### StoreMatchResult
 ```dart
 class StoreMatchResult {
@@ -335,7 +347,7 @@ class CustomerApiClient {
 | Repository | Methods | Endpoint |
 |------------|---------|----------|
 | `CustomerAuthRepository` | `login()`, `getMe()`, `getSummary()`, `changePassword()`, `updateProfile()`, `logout()` | `/auth/*`, `/me/*` |
-| `StoreDiscoveryRepository` | `getStores()`, `getStore()`, `getSpareparts()`, `matchStores()` | `/stores/*` |
+| `StoreDiscoveryRepository` | `getStores()`, `getDeviceModels()`, `getStore()`, `getSpareparts()`, `matchStores()` | `/stores/*` |
 | `OrderRepository` | `createOrder()`, `getMyOrders()`, `getOrderDetail()`, `getOrderProgress()`, `approveOrder()`, `rejectOrder()` | `/me/orders/*`, `/orders/*` |
 | `PaymentRepository` | `createPayment(orderId, dto)` | `/orders/$orderId/payments` |
 | `ReviewRepository` | `createReview()`, `getCoupons()` | `/reviews/*`, `/me/coupons` |
@@ -381,6 +393,11 @@ final homeSummaryProvider = FutureProvider<HomeSummary>((ref) async {
 final featuredStoresProvider = FutureProvider<List<ServiceStore>>((ref) async {
   final repo = ref.watch(storeDiscoveryRepositoryProvider);
   return repo.getStores();  // Tanpa limit
+});
+
+final deviceModelsProvider = FutureProvider<List<DeviceModelGroup>>((ref) async {
+  final repo = ref.watch(storeDiscoveryRepositoryProvider);
+  return repo.getDeviceModels(); // Public endpoint, no JWT
 });
 
 final storeListProvider = FutureProvider.family<List<ServiceStore>, ({String? brand, String? model})>(
@@ -483,6 +500,8 @@ final notificationPreferenceProvider = FutureProvider<bool>((ref) async { ... })
 **Notes:**
 - `NotificationDetailScreen` menerima parameter via `state.extra as NotificationItem?` (bukan path parameter)
 - `ReviewSuccessScreen` menerima parameter via `state.extra as ReviewResult`
+- `ServiceFlowScreen` Step 1 memakai dropdown brand dan model dari `deviceModelsProvider`, bukan hardcoded text field. User wajib memilih brand dan model; pilihan tidak di-auto-select walaupun hanya ada satu opsi.
+- `StoreListScreen` brand chips memakai daftar brand dari `deviceModelsProvider` dengan tambahan chip `All`.
 
 ---
 

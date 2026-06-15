@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/app_config.dart';
 import '../data/customer_repositories.dart';
+import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
 
 final customerSessionProvider = Provider<CustomerSessionStorage>((ref) => const CustomerSessionStorage(FlutterSecureStorage()));
@@ -64,6 +65,7 @@ final customerAuthProvider = AsyncNotifierProvider<CustomerAuthNotifier, Custome
 
 final homeSummaryProvider = FutureProvider<HomeSummary>((ref) => ref.watch(customerAuthRepositoryProvider).getSummary());
 final featuredStoresProvider = FutureProvider<List<ServiceStore>>((ref) => ref.watch(storeDiscoveryRepositoryProvider).getStores());
+final deviceModelsProvider = FutureProvider<List<DeviceModelGroup>>((ref) => ref.watch(storeDiscoveryRepositoryProvider).getDeviceModels());
 final storeListProvider = FutureProvider.family<List<ServiceStore>, ({String? brand, String? model})>((ref, filter) {
   return ref.watch(storeDiscoveryRepositoryProvider).getStores(brand: filter.brand, deviceModel: filter.model);
 });

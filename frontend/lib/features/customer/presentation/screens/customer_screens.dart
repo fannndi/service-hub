@@ -468,6 +468,9 @@ class _StoreListScreenState extends ConsumerState<StoreListScreen> {
   final _model = TextEditingController();
   @override
   Widget build(BuildContext context) {
+    final deviceModels = ref.watch(deviceModelsProvider);
+    final brands = deviceModels.valueOrNull?.map((group) => group.brand).toSet().toList() ?? const <String>[];
+    brands.sort();
     final stores =
         ref.watch(storeListProvider((brand: _brand, model: _model.text)));
     return CustomerScaffold(
@@ -478,15 +481,7 @@ class _StoreListScreenState extends ConsumerState<StoreListScreen> {
           child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                'All',
-                'Samsung',
-                'Apple',
-                'Xiaomi',
-                'Oppo',
-                'Realme',
-                'Vivo'
-              ]
+              children: ['All', ...brands]
                   .map((brand) => Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 8),
@@ -605,8 +600,8 @@ class ServiceFlowScreen extends ConsumerStatefulWidget {
 class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   final _pageController = PageController();
   int _step = 0;
-  final _brand = TextEditingController();
-  final _model = TextEditingController();
+  String? _selectedBrand;
+  String? _selectedModel;
   final _complaint = TextEditingController();
   final _name = TextEditingController();
   final _phone = TextEditingController();
@@ -643,8 +638,6 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _brand.dispose();
-    _model.dispose();
     _complaint.dispose();
     _name.dispose();
     _phone.dispose();
@@ -654,13 +647,13 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   }
 
   Future<void> _matchStores() async {
-    if (_brand.text.isEmpty || _model.text.isEmpty) return;
+    if (_selectedBrand == null || _selectedModel == null) return;
     setState(() => _loading = true);
     try {
       final repo = ref.read(storeDiscoveryRepositoryProvider);
       _matchedStores = await repo.matchStores(
-        brand: _brand.text.trim(),
-        deviceModel: _model.text.trim(),
+        brand: _selectedBrand!,
+        deviceModel: _selectedModel!,
         partType: _serviceType,
       );
     } catch (_) {
@@ -685,8 +678,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         fullName: _name.text.trim(),
         phoneNumber: normalizePhone(_phone.text.trim()),
         deviceType: _deviceType,
-        brand: _brand.text.trim(),
-        deviceModel: _model.text.trim(),
+        brand: _selectedBrand!,
+        deviceModel: _selectedModel!,
         deliveryMethod: _delivery,
         deliveryAddress: _delivery == 'courier_pickup' ? _address.text.trim() : null,
         couponCode: _coupon.text.trim().isEmpty ? null : _coupon.text.trim(),
@@ -715,7 +708,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
 
   void _nextStep() {
     if (_step >= 4) return;
-    if (_step == 0 && (_brand.text.isEmpty || _model.text.isEmpty)) return;
+    if (_step == 0 && (_selectedBrand == null || _selectedModel == null)) return;
     if (_step == 1 && _complaint.text.isEmpty) return;
     if (_step == 2 && _selectedStoreId == null) return;
     if (_step == 3 && (_name.text.isEmpty || _phone.text.isEmpty)) return;
@@ -807,34 +800,65 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     );
   }
 
-  Widget _buildStep1(ThemeData theme) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
-      const SizedBox(height: 8),
-      Text('Pilih jenis smartphone lalu masukkan brand dan tipe perangkatmu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-      const SizedBox(height: 24),
-      SegmentedButton<String>(
-        segments: const [
-          ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
-          ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
-        ],
-        selected: {_deviceType},
-        onSelectionChanged: (v) => setState(() => _deviceType = v.first),
-        showSelectedIcon: false,
-      ),
-      const SizedBox(height: 24),
-      TextField(
-        controller: _brand, textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Brand Smartphone', hintText: 'Contoh: Samsung, Xiaomi, Apple', prefixIcon: Icon(Icons.branding_watermark)),
-      ),
-      const SizedBox(height: 16),
-      TextField(
-        controller: _model, textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Tipe Smartphone', hintText: 'Contoh: Galaxy S24 Ultra, iPhone 15 Pro', prefixIcon: Icon(Icons.smartphone)),
-      ),
-    ],
-  );
+  Widget _buildStep1(ThemeData theme) {
+    final deviceModels = ref.watch(deviceModelsProvider);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 24),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
+            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
+          ],
+          selected: {_deviceType},
+          onSelectionChanged: (v) => setState(() => _deviceType = v.first),
+          showSelectedIcon: false,
+        ),
+        const SizedBox(height: 24),
+        deviceModels.when(
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
+          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
+          data: (groups) {
+            if (groups.isEmpty) {
+              return const EmptyMessage('Belum ada sparepart tersedia');
+            }
+
+            final brands = groups.map((group) => group.brand).toSet().toList()..sort();
+            final selectedGroups = groups.where((group) => group.brand == _selectedBrand).toList();
+            final models = selectedGroups.isEmpty
+                ? const <String>[]
+                : (selectedGroups.first.models.toSet().toList()..sort());
+            final brandValue = brands.contains(_selectedBrand) ? _selectedBrand : null;
+            final modelValue = models.contains(_selectedModel) ? _selectedModel : null;
+
+            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              DropdownButtonFormField<String>(
+                value: brandValue,
+                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
+                items: brands.map((brand) => DropdownMenuItem(value: brand, child: Text(brand))).toList(),
+                onChanged: (value) => setState(() {
+                  _selectedBrand = value;
+                  _selectedModel = null;
+                }),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: modelValue,
+                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
+                items: models.map((model) => DropdownMenuItem(value: model, child: Text(model))).toList(),
+                onChanged: _selectedBrand == null ? null : (value) => setState(() => _selectedModel = value),
+              ),
+            ]);
+          },
+        ),
+      ],
+    );
+  }
 
   Widget _buildStep2(ThemeData theme) => ListView(
     padding: const EdgeInsets.all(16),
@@ -876,7 +900,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
           const SizedBox(height: 24),
           const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          Text('Tidak ada toko yang cocok untuk perangkat ${_brand.text} ${_model.text} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+          Text('Tidak ada toko yang cocok untuk perangkat ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
           Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
@@ -1010,7 +1034,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_brand.text} ${_model.text}'),
+            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'}'),
             const Divider(),
             _confirmRow(theme, 'Layanan', _serviceTypeLabels[_serviceType]!),
             const Divider(),

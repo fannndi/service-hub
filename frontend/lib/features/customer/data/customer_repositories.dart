@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/app_config.dart';
+import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
 
 String normalizePhone(String value) {
@@ -175,8 +176,13 @@ class StoreDiscoveryRepository {
   final CustomerApiClient _api;
 
   Future<List<ServiceStore>> getStores({String? brand, String? deviceModel, int page = 1}) async {
-    final response = await _api.authDio.get('/stores', queryParameters: {'page': page, 'limit': 20, if (brand != null && brand != 'All') 'brand': brand, if (deviceModel != null && deviceModel.isNotEmpty) 'deviceModel': deviceModel});
+    final response = await _api.publicDio.get('/stores', queryParameters: {'page': page, 'limit': 20, if (brand != null && brand != 'All') 'brand': brand, if (deviceModel != null && deviceModel.isNotEmpty) 'deviceModel': deviceModel});
     return CustomerApiClient.unwrapList(response.data).map(ServiceStore.fromJson).toList();
+  }
+
+  Future<List<DeviceModelGroup>> getDeviceModels() async {
+    final response = await _api.publicDio.get('/stores/device-models');
+    return CustomerApiClient.unwrapList(response.data).map(DeviceModelGroup.fromJson).toList();
   }
 
   Future<ServiceStore> getStore(String id) async {

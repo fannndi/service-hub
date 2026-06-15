@@ -195,6 +195,18 @@ Error response:
 ### `GET /stores/:id`
 - **Response:** Detail store + reviews
 
+### `GET /stores/device-models`
+- **Auth:** Tidak perlu
+- **Description:** Mengembalikan daftar brand dan model perangkat dari data sparepart semua toko, kecuali sparepart `discontinued`.
+- **Response:**
+```json
+[
+  { "brand": "Apple", "models": ["iPhone 14", "iPhone 15 Pro"] },
+  { "brand": "Samsung", "models": ["Galaxy S23", "Galaxy S24 Ultra"] }
+]
+```
+- **Usage:** Dipakai Customer Service Now Step 1 dan filter brand Store List agar opsi selalu mengikuti inventory aktif.
+
 ### `GET /stores/:id/spareparts`
 - **Query Params:** `brand`, `deviceModel`, `partType` (optional)
 - **Response:** Array spareparts yang tersedia di store
