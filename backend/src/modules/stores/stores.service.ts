@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 
 export interface StoreMatchResult {
   storeId: string;
@@ -30,16 +31,23 @@ interface StoreConfig {
 
 @Injectable()
 export class StoresService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redis: RedisService,
+  ) {}
 
   async findAll(includeInactive = false, brand?: string, deviceModel?: string) {
+    const cacheKey = `stores:all:${includeInactive}:${brand ?? '*'}:${deviceModel ?? '*'}`;
+    const cached = await this.redis.get<any[]>(cacheKey);
+    if (cached) return cached;
+
     const sparepartFilter: Record<string, unknown> = {};
     if (brand) sparepartFilter.brand = brand;
     if (deviceModel) sparepartFilter.deviceModel = deviceModel;
 
     const hasSparepartFilter = Object.keys(sparepartFilter).length > 0;
 
-    return this.prisma.store.findMany({
+    const result = await this.prisma.store.findMany({
       where: {
         ...(includeInactive ? {} : { isActive: true }),
         ...(hasSparepartFilter ? { spareparts: { some: sparepartFilter } } : {}),
@@ -57,6 +65,9 @@ export class StoresService {
       },
       orderBy: { ratingAvg: 'desc' },
     });
+
+    await this.redis.set(cacheKey, result, 300);
+    return result;
   }
 
   async matchStores(brand: string, deviceModel: string, partType?: string): Promise<StoreMatchResult[]> {

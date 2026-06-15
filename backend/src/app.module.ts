@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import configuration from './config/configuration';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { LoggerModule } from './common/logger/logger.module';
 import { HealthController } from './common/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { StoreAuthModule } from './modules/store-auth/store-auth.module';
@@ -20,6 +21,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 
+import { RedisModule } from './modules/redis/redis.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
@@ -30,7 +33,9 @@ import { JobsModule } from './modules/jobs/jobs.module';
         limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
       },
     ]),
+    LoggerModule,
     PrismaModule,
+    RedisModule,
     NotificationsModule,
     AuthModule,
     StoreAuthModule,

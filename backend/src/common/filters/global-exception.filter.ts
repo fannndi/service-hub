@@ -9,12 +9,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
+    const userId = (req as any).user?.id;
 
     if (exception instanceof HttpException) {
       const body = exception.getResponse();
       if (typeof body === 'object' && body !== null && 'success' in body && (body as { success: boolean }).success === false) {
         return res.status(exception.getStatus()).json(body);
       }
+
+      if (exception.getStatus() >= 500) {
+        this.logger.error({ method: req.method, url: req.url, status: exception.getStatus(), userId, error: exception.message, stack: exception.stack });
+      }
+
       return res.status(exception.getStatus()).json({
         success: false,
         error: {
@@ -28,7 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       });
     }
 
-    this.logger.error(`Unhandled exception at ${req.method} ${req.url}`, exception instanceof Error ? exception.stack : String(exception));
+    this.logger.error({ method: req.method, url: req.url, userId, error: exception instanceof Error ? exception.message : String(exception), stack: exception instanceof Error ? exception.stack : undefined });
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: {

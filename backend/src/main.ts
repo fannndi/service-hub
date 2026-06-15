@@ -1,5 +1,6 @@
 ﻿import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as compression from 'compression';
@@ -12,11 +13,10 @@ import { validateConfig } from './config/configuration';
 loadDotenv();
 
 async function bootstrap(): Promise<void> {
-  const logger = new Logger('Bootstrap');
-
   validateConfig();
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
 
   app.use(helmet());
   app.use(compression());
@@ -50,14 +50,14 @@ async function bootstrap(): Promise<void> {
       .addBearerAuth()
       .build();
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
-    logger.log('Swagger docs available at /docs');
+    app.get(Logger).log('Swagger docs available at /docs');
   }
 
   app.enableShutdownHooks();
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
-  logger.log(`Application listening on port ${port}`);
+  app.get(Logger).log(`Application listening on port ${port}`);
 }
 
 bootstrap().catch((err) => {
