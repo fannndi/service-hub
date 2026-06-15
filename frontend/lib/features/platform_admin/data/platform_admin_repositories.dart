@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/app_config.dart';
+import '../../../network/api_client.dart';
 import '../domain/platform_admin_models.dart';
 
 class AdminSessionStorage {
@@ -16,19 +17,7 @@ class AdminSessionStorage {
 
 class AdminApiClient {
   AdminApiClient(AppConfig config, this._session)
-      : dio = Dio(BaseOptions(
-          baseUrl: config.apiBaseUrl,
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 20),
-        )) {
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _session.readToken();
-        if (token != null) options.headers['Authorization'] = 'Bearer $token';
-        handler.next(options);
-      },
-    ));
-  }
+      : dio = createApiClient(config.apiBaseUrl, readToken: () => _session.readToken());
 
   final AdminSessionStorage _session;
   final Dio dio;

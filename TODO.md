@@ -17,10 +17,10 @@
 | Level | Total | Done | Remaining | Notes |
 |-------|-------|------|-----------|-------|
 | P0 | 3 | 1 | 2 | P0-1 split failed — reverted to monolithic |
-| P1 | 6 | 2 | 4 | P1-6 step 4-6 dead code cleanup done |
+| P1 | 6 | 3 | 3 | P1-6 done (Dio consolidation + dead code) |
 | P2 | 3 | 1 | 2 |
 | P3 | 10 | 0 | 10 |
-| **Total** | **22** | **4** | **18** |
+| **Total** | **22** | **5** | **17** |
 
 **Next recommended:** P0-1 (Split `customer_screens.dart`) — maintainability, atau P1-3 (Integration Tests) — coverage.
 
@@ -98,6 +98,22 @@
 - ✅ `customer_router.dart` — removed `customerRouterProvider` + `_RouterRefresh`
 - ✅ `store_admin_router.dart` — removed `storeAdminRouterProvider` + `_RouterRefresh`
 - ✅ `platform_admin_router.dart` — removed `adminRouterProvider` + `_AdminRefresh`
+
+### Verification
+- ✅ `flutter analyze` — 0 errors
+
+---
+
+## ✅ Completed — P1-6 Step 1-3: Consolidate Dio Clients
+
+**Done by:** Reviewer (2026-06-15)
+
+### Changes
+- ✅ Created `frontend/lib/network/api_client.dart` with shared `createApiClient` factory
+- ✅ `CustomerApiClient.publicDio` — uses `createApiClient` (no auth)
+- ✅ `storeAdminDioProvider` — uses `createApiClient` (with auth via closure)
+- ✅ `AdminApiClient.dio` — uses `createApiClient` (with auth via closure)
+- ✅ Customer's `authDio` kept as-is (has complex token refresh logic)
 
 ### Verification
 - ✅ `flutter analyze` — 0 errors

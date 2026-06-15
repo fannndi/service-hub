@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/app_config.dart';
+import '../../../network/api_client.dart';
 import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
 
@@ -73,7 +74,7 @@ class CustomerSessionStorage {
 
 class CustomerApiClient {
   CustomerApiClient(AppConfig config, this._session)
-      : publicDio = Dio(BaseOptions(baseUrl: config.apiBaseUrl, connectTimeout: const Duration(seconds: 15), receiveTimeout: const Duration(seconds: 20))),
+      : publicDio = createApiClient(config.apiBaseUrl),
         authDio = Dio(BaseOptions(baseUrl: config.apiBaseUrl, connectTimeout: const Duration(seconds: 15), receiveTimeout: const Duration(seconds: 20))) {
     authDio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
