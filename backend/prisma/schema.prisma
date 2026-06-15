@@ -286,6 +286,7 @@ model ServiceOrder {
   @@index([userId])
   @@index([storeId])
   @@index([status])
+  @@index([createdAt])
   @@map("service_orders")
 }
 

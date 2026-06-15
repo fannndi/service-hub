@@ -22,6 +22,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 
 import { RedisModule } from './modules/redis/redis.module';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -36,6 +37,10 @@ import { RedisModule } from './modules/redis/redis.module';
     LoggerModule,
     PrismaModule,
     RedisModule,
+    PrometheusModule.register({
+      path: '/v1/metrics',
+      defaultMetrics: { enabled: true },
+    }),
     NotificationsModule,
     AuthModule,
     StoreAuthModule,

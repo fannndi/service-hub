@@ -57,7 +57,7 @@ void main() {
 
   group('CustomerUser', () {
     test('parses from JSON with snake_case keys', () {
-      final user = CustomerUser.fromJson({
+      final user = CustomerUser.fromJson(const {
         'id': 'user-1',
         'full_name': 'Budi',
         'phone_number': '081234567890',
@@ -70,7 +70,7 @@ void main() {
     });
 
     test('parses from JSON with camelCase keys', () {
-      final user = CustomerUser.fromJson({
+      final user = CustomerUser.fromJson(const {
         'id': 'user-1',
         'fullName': 'Budi',
         'phoneNumber': '081234567890',

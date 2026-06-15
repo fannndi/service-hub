@@ -2271,8 +2271,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Card(
-            child: ListTile(
+          const Card(
+            child: const ListTile(
               leading: const Icon(Icons.phone),
               title: const Text('Nomor HP'),
               subtitle: const Text('Hubungi support untuk mengubah nomor HP'),

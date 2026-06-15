@@ -11,5 +11,5 @@ final appConfigProvider = Provider<AppConfig>((ref) {
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:3000/v1', // Android emulator → localhost
   );
-  return AppConfig(apiBaseUrl: value);
+  return const AppConfig(apiBaseUrl: value);
 });
