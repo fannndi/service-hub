@@ -9,6 +9,20 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: servisgadget
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -24,8 +38,15 @@ jobs:
 
       - run: npm ci
       - run: npx prisma generate
-      - run: npm run typecheck
       - run: npm test
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/servisgadget
+          JWT_ACCESS_SECRET: test-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          JWT_STORE_ACCESS_SECRET: test-store-access
+          JWT_STORE_REFRESH_SECRET: test-store-refresh
+          JWT_PLATFORM_ADMIN_SECRET: test-platform-admin
+          CREDENTIAL_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
 
   frontend:
     runs-on: ubuntu-latest
