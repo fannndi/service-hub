@@ -1,8 +1,26 @@
 # TODO — Remaining Tasks for AI Agent
 
-> **Untuk AI Agent:** Baca file ini + dokumentasi di `docs/backend/` dan `docs/frontend/` sebelum mengerjakan.
-> Setiap task sudah self-contained — cukup baca konteks di sini + file yang disebutkan.
-> **Wajib:** Setelah selesai 1 task, update dokumentasi terkait di `docs/` agar sinkron dengan kode.
+> **Project:** ServisGadget (service-hub)
+> **Stack:** NestJS (backend) + Flutter (frontend)
+> **Agent System:** opencode-setup `v2.4.0` — `/target`, `/auto-load`, `/task-queue`, `/dashboard`
+>
+> Untuk AI agent (Codex/Claude/etc):
+> - Baca `docs/backend/` dan `docs/frontend/` sebelum mulai
+> - Setiap task self-contained — cukup baca konteks di sini + file yang disebut
+> - **Wajib:** Update dokumentasi di `docs/` setelah selesai 1 task
+>
+> ### Using Agent System
+>
+> Setelah setup project dengan `/set-project`, gunakan:
+> - `/detect <path>` — deteksi stack (NestJS+Flutter akan terdeteksi)
+> - `/auto-load <path>` — load skill sesuai stack
+> - `/resume` — resume konteks session sebelumnya
+> - `/dashboard` — lihat overview project + rekomendasi
+> - `/task-queue "goal"` — decompose goal jadi subtasks, execute otomatis
+> - `/tool-create script=<name>` — generate script baru
+>
+> Prioritas: P0 → P1 → P2 → P3
+> Setiap task punya effort estimate — mulai dari yang effort kecil untuk momentum.
 
 ---
 
@@ -693,3 +711,25 @@ cd frontend && flutter run         # Run on emulator
 | P3-8: Monitoring | 4h | 🔴 Observability |
 | P3-9: Flutter Perf | 3h | 🟡 App speed |
 | P3-10: WA Fallback | 5h | 🟡 Reliability |
+
+---
+
+### Agent Quick Reference
+
+Gunakan agent system untuk task-task tertentu:
+
+| Task | Agent Command | Benefit |
+|------|--------------|---------|
+| P0-0 Device dropdown | `/task-queue "implement device model dropdown"` | Decompose backend+frontend otomatis |
+| P0-1 Split god file | `/task-queue "split customer_screens.dart into separate files"` | 25 screens → 25 subtasks |
+| P0-2 Fix perf | `/task-queue "optimize ServiceFlowScreen performance"` | Step-by-step refactor |
+| P1-1 Consolidate widgets | `/task-queue "consolidate duplicate widgets to shared_widgets"` | 6 widgets → 6 subtasks |
+| P1-3 Integration tests | `/task-queue "add integration tests for orders service"` | Auto-run each test after writing |
+| P1-5 Rate limiting | `/tool-create script=add-rate-limit` | Generate script dulu |
+| P1-6 Dead code cleanup | `/task-queue "remove dead code and consolidate Dio clients"` | Systematic cleanup |
+| P2-1 CI/CD | `/tool-create script=setup-github-actions` | Generate CI script |
+| P2-2 Widget tests | `/task-queue "add widget tests for screens"` | TDD flow: test first |
+| P3-1 Security audit | `/task-queue "perform full security audit"` | Systematic audit per module |
+| P3-5 DB optimization | `/task-queue "optimize prisma queries and add indexes"` | Query-by-query analysis |
+| P3-6 E2E tests | `/task-queue "add E2E tests for critical flows"` | Flow-by-flow coverage |
+| P3-9 Flutter perf | `/task-queue "optimize flutter app performance"` | List all optimizations |
