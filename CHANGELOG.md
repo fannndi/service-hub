@@ -1,6 +1,38 @@
 ﻿# Changelog
 
-## 2026-06-15 — Public Order Rate Limit
+## 2026-06-15 — Sessions, God File Split, Logging, Redis, Tests, Monitoring
+
+### Added
+- **Sessions screen** — `GET /me/sessions`, `DELETE /me/sessions/:id`, `DELETE /me/sessions` (backend + frontend)
+- **Security screen** — Active sessions count, change password link
+- **CI/CD pipeline** — `.github/workflows/ci.yml` (backend typecheck+test, frontend analyze+test)
+- **Structured logging** — `nestjs-pino` with pretty-print dev / JSON prod, enhanced error context
+- **Redis caching** — `RedisModule` + `RedisService` with cache-aside for store listings (5min TTL)
+- **Prometheus metrics** — `/v1/metrics` endpoint with default process metrics
+- **WhatsApp email fallback** — `EmailService` (Nodemailer SMTP) when Fonnte 3x retry exhausted
+- **Widget tests** — 4 new tests (WelcomeScreen, StatusBadge, EmptyMessage). Total: 23
+- **Deployment guide** — `docs/deployment.md` with rollback procedure
+- **Shared widgets** — `AsyncPage`, enhanced `EmptyState` with icon, `formatters.dart`
+
+### Changed
+- **God file split** — `booking_form_screen.dart` (2002→476 lines) split into 24 individual screen files
+- **ServiceFlowScreen performance** — 5 step widgets extracted with `IndexedStack` (only active step rebuilds)
+- **Dio clients consolidated** — Shared `createApiClient()` factory, 3 client instances refactored
+- **Dead code removed** — Deleted `dio_client.dart`, `base_repository.dart`, `api_response.dart`
+- **Unused routers removed** — `customerRouterProvider`, `storeAdminRouterProvider`, `adminRouterProvider`
+- **Docker compose hardened** — `restart: unless-stopped`, resource limits, health checks on all services
+- **jest config fixed** — `rootDir` updated to include `test/` directory (55 tests, 4 suites)
+- **DB index added** — `@@index([createdAt])` on `ServiceOrder`
+- **Errors/Warnings fixed** — 4 unused imports, 1 unused variable, 5 const constructor warnings
+- **const constructors** — `AppConfig`, `Card`, `ListTile`, test map literals
+
+### Docs
+- `docs/deployment.md` — New runbook
+- `backend/BACKEND_API_REFERENCE.md` — Sessions endpoints
+- `frontend/FRONTEND_CUSTOMER.md` — SessionsScreen, SecurityScreen
+- `.env.example` — SMTP config for email fallback
+
+---
 
 ### Changed
 - Added Nest throttling to public `POST /v1/orders`, limiting booking creation to 5 requests per minute per IP.
