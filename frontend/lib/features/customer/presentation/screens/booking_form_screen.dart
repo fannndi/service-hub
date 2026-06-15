@@ -11,6 +11,7 @@ import '../../domain/customer_models.dart';
 import '../../domain/user_session.dart';
 import '../../../../shared_widgets/error_state.dart';
 import '../widgets/customer_widgets.dart';
+import 'service_flow_steps.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -600,103 +601,75 @@ class ServiceFlowScreen extends ConsumerStatefulWidget {
 }
 
 class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
-  final _pageController = PageController();
+  final _state = FlowState();
   int _step = 0;
-  String? _selectedBrand;
-  String? _selectedModel;
-  final _complaint = TextEditingController();
-  final _name = TextEditingController();
-  final _phone = TextEditingController();
-  final _address = TextEditingController();
-  final _coupon = TextEditingController();
-  String _deviceType = 'android';
-  String _serviceType = 'screen_replacement';
-  String _delivery = 'walk_in';
-  String? _selectedStoreId;
-  String? _selectedPartId;
-  double _estimateCost = 0;
-  bool _loading = false;
-  List<StoreMatchResult> _matchedStores = const [];
-
-  final _serviceTypeLabels = const {
-    'screen_replacement': 'Ganti Layar',
-    'battery_replacement': 'Ganti Baterai',
-    'charging_port': 'Port Charger',
-    'camera': 'Kamera',
-    'other': 'Lainnya',
-  };
 
   @override
   void initState() {
     super.initState();
     final user = ref.read(customerAuthProvider).valueOrNull;
     if (user != null) {
-      _name.text = user.fullName;
-      _phone.text = user.phoneNumber;
-      _address.text = user.address ?? '';
+      _state.name.text = user.fullName;
+      _state.phone.text = user.phoneNumber;
+      _state.address.text = user.address ?? '';
     }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _complaint.dispose();
-    _name.dispose();
-    _phone.dispose();
-    _address.dispose();
-    _coupon.dispose();
+    _state.dispose();
     super.dispose();
   }
 
   Future<void> _matchStores() async {
-    if (_selectedBrand == null || _selectedModel == null) return;
-    setState(() => _loading = true);
+    if (_state.selectedBrand == null || _state.selectedModel == null) return;
+    setState(() => _state.loading = true);
     try {
       final repo = ref.read(storeDiscoveryRepositoryProvider);
-      _matchedStores = await repo.matchStores(
-        brand: _selectedBrand!,
-        deviceModel: _selectedModel!,
-        partType: _serviceType,
+      _state.matchedStores = await repo.matchStores(
+        brand: _state.selectedBrand!,
+        deviceModel: _state.selectedModel!,
+        partType: _state.serviceType,
       );
     } catch (_) {
-      _matchedStores = const [];
+      _state.matchedStores = const [];
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _state.loading = false);
     }
   }
 
   void _selectStore(StoreMatchResult store) {
     setState(() {
-      _selectedStoreId = store.storeId;
-      _estimateCost = store.estimatedCost;
+      _state.selectedStoreId = store.storeId;
+      _state.estimateCost = store.estimatedCost;
     });
   }
 
   Future<void> _createBooking() async {
-    setState(() => _loading = true);
+    setState(() => _state.loading = true);
     try {
       final req = CreateOrderRequest(
-        storeId: _selectedStoreId!,
-        fullName: _name.text.trim(),
-        phoneNumber: normalizePhone(_phone.text.trim()),
-        deviceType: _deviceType,
-        brand: _selectedBrand!,
-        deviceModel: _selectedModel!,
-        deliveryMethod: _delivery,
-        deliveryAddress: _delivery == 'courier_pickup' ? _address.text.trim() : null,
-        couponCode: _coupon.text.trim().isEmpty ? null : _coupon.text.trim(),
+        storeId: _state.selectedStoreId!,
+        fullName: _state.name.text.trim(),
+        phoneNumber: normalizePhone(_state.phone.text.trim()),
+        deviceType: _state.deviceType,
+        brand: _state.selectedBrand!,
+        deviceModel: _state.selectedModel!,
+        deliveryMethod: _state.delivery,
+        deliveryAddress: _state.delivery == 'courier_pickup' ? _state.address.text.trim() : null,
+        couponCode: _state.coupon.text.trim().isEmpty ? null : _state.coupon.text.trim(),
         items: [
           CreateOrderItemInput(
-            serviceType: _serviceType,
-            complaint: _complaint.text.trim(),
-            sparepartId: _selectedPartId,
-            price: _estimateCost,
+            serviceType: _state.serviceType,
+            complaint: _state.complaint.text.trim(),
+            sparepartId: _state.selectedPartId,
+            price: _state.estimateCost,
           ),
         ],
       );
       final result = await ref.read(orderRepositoryProvider).createOrder(req);
       if (!mounted) return;
-      context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
+      context.go('/booking-success/' + result.orderNumber, extra: result.isNewCustomer);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -704,37 +677,30 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _state.loading = false);
     }
   }
 
   void _nextStep() {
     if (_step >= 4) return;
-    if (_step == 0 && (_selectedBrand == null || _selectedModel == null)) return;
-    if (_step == 1 && _complaint.text.isEmpty) return;
-    if (_step == 2 && _selectedStoreId == null) return;
-    if (_step == 3 && (_name.text.isEmpty || _phone.text.isEmpty)) return;
+    if (_step == 0 && (_state.selectedBrand == null || _state.selectedModel == null)) return;
+    if (_step == 1 && _state.complaint.text.isEmpty) return;
+    if (_step == 2 && _state.selectedStoreId == null) return;
+    if (_step == 3 && (_state.name.text.isEmpty || _state.phone.text.isEmpty)) return;
 
     if (_step == 1) {
+      setState(() => _state.loading = true);
       _matchStores().then((_) {
-        if (mounted) {
-          _pageController.nextPage(
-            duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-          setState(() => _step = 2);
-        }
+        if (mounted) setState(() => _step = 2);
       });
       return;
     }
 
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     setState(() => _step += 1);
   }
 
   void _prevStep() {
     if (_step <= 0) return;
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     setState(() => _step -= 1);
   }
 
@@ -770,8 +736,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                         ),
                         child: Center(
                           child: done
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
-                            : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -783,15 +749,14 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
             ),
             const Divider(),
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
+              child: IndexedStack(
+                index: _step,
                 children: [
-                  _buildStep1(theme),
-                  _buildStep2(theme),
-                  _buildStep3(theme),
-                  _buildStep4(theme),
-                  _buildStep5(theme),
+                  Step1Widget(state: _state, onChanged: () => setState(() {})),
+                  Step2Widget(state: _state),
+                  Step3Widget(state: _state, onSelectStore: _selectStore, onBack: _prevStep),
+                  Step4Widget(state: _state),
+                  Step5Widget(state: _state),
                 ],
               ),
             ),
@@ -802,310 +767,33 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     );
   }
 
-  Widget _buildStep1(ThemeData theme) {
-    final deviceModels = ref.watch(deviceModelsProvider);
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 24),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
-            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
-          ],
-          selected: {_deviceType},
-          onSelectionChanged: (v) => setState(() => _deviceType = v.first),
-          showSelectedIcon: false,
-        ),
-        const SizedBox(height: 24),
-        deviceModels.when(
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
-          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
-          data: (groups) {
-            if (groups.isEmpty) {
-              return const EmptyMessage('Belum ada sparepart tersedia');
-            }
-
-            final brands = groups.map((group) => group.brand).toSet().toList()..sort();
-            final selectedGroups = groups.where((group) => group.brand == _selectedBrand).toList();
-            final models = selectedGroups.isEmpty
-                ? const <String>[]
-                : (selectedGroups.first.models.toSet().toList()..sort());
-            final brandValue = brands.contains(_selectedBrand) ? _selectedBrand : null;
-            final modelValue = models.contains(_selectedModel) ? _selectedModel : null;
-
-            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              DropdownButtonFormField<String>(
-                value: brandValue,
-                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
-                items: brands.map((brand) => DropdownMenuItem(value: brand, child: Text(brand))).toList(),
-                onChanged: (value) => setState(() {
-                  _selectedBrand = value;
-                  _selectedModel = null;
-                }),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: modelValue,
-                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
-                items: models.map((model) => DropdownMenuItem(value: model, child: Text(model))).toList(),
-                onChanged: _selectedBrand == null ? null : (value) => setState(() => _selectedModel = value),
-              ),
-            ]);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep2(ThemeData theme) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
-      const SizedBox(height: 8),
-      Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-      const SizedBox(height: 24),
-      Wrap(
-        spacing: 8, runSpacing: 8,
-        children: _serviceTypeLabels.entries.map((e) => ChoiceChip(
-          label: Text(e.value),
-          selected: _serviceType == e.key,
-          onSelected: (v) { if (v) setState(() => _serviceType = e.key); },
-        )).toList(),
-      ),
-      const SizedBox(height: 24),
-      TextField(
-        controller: _complaint, maxLines: 4, textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          labelText: 'Keluhan / Deskripsi Kerusakan',
-          hintText: 'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
-          prefixIcon: Padding(padding: EdgeInsets.only(bottom: 64), child: Icon(Icons.report_problem_outlined)),
-          alignLabelWithHint: true,
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildStep3(ThemeData theme) {
-    if (_loading && _matchedStores.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_matchedStores.isEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('Rekomendasi Toko Mitra', style: theme.textTheme.titleLarge),
-          const SizedBox(height: 24),
-          const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text('Tidak ada toko yang cocok untuk perangkat ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
-          const SizedBox(height: 16),
-          Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _prevStep,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Kembali'),
-          ),
-        ],
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Text('${_matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 16),
-        ..._matchedStores.map((store) {
-          final selected = store.storeId == _selectedStoreId;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            color: selected ? theme.colorScheme.primaryContainer : null,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: selected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => _selectStore(store),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                    Row(children: [
-                      const Icon(Icons.star, size: 18, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodyMedium),
-                    ]),
-                  ]),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(child: Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall),
-                  ),
-                  const SizedBox(height: 8),
-                  ...store.spareparts.map((sp) => Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(children: [
-                      const Icon(Icons.build, size: 14),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(sp.partName, style: theme.textTheme.bodyMedium)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: sp.status == 'available' ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(rupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    ]),
-                  )),
-                  const Divider(height: 16),
-                  Row(children: [
-                    const Icon(Icons.info_outline, size: 16),
-                    const SizedBox(width: 4),
-                    Text('Estimasi awal: ${rupiah(store.estimatedCost)}', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                  ]),
-                ]),
-              ),
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildStep4(ThemeData theme) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text('Data Diri & Pengiriman', style: theme.textTheme.titleLarge),
-      const SizedBox(height: 24),
-      SegmentedButton<String>(
-        segments: const [
-          ButtonSegment(value: 'walk_in', label: Text('Antar ke Toko'), icon: Icon(Icons.store)),
-          ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'), icon: Icon(Icons.local_shipping)),
-        ],
-        selected: {_delivery},
-        onSelectionChanged: (v) => setState(() => _delivery = v.first),
-        showSelectedIcon: false,
-      ),
-      const SizedBox(height: 24),
-      TextField(
-        controller: _name, textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outline)),
-      ),
-      const SizedBox(height: 16),
-      TextField(
-        controller: _phone, keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
-      ),
-      if (_delivery == 'courier_pickup') ...[
-        const SizedBox(height: 16),
-        TextField(
-          controller: _address, maxLines: 2, textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(labelText: 'Alamat Penjemputan', prefixIcon: Icon(Icons.location_on_outlined), alignLabelWithHint: true),
-        ),
-      ],
-    ],
-  );
-
-  Widget _buildStep5(ThemeData theme) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text('Konfirmasi Booking', style: theme.textTheme.titleLarge),
-      const SizedBox(height: 16),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _confirmRow(theme, 'Perangkat', '${_deviceType.toUpperCase()} - ${_selectedBrand ?? '-'} ${_selectedModel ?? '-'}'),
-            const Divider(),
-            _confirmRow(theme, 'Layanan', _serviceTypeLabels[_serviceType]!),
-            const Divider(),
-            _confirmRow(theme, 'Keluhan', _complaint.text),
-            const Divider(),
-            _confirmRow(theme, 'Nama', _name.text),
-            const Divider(),
-            _confirmRow(theme, 'WhatsApp', _phone.text),
-            if (_delivery == 'courier_pickup') ...[
-              const Divider(),
-              _confirmRow(theme, 'Alamat', _address.text),
-            ],
-            const Divider(),
-            _confirmRow(theme, 'Pengiriman', _delivery == 'walk_in' ? 'Antar ke Toko' : 'Pickup Kurir'),
-            const Divider(height: 24),
-            Row(children: [
-              Text('Estimasi Biaya', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const Spacer(),
-              Text(rupiah(_estimateCost), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-            ]),
-            const SizedBox(height: 4),
-            Text('* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-          ]),
-        ),
-      ),
-      const SizedBox(height: 16),
-      TextField(
-        controller: _coupon,
-        decoration: const InputDecoration(labelText: 'Kode Kupon (opsional)', prefixIcon: Icon(Icons.local_offer_outlined), isDense: true),
-      ),
-    ],
-  );
-
-  Widget _confirmRow(ThemeData theme, String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
-      Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-    ]),
-  );
-
   Widget _buildBottomNav(ThemeData theme) => SafeArea(
     child: Padding(
       padding: const EdgeInsets.all(16),
       child: Row(children: [
         if (_step > 0)
           Expanded(child: OutlinedButton.icon(
-            onPressed: _loading ? null : _prevStep,
+            onPressed: _state.loading ? null : _prevStep,
             icon: const Icon(Icons.arrow_back),
             label: const Text('Kembali'),
           )),
         if (_step > 0) const SizedBox(width: 12),
         if (_step < 4)
           Expanded(child: FilledButton.icon(
-            onPressed: _loading ? null : _nextStep,
+            onPressed: _state.loading ? null : _nextStep,
             icon: const Icon(Icons.arrow_forward),
-            label: Text(_step == 1 ? 'Cari Toko' : 'Lanjut'),
-          )),
-        if (_step == 4)
+            label: Text(_step == 0 ? 'Cari Toko' : _step == 3 ? 'Review' : 'Lanjut'),
+          ))
+        else
           Expanded(child: FilledButton.icon(
-            onPressed: _loading ? null : _createBooking,
-            icon: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
-            label: Text(_loading ? 'Membuat...' : 'Buat Booking'),
+            onPressed: _state.loading ? null : _createBooking,
+            icon: _state.loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
+            label: Text(_state.loading ? 'Memproses...' : 'Booking'),
           )),
       ]),
     ),
   );
 }
-
 class BookingFormScreen extends ConsumerStatefulWidget {
   const BookingFormScreen({super.key, required this.storeId});
   final String storeId;
@@ -2130,6 +1818,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
   }
 }
 
+
 class SessionsScreen extends ConsumerStatefulWidget {
   const SessionsScreen({super.key});
   @override
@@ -2207,7 +1896,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                 leading: Icon(s.isActive ? Icons.phone_android : Icons.phone_android, color: s.isActive ? Colors.green : Colors.grey),
                 title: Text(deviceName, style: theme.textTheme.bodyLarge),
                 subtitle: Text(
-                  '${s.ipAddress ?? '-'} • ${_formatDate(s.lastActiveAt)}',
+                  '${s.ipAddress ?? '-'} Ã¢â‚¬Â¢ ${_formatDate(s.lastActiveAt)}',
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 trailing: s.isActive
