@@ -100,7 +100,7 @@ export class PlatformAdminService {
             sat: '09:00-15:00',
             sun: 'closed',
           },
-          config,
+          config: config as any,
           isActive: true,
         },
       });

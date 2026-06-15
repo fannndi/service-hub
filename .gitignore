@@ -1,6 +1,7 @@
 *.env
 .env
 .env.*
+password.txt
 backend/.env
 backend/dist/
 backend/node_modules/

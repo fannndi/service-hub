@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, MinLength, IsOptional, IsObject } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { normalizePhone } from '../../auth/dto/auth.dto';
+import { normalizePhone } from '../../../common/utils';
 
 export class RegisterStoreDto {
   @IsString()

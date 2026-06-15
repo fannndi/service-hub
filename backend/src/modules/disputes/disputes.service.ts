@@ -66,7 +66,7 @@ export class DisputesService {
     return dispute;
   }
 
-  async respondDispute(disputeId: string, adminId: string, storeId: string, dto: RespondDisputeDto) {
+  async respondDispute(disputeId: string, storeId: string, dto: RespondDisputeDto) {
     const dispute = await this.prisma.dispute.findFirst({
       where: { id: disputeId, storeId, status: 'open' },
       include: { order: { include: { user: true, store: true, items: true } } },

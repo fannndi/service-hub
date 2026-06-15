@@ -19,5 +19,27 @@ services:
         sync: false
       - key: CREDENTIAL_ENCRYPTION_KEY
         sync: false
+      - key: WA_GATEWAY_URL
+        sync: false
+      - key: WA_GATEWAY_TOKEN
+        sync: false
+      - key: WA_SENDER_NUMBER
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: STORE_EMAIL
+        sync: false
+      - key: APP_URL
+        sync: false
       - key: PORT
         value: "3000"
+      - key: NODE_ENV
+        value: "production"

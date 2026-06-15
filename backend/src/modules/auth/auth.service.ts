@@ -12,7 +12,7 @@ import {
   TokenInvalidException,
 } from '../../common/exceptions';
 import { generatePassword, normalizePhone, encryptCredential, decryptCredential } from '../../common/utils';
-import { AuthenticatedUser, JwtPayload } from '../../common/types/jwt-payload.type';
+import { JwtPayload } from '../../common/types/jwt-payload.type';
 import { AppConfig } from '../../config/configuration';
 
 interface AutoCreateAccountResult {

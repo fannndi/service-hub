@@ -226,7 +226,7 @@ export class StoresService {
   async updateConfig(storeId: string, config: Record<string, unknown>) {
     return this.prisma.store.update({
       where: { id: storeId },
-      data: { config },
+      data: { config: config as any },
       select: { id: true, config: true },
     });
   }

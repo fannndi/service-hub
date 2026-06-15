@@ -5,7 +5,7 @@ import { AuthenticatedUser } from '../types/jwt-payload.type';
 
 @Injectable()
 export class StoreJwtAuthGuard extends AuthGuard('store-jwt-access') {
-  handleRequest(err: unknown, user: AuthenticatedUser | false): AuthenticatedUser {
+  handleRequest(err: unknown, user: AuthenticatedUser | false): any {
     if (err || !user) throw new TokenInvalidException();
     return user;
   }

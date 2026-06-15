@@ -5,7 +5,7 @@ import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
 
 @Injectable()
 export class PlatformAdminGuard extends AuthGuard('platform-admin-jwt') {
-  handleRequest(err: unknown, user: AuthenticatedUser | false): AuthenticatedUser {
+  handleRequest(err: unknown, user: AuthenticatedUser | false): any {
     if (err || !user) throw new TokenInvalidException();
     return user;
   }
