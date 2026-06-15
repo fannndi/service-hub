@@ -541,3 +541,176 @@ cd frontend && flutter run         # Run on emulator
 - `docs/frontend/FRONTEND_ARCHITECTURE.md` — Flutter app structure
 - `docs/frontend/FRONTEND_CUSTOMER.md` — Customer feature details
 - `docs/frontend/FRONTEND_STORE_ADMIN.md` — Store admin feature details
+
+---
+
+## P3 — AI Agent Tasks (ECC-Powered)
+
+> Tasks ini dirancang untuk AI agent partner. Setiap task menunjuk skill ECC yang relevan.
+> Baca `opencode-setup/Skill/skill-list.md` untuk detail skill.
+> Baca `docs/` project untuk konteks bisnis sebelum mulai.
+
+### P3-1: Full Security Audit
+
+**ECC Skills:** `security-review`
+
+**Scope:** 3 auth systems, payment flow, public endpoints, file uploads, secrets.
+
+**Files to audit:**
+- `backend/src/modules/auth/` — Customer JWT
+- `backend/src/modules/store-auth/` — Store admin JWT
+- `backend/src/modules/platform-admin/` — Platform admin JWT
+- `backend/src/modules/orders/` — Public POST /orders (stealth)
+- `backend/src/modules/payments/` — Payment flow
+- `backend/src/common/guards/` — All guards
+
+**Checklist:**
+1. Rate limiting on ALL public endpoints
+2. CSRF on payment endpoints
+3. Input validation on all file uploads
+4. No sensitive data in error responses
+5. JWT secrets strength (256-bit minimum)
+6. SQL injection: parameterized queries via Prisma
+7. XSS: user content sanitized before render
+
+**Deliverable:** `docs/security-audit.md`
+
+---
+
+### P3-2: Add Structured Logging
+
+**ECC Skills:** `error-handling`
+
+**Files:**
+- `backend/src/common/logger/` — New Pino logger module
+- `backend/src/common/filters/global-exception-filter.ts` — Enhance
+
+**Tugas:**
+1. `npm install nestjs-pino pino-http`
+2. Log all requests: method, path, status, duration
+3. Enhance exception filter: log full context (stack, body, user ID)
+4. Environment-based log level (debug dev, info prod)
+
+---
+
+### P3-3: Redis Caching Layer
+
+**ECC Skills:** `redis-patterns`
+
+**Files:** `backend/src/modules/redis/` (empty placeholder → implement)
+
+**Tugas:**
+1. `RedisModule` + `RedisService` with cache-aside pattern
+2. Cache `GET /stores` (TTL 300s)
+3. Cache `GET /stores/match` (TTL 60s)
+4. Invalidate on store update
+5. Graceful degradation: fallback DB if Redis down
+
+---
+
+### P3-4: Production Readiness Audit
+
+**ECC Skills:** `production-audit`, `deployment-patterns`, `docker-patterns`
+
+**Files to audit:**
+- `backend/Dockerfile` — Non-root, multi-stage, size
+- `docker-compose.yml` — Resource limits, restart
+- `render.yaml` — Deploy config
+
+**Deliverable:** `docs/deployment.md` with runbook.
+
+---
+
+### P3-5: Database Query Optimization
+
+**ECC Skills:** `postgres-patterns`, `prisma-patterns`
+
+**Files:** `prisma/schema.prisma` + all service files
+
+**Tugas:**
+1. Fix N+1 queries (missing `include`/`select`)
+2. Add `@@index` on frequently filtered fields
+3. Pagination on `GET /stores`, `GET /orders`
+4. Audit `distinct` queries on large tables
+
+---
+
+### P3-6: E2E API Tests
+
+**ECC Skills:** `e2e-testing`
+
+**Files:** `backend/test/e2e/` (new)
+
+**Critical flows:**
+1. Login → create order (stealth) → payment → success
+2. Store admin login → manage orders → diagnosis
+3. Platform admin → create store
+4. Error: invalid JWT, expired, wrong role
+5. Rate limiting: 6th request → 429
+
+---
+
+### P3-7: Code Quality Audit
+
+**ECC Skills:** `refactor-cleaner`, `coding-standards`
+
+**Tugas:**
+1. Scan unused imports, `any` types
+2. Replace `print()` with logger
+3. Verify all responses use `{success, data, timestamp}` envelope
+4. No empty `catch {}` blocks
+5. Remove `// ignore_for_file` — fix root causes
+
+---
+
+### P3-8: Monitoring Metrics
+
+**ECC Skills:** `dashboard-builder`
+
+**Tugas:**
+1. `@nestjs/terminus` + Prometheus metrics
+2. Export: request count/duration, order rate, payment rate
+3. Health checks: PostgreSQL, Redis, WhatsApp API
+
+---
+
+### P3-9: Flutter Performance
+
+**ECC Skills:** `dart-flutter-patterns`
+
+**Tugas:**
+1. Add missing `const` constructors
+2. Use `ListView.builder` + `itemExtent`
+3. Image caching, preloading
+4. Report APK size with `flutter build apk --release`
+5. Profile startup with `--trace-startup`
+
+---
+
+### P3-10: WhatsApp Notification Fallback
+
+**ECC Skills:** `error-handling`
+
+**Current:** 3x retry Fonnte WhatsApp, no fallback.
+
+**Tugas:**
+1. Email fallback (SendGrid/SMTP) for critical: order created, payment confirmed
+2. BullMQ queue for notifications with dead letter queue
+3. Dashboard: notification failure rate
+
+---
+
+### Priority Reference
+
+| Task | ECC Skill | Effort | Impact |
+|------|-----------|--------|--------|
+| P3-1: Security Audit | security-review | 2h | 🔴 Production safety |
+| P3-2: Structured Logging | error-handling | 3h | 🔴 Debugging |
+| P3-3: Redis Caching | redis-patterns | 4h | 🟡 Performance |
+| P3-4: Production Audit | production-audit | 2h | 🔴 Deployment safety |
+| P3-5: DB Optimization | postgres-patterns | 3h | 🟡 Query speed |
+| P3-6: E2E Tests | e2e-testing | 6h | 🟢 Reliability |
+| P3-7: Code Quality | refactor-cleaner | 2h | 🟢 Maintainability |
+| P3-8: Monitoring | dashboard-builder | 4h | 🔴 Observability |
+| P3-9: Flutter Perf | dart-flutter-patterns | 3h | 🟡 App speed |
+| P3-10: WA Fallback | error-handling | 5h | 🟡 Reliability |
