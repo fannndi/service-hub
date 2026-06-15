@@ -1,0 +1,33 @@
+[project]
+ref = "eboplbemgtvmviwhdlfa"
+port = 54321
+
+[auth]
+enabled = false
+
+[analytics]
+enabled = false
+
+[functions]
+enabled = false
+
+[storage]
+enabled = false
+
+[realtime]
+enabled = false
+
+[edge_functions]
+enabled = false
+
+[db.migrations]
+enabled = false
+
+[studio]
+enabled = false
+
+[inbucket]
+enabled = false
+
+[email]
+enabled = false
