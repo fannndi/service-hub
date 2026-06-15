@@ -22,7 +22,16 @@
 | P3 | 10 | 0 | 10 |
 | **Total** | **22** | **2** | **20** |
 
-**Next recommended:** P0-1 (Split `customer_screens.dart`) untuk mengurangi risiko maintainability, atau P1-3 (Integration Tests) untuk coverage backend.
+**Next recommended:** P0-1 (Split `customer_screens.dart`) — maintainability, atau P1-3 (Integration Tests) — coverage.
+
+### ⚡ Quick Wins (< 1 jam)
+
+| Task | Effort | What |
+|------|--------|------|
+| P1-5 ✅ | 30m | Rate limiting — **done** |
+| P1-4 | 30m | App icon — generate PNG + `flutter_launcher_icons` |
+| P2-3 | 20m | Splash screen — `flutter_native_splash` |
+| P1-6 step 4-6 | 40m | Delete dead code files + unused routers |
 
 ---
 
