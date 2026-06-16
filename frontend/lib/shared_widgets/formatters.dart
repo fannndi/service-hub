@@ -12,6 +12,6 @@ String formatShortDate(DateTime? dt) {
   if (diff.inMinutes < 1) return 'Baru saja';
   if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
   if (diff.inDays < 1) return '${diff.inHours}h lalu';
-  if (diff.inDays < 7) return '${diff.inDays}h lalu';
+  if (diff.inDays < 7) return '${diff.inDays}d lalu';
   return DateFormat('dd/MM/yyyy').format(dt);
 }

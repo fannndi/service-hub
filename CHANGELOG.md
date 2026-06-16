@@ -1,5 +1,35 @@
 ﻿# Changelog
 
+## 2026-06-16 — Refactoring Besar-besaran (Code Quality Cleanup)
+
+### Fixed
+- **`formatShortDate` bug** — Menampilkan "Xh lalu" untuk range hari, sekarang benar "Xd lalu"
+- **`AdminAuthNotifier` hardcoded session** — Sekarang cache session di secure storage, bukan hardcoded fake `AdminSession`
+- **`user_session.dart` unsafe parsing** — `DateTime.parse()` → `tryParse()` + null-coalescing, tidak crash lagi
+
+### Added
+- **`lib/core/json_helpers.dart`** — Shared deserialization helpers (`moneyFromJson`, `readString`, `jsonMap`, `jsonList`, `jsonString`, `jsonInt`, `jsonNum`, `jsonDouble`, `jsonBool`, `jsonDate`, `jsonDateOrNull`, `jsonStringList`, `jsonIntMap`)
+- **`lib/core/domain/order_status.dart`** — Canonical `OrderStatus`, `PaymentRecordStatus`, `DisputeStatus` enums + `PageResult<T>`
+- **`createAuthDio()` factory** — Shared Dio instance dengan auth interceptor + automatic 401 refresh-retry logic
+- **`unwrap()` / `unwrapList()`** — Shared API response envelope unwrappers di `api_client.dart`
+- **Customer domain split** — `customer_models.dart` (492L) → 7 focused files + barrel: `auth_models.dart`, `order_models.dart`, `store_models.dart`, `sparepart_models.dart`, `review_models.dart`, `notification_models.dart`, `home_models.dart`
+- **Store admin domain split** — `store_admin_models.dart` (473L) → 9 focused files + barrel: `store_admin_enums.dart`, `store_admin_session.dart`, `store_admin_dashboard_models.dart`, `store_admin_order_models.dart`, `store_admin_inventory_models.dart`, `store_admin_dispute_models.dart`, `store_admin_review_models.dart`, `store_admin_notification_models.dart`, `store_admin_customer_models.dart`
+
+### Changed
+- **Backend dead code removed** — 12 empty scaffold directories deleted (`src/auth/`, `src/stores/`, `src/orders/`, `src/payments/`, `src/reviews/`, `src/disputes/`, `src/spareparts/`, `src/notifications/`, `src/jobs/`, `src/upload/`, `src/database/`, `src/redis/`)
+- **Frontend dead code removed** — `lib/models/`, `lib/repositories/` scaffold dirs deleted
+- **7 dead shared widgets deleted** — `SlaCountdownBadge`, `SectionHeader`, `SearchFilterBar`, `LoadingState`, `KeyValueRow`, `AppInfoCard`, `AsyncPage` (zero imports)
+- **Duplicate helper functions eliminated** — `moneyFromJson`/`moneyParse`, `readString`/`strRead`, `_string`/`_int`/`_num`/`_double`/`_bool`/`_date`/`_dateOrNull` consolidated into shared `json_helpers.dart`
+- **`CustomerApiClient` refactored** — Inline Dio interceptor → shared `createAuthDio()` factory
+- **30+ `.gitkeep` files cleaned up** — Removed from directories that already contain real files
+
+### Removed
+- Backend: `src/auth/`, `src/stores/`, `src/orders/`, `src/payments/`, `src/reviews/`, `src/disputes/`, `src/spareparts/`, `src/notifications/`, `src/jobs/`, `src/upload/`, `src/database/`, `src/redis/` (all empty scaffolds)
+- Frontend: `lib/models/`, `lib/repositories/` (empty scaffolds)
+- Frontend shared_widgets: 7 dead widget files
+
+---
+
 ## 2026-06-15 — Sessions, God File Split, Logging, Redis, Tests, Monitoring
 
 ### Added

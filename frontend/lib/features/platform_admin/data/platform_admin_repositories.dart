@@ -8,11 +8,28 @@ import '../domain/platform_admin_models.dart';
 class AdminSessionStorage {
   const AdminSessionStorage(this._storage);
   static const _tokenKey = 'admin_access_token';
+  static const _sessionKey = 'admin_session';
   final FlutterSecureStorage _storage;
 
   Future<String?> readToken() => _storage.read(key: _tokenKey);
   Future<void> saveToken(String token) => _storage.write(key: _tokenKey, value: token);
-  Future<void> clear() => _storage.delete(key: _tokenKey);
+
+  Future<void> saveSession(AdminSession session) async {
+    await _storage.write(key: _sessionKey, value: '${session.id}|${session.username}|${session.fullName}');
+  }
+
+  Future<AdminSession?> readSession() async {
+    final raw = await _storage.read(key: _sessionKey);
+    if (raw == null || !raw.contains('|')) return null;
+    final parts = raw.split('|');
+    if (parts.length < 3) return null;
+    return AdminSession(id: parts[0], username: parts[1], fullName: parts[2]);
+  }
+
+  Future<void> clear() async {
+    await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _sessionKey);
+  }
 }
 
 class AdminApiClient {
@@ -40,6 +57,7 @@ class AdminRepository {
     final response = await _api.dio.post('/platform/login', data: {'username': username, 'password': password});
     final result = AdminLoginResult.fromJson(AdminApiClient.unwrap(response.data));
     await _session.saveToken(result.accessToken);
+    await _session.saveSession(result.admin);
     return result;
   }
 

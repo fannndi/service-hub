@@ -217,10 +217,17 @@ service-hub/
 │   └── Dockerfile               Multi-stage production build
 │
 ├── frontend/                    Flutter
-│   └── lib/features/
-│       ├── customer/            Pelanggan (17 screens)
-│       ├── store_admin/         Admin Toko (14 screens)
-│       └── platform_admin/     Admin Platform (2 screens)
+│   └── lib/
+│       ├── core/                Shared: config, json_helpers, domain types
+│       │   ├── json_helpers.dart    Unified deserialization helpers
+│       │   └── domain/             OrderStatus, PaymentRecordStatus, PageResult
+│       ├── network/             Dio client, auth factory, error mapping
+│       ├── shared_widgets/      StatusBadge, ErrorState, EmptyState, Formatters
+│       ├── storage/             Secure token storage abstraction
+│       └── features/
+│           ├── customer/            Pelanggan (26 screens, 7 domain model files)
+│           ├── store_admin/         Admin Toko (14 screens, 9 domain model files)
+│           └── platform_admin/      Admin Platform (2 screens)
 │
 ├── docs/                        Dokumentasi lengkap
 │   ├── backend/                 Backend reference (5 files)

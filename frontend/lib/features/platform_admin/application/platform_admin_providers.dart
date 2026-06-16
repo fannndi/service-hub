@@ -15,10 +15,9 @@ class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
     final token = await ref.read(adminStorageProvider).readToken();
     if (token == null) return null;
     try {
-      final stores = await ref.read(adminRepositoryProvider).listStores();
-      if (stores.isNotEmpty) {
-        return const AdminSession(id: '', username: 'admin', fullName: 'Platform Admin');
-      }
+      await ref.read(adminRepositoryProvider).listStores();
+      final cached = await ref.read(adminStorageProvider).readSession();
+      if (cached != null) return cached;
     } catch (_) {}
     await ref.read(adminStorageProvider).clear();
     return null;
@@ -32,7 +31,7 @@ class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
   }
 
   Future<void> logout() async {
-    await ref.read(adminRepositoryProvider).logout();
+    await ref.read(adminStorageProvider).clear();
     state = const AsyncData(null);
   }
 }

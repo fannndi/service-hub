@@ -1,11 +1,4 @@
-double moneyParse(Object? value) {
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value) ?? 0;
-  return 0;
-}
-
-String strRead(Map<String, dynamic> json, String key, [String? alt]) =>
-    (json[key] ?? (alt != null ? json[alt] : null) ?? '').toString();
+import '../../../core/json_helpers.dart';
 
 class AdminSession {
   const AdminSession({required this.id, required this.username, required this.fullName});
@@ -14,9 +7,9 @@ class AdminSession {
   final String fullName;
 
   factory AdminSession.fromJson(Map<String, dynamic> json) => AdminSession(
-        id: strRead(json, 'id'),
-        username: strRead(json, 'username'),
-        fullName: strRead(json, 'fullName'),
+        id: readString(json, 'id'),
+        username: readString(json, 'username'),
+        fullName: readString(json, 'fullName'),
       );
 }
 
@@ -26,7 +19,7 @@ class AdminLoginResult {
   final AdminSession admin;
 
   factory AdminLoginResult.fromJson(Map<String, dynamic> json) => AdminLoginResult(
-        accessToken: strRead(json, 'accessToken'),
+        accessToken: readString(json, 'accessToken'),
         admin: AdminSession.fromJson((json['admin'] as Map<String, dynamic>?) ?? {}),
       );
 }
@@ -56,14 +49,14 @@ class StoreListItem {
   factory StoreListItem.fromJson(Map<String, dynamic> json) {
     final config = json['config'] as Map<String, dynamic>?;
     return StoreListItem(
-      id: strRead(json, 'id'),
-      storeName: strRead(json, 'storeName'),
-      address: strRead(json, 'address'),
-      phoneNumber: strRead(json, 'phoneNumber'),
+      id: readString(json, 'id'),
+      storeName: readString(json, 'storeName'),
+      address: readString(json, 'address'),
+      phoneNumber: readString(json, 'phoneNumber'),
       deviceTypes: config?['device_types'] as Map<String, dynamic>?,
-      ratingAvg: moneyParse(json['ratingAvg']),
+      ratingAvg: moneyFromJson(json['ratingAvg']),
       totalCompleted: json['totalCompleted'] as int? ?? 0,
-      createdAt: strRead(json, 'createdAt'),
+      createdAt: readString(json, 'createdAt'),
       admins: (json['admins'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList(),
     );
   }

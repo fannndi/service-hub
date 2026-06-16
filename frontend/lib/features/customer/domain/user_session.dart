@@ -16,11 +16,17 @@ class UserSession {
   });
 
   factory UserSession.fromJson(Map<String, dynamic> json) => UserSession(
-        id: json['id'] as String,
+        id: (json['id'] ?? '').toString(),
         deviceInfo: json['deviceInfo'] as Map<String, dynamic>?,
         ipAddress: json['ipAddress'] as String?,
-        lastActiveAt: DateTime.parse(json['lastActiveAt'] as String),
-        isActive: json['isActive'] as bool,
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        lastActiveAt: _parseDate(json['lastActiveAt']),
+        isActive: json['isActive'] == true,
+        createdAt: _parseDate(json['createdAt']),
       );
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+  }
 }
