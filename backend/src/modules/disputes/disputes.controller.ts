@@ -47,6 +47,6 @@ export class StoreDisputesController {
     @Param('id') disputeId: string,
     @Body() dto: RespondDisputeDto,
   ) {
-    return this.disputesService.respondDispute(disputeId, user.id, user.storeId!, dto);
+    return this.disputesService.respondDispute(disputeId, user.storeId!, dto);
   }
 }

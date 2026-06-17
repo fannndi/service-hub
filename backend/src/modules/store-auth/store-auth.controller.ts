@@ -29,7 +29,7 @@ export class StoreAuthController {
   @UseGuards(StoreJwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async logout(@GetUser() user: AuthenticatedUser) {
+  async logout(@GetUser() _user: AuthenticatedUser) {
     return { message: 'Logout berhasil.' };
   }
 }

@@ -32,6 +32,7 @@ export interface AppConfig {
     disputeRespond: number;
   };
   throttle: { ttl: number; limit: number };
+  maintenance: { mode: boolean; message: string };
 }
 
 function requireEnv(name: string): string {
@@ -122,5 +123,10 @@ export default (): AppConfig => ({
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL_SECONDS || '60', 10),
     limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+  },
+
+  maintenance: {
+    mode: process.env.MAINTENANCE_MODE === 'true',
+    message: process.env.MAINTENANCE_MESSAGE || 'Sedang Maintenance',
   },
 });

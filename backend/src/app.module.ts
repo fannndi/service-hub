@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+﻿import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -6,6 +6,8 @@ import configuration from './config/configuration';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { HealthController } from './common/health.controller';
+import { ConfigController } from './common/config.controller';
+import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { StoreAuthModule } from './modules/store-auth/store-auth.module';
 import { StoreRegisterModule } from './modules/store-register/store-register.module';
@@ -56,6 +58,10 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     UploadsModule,
     JobsModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, ConfigController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MaintenanceMiddleware).forRoutes('*');
+  }
+}

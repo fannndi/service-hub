@@ -21,6 +21,7 @@ import '../screens/review_success_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/sessions_screen.dart';
 import '../screens/security_screen.dart';
+import '../screens/settings_screen.dart';
 import '../screens/coupons_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/notification_detail_screen.dart';
@@ -52,6 +53,7 @@ final customerRoutes = <RouteBase>[
   GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   GoRoute(path: '/sessions', builder: (_, __) => const SessionsScreen()),
   GoRoute(path: '/security', builder: (_, __) => const SecurityScreen()),
+  GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
   GoRoute(path: '/coupons', builder: (_, __) => const CouponsScreen()),
   GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
   GoRoute(path: '/notifications/:id', builder: (_, state) => NotificationDetailScreen(item: state.extra as NotificationItem?)),

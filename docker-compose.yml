@@ -1,4 +1,12 @@
-﻿services:
+﻿# =============================================
+# Local Development Environment
+# =============================================
+# Usage: docker compose up -d
+# Status: docker compose ps
+# Logs: docker compose logs -f backend
+# Stop: docker compose down
+
+services:
   postgres:
     image: postgres:16-alpine
     container_name: servisgadget_postgres
