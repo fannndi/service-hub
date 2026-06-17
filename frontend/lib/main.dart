@@ -17,7 +17,6 @@ Future<void> main() async {
   await EnvironmentService.init();
   runApp(const ProviderScope(child: ServisGadgetApp()));
 }
-}
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -102,14 +101,14 @@ class _AppRefresh extends ChangeNotifier {
   final Ref ref;
 }
 
-class _InitSplash extends StatefulWidget {
+class _InitSplash extends ConsumerStatefulWidget {
   const _InitSplash();
 
   @override
-  State<_InitSplash> createState() => _InitSplashState();
+  ConsumerState<_InitSplash> createState() => _InitSplashState();
 }
 
-class _InitSplashState extends State<_InitSplash> {
+class _InitSplashState extends ConsumerState<_InitSplash> {
   String _status = 'Menghubungkan ke server...';
 
   @override

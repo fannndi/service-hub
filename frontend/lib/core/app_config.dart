@@ -8,7 +8,7 @@ class AppConfig {
 }
 
 final appConfigProvider = Provider<AppConfig>((ref) {
-  return const AppConfig(apiBaseUrl: EnvironmentService.currentUrl);
+  return AppConfig(apiBaseUrl: EnvironmentService.currentUrl);
 });
 
 class EnvironmentService {

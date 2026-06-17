@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/app_config.dart';
+import '../../../core/json_helpers.dart';
 import '../../../network/api_client.dart';
 import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
