@@ -1,6 +1,9 @@
 # ServisGadget — Panduan Setup Lengkap (Dari Nol)
 
 > Panduan ini untuk setup **ServisGadget** di laptop Windows dari awal sampai bisa running.
+>
+> **UPDATE 2026-06-17:** File environment sekarang ada di folder `secrets/`.
+> Minta folder `secrets/` dari anggota tim yang handle deployment.
 
 ---
 
@@ -134,24 +137,47 @@ cd /mnt/c/Users/%USERNAME%/Documents/service-hub
 
 Project ini punya **2 mode environment**: Local dan Production.
 
+### 5.1 Copy Folder secrets/
+
+Minta folder `secrets/` dari anggota tim (via flashdisk, WhatsApp, dll). Lalu copy ke root project:
+
+```
+service-hub/
+├── secrets/          ← copy di sini
+│   ├── .env.local
+│   └── .env.production
+├── backend/
+├── frontend/
+└── ...
+```
+
+### 5.2 Switch ke Local
+
 **Pilih LOCAL untuk development:**
 
 ```bash
-# Switch ke local (copy .env.local → .env)
+# Switch ke local (copy secrets/.env.local → .env)
 bash switch-env.sh local
 ```
 
 Atau manual:
 
 ```bash
-cp .env.local .env
+cp secrets/.env.local .env
 ```
 
-**Cek file .env berhasil dibuat:**
+**Cek environment:**
+
+```bash
+bash switch-env.sh status
+# Output: Current Environment: LOCAL
+```
+
+### 5.3 Verifikasi .env
 
 ```bash
 cat .env | grep DATABASE_URL
-# Output harus: postgresql://servisgadget:servisgadget@postgres:5432/servisgadget
+# Output harus: postgresql://servisgadget:servisgadget@localhost:5432/servisgadget
 ```
 
 ---
@@ -427,12 +453,14 @@ flutter pub add shared_preferences
 
 ### File Environment
 
-| File | Untuk |
-|------|-------|
-| `.env.local` | Local development (Docker) |
-| `.env.production` | Production (Supabase + SumoPod) |
-| `.env` | Aktif saat ini (copy dari .env.local/production) |
-| `switch-env.sh` | Script switch environment |
+| File | Untuk | Shared via |
+|------|-------|------------|
+| `secrets/.env.local` | Local development (Docker) | Folder secrets/ (manual) |
+| `secrets/.env.production` | Production (VPS) | Folder secrets/ (manual) |
+| `secrets/README.md` | Petunjuk penggunaan secrets | Folder secrets/ (manual) |
+| `.env` | Aktif saat ini (auto-copy oleh switch-env.sh) | Auto-generated |
+| `switch-env.sh` | Script switch environment | Git |
+| `.env.example` | Template reference (untuk lihat semua env vars) | Git |
 
 ---
 
