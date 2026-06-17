@@ -37,6 +37,9 @@ export class SparepartsService {
   async update(id: string, storeId: string, dto: UpdateSparepartDto) {
     const sp = await this.prisma.sparePart.findFirst({ where: { id, storeId } });
     if (!sp) throw new NotFoundException('Sparepart not found', 'Sparepart tidak ditemukan.');
+    if (dto.qty !== undefined && dto.qty < sp.qtyReserved) {
+      throw new NotFoundException('Stock below reserved', 'Stok tidak boleh kurang dari jumlah yang sedang direservasi.');
+    }
 
     return this.prisma.sparePart.update({
       where: { id },

@@ -305,10 +305,18 @@ export class OrdersService {
     });
     if (!order) throw new OrderNotFoundException();
 
+    const orderItemIds = new Set(order.items.map((i) => i.id));
     for (const diagItem of dto.items) {
+      if (!orderItemIds.has(diagItem.orderItemId)) {
+        throw new OrderNotFoundException();
+      }
       if (diagItem.status === 'replaced' && !diagItem.replacedSparepartId) {
         throw new InvalidStatusTransitionException('diagnosing', 'waiting_approval');
       }
+    }
+
+    if (dto.items.length !== order.items.length) {
+      throw new InvalidStatusTransitionException('diagnosing', 'waiting_approval');
     }
 
     let finalPrice = Number(dto.serviceFee);

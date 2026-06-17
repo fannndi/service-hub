@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { StoreAuthService } from './store-auth.service';
 import { StoreLoginDto, StoreChangePasswordDto } from './dto/store-auth.dto';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
@@ -12,6 +13,7 @@ export class StoreAuthController {
   constructor(private readonly storeAuthService: StoreAuthService) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: StoreLoginDto) {
     return this.storeAuthService.login(dto.phoneNumber, dto.password);

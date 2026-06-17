@@ -10,7 +10,14 @@ final storeAdminStorageProvider = Provider<StoreAdminSessionStorage>((ref) => St
 final storeAdminDioProvider = Provider<Dio>((ref) {
   final config = ref.watch(appConfigProvider);
   final storage = ref.watch(storeAdminStorageProvider);
-  return createApiClient(config.apiBaseUrl, readToken: () => storage.readAccessToken());
+  return createAuthDio(
+    baseUrl: config.apiBaseUrl,
+    readAccessToken: () => storage.readAccessToken(),
+    readRefreshToken: () => storage.readRefreshToken(),
+    onSaveTokens: (accessToken, refreshToken) => storage.saveTokens(accessToken: accessToken, refreshToken: refreshToken),
+    onClearSession: () => storage.clear(),
+    refreshEndpoint: '/store/auth/refresh',
+  );
 });
 
 final storeAuthRepositoryProvider = Provider<StoreAuthRepository>((ref) => StoreAuthRepository(ref.watch(storeAdminDioProvider), ref.watch(storeAdminStorageProvider)));
@@ -30,6 +37,13 @@ class StoreAdminSessionStorage {
   static const _isFirstLogin = 'store_is_first_login';
 
   Future<String?> readAccessToken() => _storage.read(key: _accessToken);
+
+  Future<String?> readRefreshToken() => _storage.read(key: _refreshToken);
+
+  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
+    await _storage.write(key: _accessToken, value: accessToken);
+    await _storage.write(key: _refreshToken, value: refreshToken);
+  }
 
   Future<void> saveLogin({required String accessToken, String? refreshToken, required StoreAdminSession session}) async {
     await _storage.write(key: _accessToken, value: accessToken);

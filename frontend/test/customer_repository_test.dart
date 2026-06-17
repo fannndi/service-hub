@@ -36,15 +36,15 @@ void main() {
 
   group('OrderStatus', () {
     test('parses valid status values', () {
-      expect(OrderStatus.parse('waiting_device'), OrderStatus.waitingDevice);
-      expect(OrderStatus.parse('completed'), OrderStatus.completed);
-      expect(OrderStatus.parse('cancelled'), OrderStatus.cancelled);
-      expect(OrderStatus.parse('disputed'), OrderStatus.disputed);
+      expect(OrderStatus.fromJson('waiting_device'), OrderStatus.waitingDevice);
+      expect(OrderStatus.fromJson('completed'), OrderStatus.completed);
+      expect(OrderStatus.fromJson('cancelled'), OrderStatus.cancelled);
+      expect(OrderStatus.fromJson('disputed'), OrderStatus.disputed);
     });
 
     test('returns waitingDevice for unknown values', () {
-      expect(OrderStatus.parse('unknown'), OrderStatus.waitingDevice);
-      expect(OrderStatus.parse(null), OrderStatus.waitingDevice);
+      expect(OrderStatus.fromJson('unknown'), OrderStatus.waitingDevice);
+      expect(OrderStatus.fromJson(null), OrderStatus.waitingDevice);
     });
 
     test('isActive returns correct values', () {

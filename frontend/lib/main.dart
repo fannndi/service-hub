@@ -157,6 +157,15 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
     if (!mounted) return;
 
     try {
+      final adminAuth = ref.read(adminAuthProvider);
+      if (adminAuth.valueOrNull != null) {
+        if (!mounted) return;
+        context.go('/admin/dashboard');
+        return;
+      }
+    } catch (_) {}
+
+    try {
       final storeAuth = ref.read(storeAuthControllerProvider);
       if (storeAuth.valueOrNull != null) {
         if (!mounted) return;

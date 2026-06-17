@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { InvalidCredentialsException, PasswordSameAsOldException } from '../../common/exceptions';
+import { InvalidCredentialsException, PasswordSameAsOldException, StoreNotActiveException } from '../../common/exceptions';
 import { normalizePhone } from '../../common/utils';
 import { JwtPayload } from '../../common/types/jwt-payload.type';
 import { AppConfig } from '../../config/configuration';
@@ -23,6 +23,7 @@ export class StoreAuthService {
       include: { store: { select: { id: true, storeName: true, isActive: true } } },
     });
     if (!admin) throw new InvalidCredentialsException();
+    if (!admin.store.isActive) throw new StoreNotActiveException();
     if (!(await bcrypt.compare(password, admin.passwordHash))) throw new InvalidCredentialsException();
 
     await this.prisma.storeAdmin.update({
