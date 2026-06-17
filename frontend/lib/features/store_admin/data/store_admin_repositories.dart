@@ -73,7 +73,8 @@ class StoreAuthRepository {
 
   Future<StoreAdminSession> login({required String phoneNumber, required String password}) async {
     final response = await _dio.post<Map<String, dynamic>>('/store/auth/login', data: {'phoneNumber': phoneNumber, 'password': password});
-    final data = response.data ?? const {};
+    final raw = response.data ?? const {};
+    final data = raw['data'] is Map<String, dynamic> ? raw['data'] as Map<String, dynamic> : raw;
     final token = (data['access_token'] ?? data['accessToken'])?.toString();
     if (token == null || token.isEmpty) throw StateError('Token store admin tidak tersedia dari API.');
     final session = StoreAdminSession.fromJson(data);
