@@ -35,7 +35,7 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                 const SizedBox(height: 12),
                 TextField(controller: password, obscureText: obscure, decoration: InputDecoration(labelText: 'Password', suffixIcon: IconButton(onPressed: () => setState(() => obscure = !obscure), icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined)))),
                 const SizedBox(height: 18),
-                FilledButton.icon(onPressed: auth.isLoading ? null : () => ref.read(storeAuthControllerProvider.notifier).login(phone.text.trim(), password.text), icon: const Icon(Icons.login), label: const Text('Masuk')),
+                FilledButton.icon(onPressed: auth.isLoading ? null : () => ref.read(storeAuthControllerProvider.notifier).login('08${phone.text.trim()}', password.text), icon: const Icon(Icons.login), label: const Text('Masuk')),
                 if (auth.hasError) Padding(padding: const EdgeInsets.only(top: 12), child: Text(auth.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))),
               ]),
             ),
