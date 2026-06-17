@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/platform_admin_providers.dart';
+import '../../../../core/widgets/address_dropdowns.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -77,6 +78,13 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
           ),
         ),
       );
+
+  @override
+  void dispose() {
+    _username.dispose();
+    _password.dispose();
+    super.dispose();
+  }
 }
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -87,11 +95,11 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final _storeName = TextEditingController();
-  final _address = TextEditingController();
   final _storePhone = TextEditingController();
   final _adminName = TextEditingController();
   final _adminPhone = TextEditingController();
   final _password = TextEditingController();
+  final _addressKey = GlobalKey<AddressDropdownsState>();
   bool _android = true;
   bool _ios = true;
   bool _loading = false;
@@ -100,7 +108,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   void dispose() {
     _storeName.dispose();
-    _address.dispose();
     _storePhone.dispose();
     _adminName.dispose();
     _adminPhone.dispose();
@@ -109,11 +116,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Future<void> _create() async {
+    final addressDropdown = _addressKey.currentState!;
+    if (!addressDropdown.isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lengkapi alamat (Provinsi s/d Kelurahan).')),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
     try {
       await ref.read(adminRepositoryProvider).createStore(
             storeName: _storeName.text.trim(),
-            address: _address.text.trim(),
+            address: addressDropdown.addressString,
             storePhone: _storePhone.text.trim(),
             adminName: _adminName.text.trim(),
             adminPhone: _adminPhone.text.trim(),
@@ -125,11 +140,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       setState(() {
         _showCreate = false;
         _storeName.clear();
-        _address.clear();
         _storePhone.clear();
         _adminName.clear();
         _adminPhone.clear();
         _password.clear();
+        addressDropdown.clear();
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,9 +196,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   Text('Buat Toko Baru', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 16),
                   TextField(controller: _storeName, decoration: const InputDecoration(labelText: 'Nama Toko', isDense: true)),
-                  const SizedBox(height: 12),
-                  TextField(controller: _address, maxLines: 2, decoration: const InputDecoration(labelText: 'Alamat Toko', isDense: true)),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+                  AddressDropdowns(key: _addressKey),
+                  const SizedBox(height: 16),
                   TextField(controller: _storePhone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP Toko', prefixText: '08', isDense: true)),
                   const SizedBox(height: 16),
                   const Divider(),
