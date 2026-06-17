@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'address_models.dart';
+import '../domain/address_models.dart';
 
 class AddressRepository {
   static const _provinceIdJateng = '33';
