@@ -105,6 +105,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   bool _loading = false;
   bool _showCreate = false;
 
+  List<String> _validationErrors = [];
+  bool _validated = false;
+
   @override
   void dispose() {
     _storeName.dispose();
@@ -115,11 +118,65 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _create() async {
-    final addressDropdown = _addressKey.currentState!;
-    if (!addressDropdown.isValid) {
+  List<String> _validate() {
+    final errors = <String>[];
+
+    if (_storeName.text.trim().isEmpty) errors.add('Nama Toko wajib diisi');
+    if (_storeName.text.trim().length < 3) errors.add('Nama Toko minimal 3 karakter');
+
+    if (!(_addressKey.currentState?.isValid ?? false)) errors.add('Alamat belum lengkap (Provinsi s/d Kelurahan)');
+
+    if (_storePhone.text.trim().isEmpty) errors.add('No HP Toko wajib diisi');
+    if (_storePhone.text.trim().length < 8) errors.add('No HP Toko minimal 8 digit');
+
+    if (_adminName.text.trim().isEmpty) errors.add('Nama Admin Toko wajib diisi');
+
+    if (_adminPhone.text.trim().isEmpty) errors.add('No HP Admin wajib diisi');
+    if (_adminPhone.text.trim().length < 8) errors.add('No HP Admin minimal 8 digit');
+
+    if (_password.text.isEmpty) errors.add('Password wajib diisi');
+    if (_password.text.length < 8) errors.add('Password minimal 8 karakter');
+
+    if (!_android && !_ios) errors.add('Pilih minimal 1 tipe perangkat');
+
+    return errors;
+  }
+
+  void _check() {
+    final errors = _validate();
+    setState(() {
+      _validationErrors = errors;
+      _validated = true;
+    });
+
+    if (errors.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lengkapi alamat (Provinsi s/d Kelurahan).')),
+        const SnackBar(
+          content: Text('Semua data valid! Siap disimpan.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${errors.length} data belum valid.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  String get _previewAddress => _addressKey.currentState?.addressString ?? '(belum diisi)';
+
+  Future<void> _create() async {
+    final errors = _validate();
+    if (errors.isNotEmpty) {
+      setState(() {
+        _validationErrors = errors;
+        _validated = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Periksa kembali: ${errors.first}')),
       );
       return;
     }
@@ -128,10 +185,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     try {
       await ref.read(adminRepositoryProvider).createStore(
             storeName: _storeName.text.trim(),
-            address: addressDropdown.addressString,
-            storePhone: _storePhone.text.trim(),
+            address: _addressKey.currentState!.addressString,
+            storePhone: '08${_storePhone.text.trim()}',
             adminName: _adminName.text.trim(),
-            adminPhone: _adminPhone.text.trim(),
+            adminPhone: '08${_adminPhone.text.trim()}',
             password: _password.text,
             handlesAndroid: _android,
             handlesIos: _ios,
@@ -139,22 +196,32 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       ref.invalidate(storeListProvider);
       setState(() {
         _showCreate = false;
+        _validated = false;
+        _validationErrors = [];
         _storeName.clear();
         _storePhone.clear();
         _adminName.clear();
         _adminPhone.clear();
         _password.clear();
-        addressDropdown.clear();
+        _addressKey.currentState?.clear();
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Toko berhasil dibuat!')),
+          const SnackBar(content: Text('Toko berhasil dibuat!'), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
+      String msg = 'Gagal menyimpan.';
+      if (e.toString().contains('DioException')) {
+        final match = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(e.toString());
+        if (match != null) msg = match.group(1)!;
+        else msg = 'Gagal: cek isi form atau hubungi admin.';
+      } else {
+        msg = 'Gagal: $e';
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e')),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -181,7 +248,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => setState(() => _showCreate = !_showCreate),
+        onPressed: () => setState(() {
+          _showCreate = !_showCreate;
+          _validated = false;
+          _validationErrors = [];
+        }),
         icon: Icon(_showCreate ? Icons.close : Icons.add),
         label: Text(_showCreate ? 'Batal' : 'Buat Toko'),
       ),
@@ -195,10 +266,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Buat Toko Baru', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 16),
+
                   TextField(controller: _storeName, decoration: const InputDecoration(labelText: 'Nama Toko', isDense: true)),
                   const SizedBox(height: 16),
+
+                  Text('Alamat', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 8),
                   AddressDropdowns(key: _addressKey),
                   const SizedBox(height: 16),
+
                   TextField(controller: _storePhone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP Toko', prefixText: '08', isDense: true)),
                   const SizedBox(height: 16),
                   const Divider(),
@@ -214,18 +290,79 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   Text('Tipe Perangkat', style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   Row(children: [
-                    FilterChip(label: const Text('Android'), selected: _android, onSelected: (v) => setState(() => _android = v)),
+                    FilterChip(label: const Text('Android'), selected: _android, onSelected: (v) => setState(() { _android = v; _validated = false; })),
                     const SizedBox(width: 8),
-                    FilterChip(label: const Text('iPhone / iOS'), selected: _ios, onSelected: (v) => setState(() => _ios = v)),
+                    FilterChip(label: const Text('iPhone / iOS'), selected: _ios, onSelected: (v) => setState(() { _ios = v; _validated = false; })),
                   ]),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _loading ? null : _create,
-                      child: _loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Buat Toko'),
+
+                  if (_validated && _validationErrors.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            const Icon(Icons.error, color: Colors.red, size: 18),
+                            const SizedBox(width: 8),
+                            Text('Yang perlu diperbaiki:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red.shade700)),
+                          ]),
+                          const SizedBox(height: 4),
+                          ..._validationErrors.map((e) => Padding(
+                            padding: const EdgeInsets.only(left: 26, top: 2),
+                            child: Text('- $e', style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+                          )),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
+
+                  if (_validated && _validationErrors.isEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green.shade200)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                            const SizedBox(width: 8),
+                            Text('Semua data valid!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+                          ]),
+                          const SizedBox(height: 8),
+                          _previewRow('Nama Toko', _storeName.text.trim()),
+                          _previewRow('Alamat', _previewAddress),
+                          _previewRow('HP Toko', '08${_storePhone.text.trim()}'),
+                          _previewRow('Admin', _adminName.text.trim()),
+                          _previewRow('HP Admin', '08${_adminPhone.text.trim()}'),
+                          _previewRow('Perangkat', '${_android ? "Android " : ""}${_ios ? "iOS" : ""}'),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _loading ? null : _check,
+                        icon: const Icon(Icons.fact_check),
+                        label: const Text('Cek Data'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: (_loading || !_validated || _validationErrors.isNotEmpty) ? null : _create,
+                        icon: _loading
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.save),
+                        label: const Text('Buat Toko'),
+                      ),
+                    ),
+                  ]),
                 ]),
               ),
             ),
@@ -271,6 +408,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       );
                     }).toList(),
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 26, top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
