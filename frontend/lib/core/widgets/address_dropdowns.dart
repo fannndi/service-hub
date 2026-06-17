@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/address_models.dart';
-import '../../data/address_repository.dart';
+import '../domain/address_models.dart';
+import '../data/address_repository.dart';
 
 class AddressDropdowns extends StatefulWidget {
   final bool enabled;
