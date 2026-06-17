@@ -349,3 +349,28 @@ static List<T> unwrapList<T>(dynamic data, T Function(dynamic) fromJson) {
   }
 }
 ```
+
+---
+
+## 8. Dio Instances (Updated 2026-06-17)
+
+### createApiClient — Simple Dio with token injection
+- Digunakan untuk public endpoints
+- Token di-inject via interceptor
+- **Tidak** punya automatic refresh
+
+### createAuthDio — Auth Dio with 401→refresh→retry
+- Digunakan untuk authenticated endpoints
+- Token di-inject via interceptor
+- 401 error → baca refresh token → POST /auth/refresh → save tokens → retry
+- Clear session jika refresh gagal
+
+### Dio Instance Usage
+
+| Client | Created by | Token Injection | Auto Refresh | Role |
+|--------|-----------|----------------|-------------|------|
+| `CustomerApiClient` | `createAuthDio` | Yes | Yes | Customer |
+| `storeAdminDioProvider` | `createAuthDio` | Yes | Yes | Store Admin |
+| `AdminApiClient` | `createAuthDio` | Yes | Yes | Platform Admin |
+
+> **Update 2026-06-17:** Store admin dan platform admin Dio sekarang menggunakan `createAuthDio` (bukan `createApiClient`), sehingga semua 3 role punya automatic token refresh.

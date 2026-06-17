@@ -17,11 +17,18 @@ npm install
 ```
 
 ### Konfigurasi .env
-Edit `backend/.env`, isi `DATABASE_URL` dengan connection string Supabase:
+Edit `backend/.env`, isi semua variable yang diperlukan. Copy dari `.env.example`:
+```bash
+cp .env.example .env
 ```
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.eboplbemgtvmviwhdlfa.supabase.co:5432/postgres
-```
-Password bisa dilihat di **Supabase Dashboard → Project Settings → Database → Connection String**.
+Variable minimal yang harus diisi:
+- `DATABASE_URL` — PostgreSQL connection string
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — JWT secrets customer
+- `JWT_STORE_ACCESS_SECRET`, `JWT_STORE_REFRESH_SECRET` — JWT secrets store admin
+- `JWT_PLATFORM_ADMIN_SECRET` — JWT secret platform admin
+- `CREDENTIAL_ENCRYPTION_KEY` — 32-byte hex (64 hex chars)
+
+Lihat `.env.example` untuk daftar lengkap env vars.
 
 ### Generate Prisma Client + Seed
 ```bash

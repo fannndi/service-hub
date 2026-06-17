@@ -629,3 +629,23 @@ Error response:
 
 - **Response:** `{ "uploadUrl": "...", "fileUrl": "..." }`
 - **Note:** Menggunakan S3-compatible storage (Cloudflare R2 / AWS S3)
+
+---
+
+## 15. Security Features (Added 2026-06-17)
+
+### Rate Limiting
+- `POST /v1/store/auth/login`: 5 requests per 60 detik
+- `POST /v1/orders`: 5 requests per 60 detik (public)
+
+### Stock Over-Commitment Guard
+- `PATCH /v1/store/spareparts/:id` menolak jika `qty < qtyReserved`
+- Mencegah over-commitment stok
+
+### IDOR Protection
+- `POST /v1/store/orders/:id/diagnosis` memverifikasi semua `orderItemId` belong ke order
+- `dto.items.length` harus sama dengan `order.items.length`
+- Mencegah manipulasi item dari order lain
+
+### Store Deactivation
+- `POST /v1/store/auth/login` memeriksa `store.isActive` sebelum login

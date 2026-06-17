@@ -255,6 +255,12 @@ function decryptCredential(ciphertext: string): string {
 - 5 percobaan gagal → akun terkunci 30 menit
 - Counter di-reset setelah login berhasil
 - `lockedUntil` dicek sebelum verifikasi password
+- **Store admin login juga di-rate-limit:** 5 percobaan per 60 detik via `@Throttle`
+
+### Store Deactivation Check
+- `store.isActive` dicek sebelum password diverifikasi
+- Admin toko dengan store non-aktif tidak bisa login
+- Mencegah akses ke sistem yang sudah ditutup
 
 ### Session Management
 - Refresh token di-hash dengan SHA-256 sebelum disimpan

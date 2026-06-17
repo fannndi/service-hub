@@ -34,13 +34,18 @@ Metrics endpoint: `GET /v1/metrics`
 4. Set health check path to `/v1/health`
 5. Set required env vars via Render Dashboard:
    - `DATABASE_URL` — PostgreSQL connection string
-   - `JWT_ACCESS_SECRET` — 32+ char random string
-   - `JWT_REFRESH_SECRET` — 32+ char random string
-   - `JWT_STORE_ACCESS_SECRET` — 32+ char random string
-   - `JWT_STORE_REFRESH_SECRET` — 32+ char random string
-   - `JWT_PLATFORM_ADMIN_SECRET` — 32+ char random string
-   - `CREDENTIAL_ENCRYPTION_KEY` — 32-byte hex key
-   - `REDIS_URL` — Redis connection string (optional)
+   - `JWT_ACCESS_SECRET` — 64-byte hex random string
+   - `JWT_REFRESH_SECRET` — 64-byte hex random string
+   - `JWT_STORE_ACCESS_SECRET` — 64-byte hex random string (must differ from customer)
+   - `JWT_STORE_REFRESH_SECRET` — 64-byte hex random string
+   - `JWT_PLATFORM_ADMIN_SECRET` — 64-byte hex random string (must differ from both above)
+   - `CREDENTIAL_ENCRYPTION_KEY` — 32-byte hex key (64 hex chars)
+   - `REDIS_HOST` / `REDIS_PORT` — Redis connection (optional, graceful degradation)
+   - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` — Email fallback
+   - `STORE_EMAIL` — Email notif recipient for WA fallback
+   - `WA_GATEWAY_URL` / `WA_GATEWAY_TOKEN` / `WA_SENDER_NUMBER` — WhatsApp
+   - `STORAGE_ENDPOINT` / `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` / `STORAGE_BUCKET` / `STORAGE_PUBLIC_URL` — R2/S3
+   - `APP_URL` — Frontend app URL
    - `PORT` — `3000`
 
 ## Rollback

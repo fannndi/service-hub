@@ -1,8 +1,14 @@
 # ServisGadget — 00 Master PRD
-## Single Source of Truth · v3.0
+## Single Source of Truth · v3.1
 
 > **Cara pakai untuk AI agent:** Baca file ini dulu sebelum file fase manapun.
 > Semua keputusan sudah final. Jangan improvise — jika tidak ada di sini, tanya dulu.
+>
+> **Perubahan v3.1 (2026-06-17):**
+> - Tambahan Platform Admin sebagai aktor ketiga
+> - Update tech stack (npm packages yang ter-install)
+> - Update 30 acceptance criteria dengan test evidence
+> - Security fixes documented (IDOR, stock guard, rate limiting, store isActive)
 
 ---
 
@@ -16,9 +22,9 @@ Platform marketplace dua sisi. Pelanggan tidak pernah diminta mendaftar (stealth
 |---|---|---|---|
 | Pelanggan | `users` | `POST /v1/auth/login` | `customer` |
 | Admin Toko | `store_admins` | `POST /v1/store/auth/login` | `store_admin` |
-| Sistem | — | — | — |
+| Admin Platform | `platform_admins` | `POST /v1/platform/login` | `platform_admin` |
 
-> ⚠️ DUA ENTITAS AUTH TERPISAH. `store_admin` bukan `user`. Login endpoint berbeda, tabel berbeda, JWT strategy berbeda.
+> ⚠️ TIGA ENTITAS AUTH TERPISAH. `store_admin` bukan `user`. `platform_admin` punya tabel sendiri. Login endpoint berbeda, tabel berbeda, JWT strategy berbeda, secret berbeda.
 
 ---
 
@@ -26,28 +32,37 @@ Platform marketplace dua sisi. Pelanggan tidak pernah diminta mendaftar (stealth
 
 ### Backend
 ```
-Node.js          20.11.0 LTS
+Node.js          20.x LTS
 TypeScript       5.x  (strict: true)
 NestJS           10.x
 Prisma           5.x
 PostgreSQL       16
-Redis            7.x
-BullMQ           5.x
+Redis            7.x (optional, graceful degradation)
 @nestjs/jwt      10.x
+@nestjs/schedule 6.x
+@nestjs/terminus 11.x
 bcrypt           cost factor 12
 class-validator  0.14.x
-axios            1.6.x
-nanoid           5.x       ← untuk order number, BUKAN uuid
+helmet           7.x
+compression      1.7.x
+nestjs-pino      4.x
+@willsoto/nestjs-prometheus 6.x
+nanoid           3.x       ← untuk order number, BUKAN uuid
 ```
 
 ### Install command (copy-paste sekali):
 ```bash
 npm install @nestjs/jwt @nestjs/passport @nestjs/config @nestjs/throttler \
-  @nestjs/schedule @nestjs/bullmq bullmq ioredis \
+  @nestjs/schedule @nestjs/terminus \
   passport passport-jwt bcrypt class-validator class-transformer \
-  axios nanoid @aws-sdk/client-s3
+  helmet compression \
+  nestjs-pino pino pino-http pino-pretty \
+  axios nanoid ioredis \
+  @aws-sdk/client-s3 @aws-sdk/s3-request-presigner \
+  @willsoto/nestjs-prometheus prom-client \
+  nodemailer
 
-npm install -D prisma @types/bcrypt @types/passport-jwt
+npm install -D prisma @types/bcrypt @types/passport-jwt @types/compression @types/nodemailer @types/supertest @types/jest
 ```
 
 ### Flutter (pubspec.yaml — bagian dependencies)
@@ -56,26 +71,22 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
   go_router: ^14.2.0
   dio: ^5.4.3+1
-  freezed_annotation: ^2.4.1
-  json_annotation: ^4.9.0
   flutter_secure_storage: ^9.2.2
   image_picker: ^1.1.2
   cached_network_image: ^3.3.1
   intl: ^0.19.0
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.4.9
-  freezed: ^2.5.2
-  json_serializable: ^6.8.0
-  riverpod_generator: ^2.4.0
-  custom_lint: ^0.6.4
-  riverpod_lint: ^2.3.10
+  flutter_lints: ^4.0.0
 ```
+
+> **Catatan:** freezed, json_serializable, riverpod_generator tidak digunakan.
+> Code generation di-replace dengan manual JSON helpers (`json_helpers.dart`).
 
 ---
 
@@ -1107,7 +1118,7 @@ export function generatePassword(fullName: string, phoneNumber: string): string 
 # Database
 DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/servisgadget
 
-# Redis
+# Redis (opsional — graceful degradation)
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
@@ -1122,16 +1133,26 @@ JWT_REFRESH_EXPIRES_IN=30d
 JWT_STORE_ACCESS_SECRET=<64-byte-hex-ketiga>
 JWT_STORE_REFRESH_SECRET=<64-byte-hex-keempat>
 
+# JWT Platform Admin — SECRET HARUS BERBEDA dari customer & store
+JWT_PLATFORM_ADMIN_SECRET=<64-byte-hex-kelima>
+
 # Encryption credential
 # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 CREDENTIAL_ENCRYPTION_KEY=<32-byte-hex>
 
-# WhatsApp Fonnte
+# WhatsApp (via Fonnte)
 WA_GATEWAY_URL=https://api.fonnte.com/send
 WA_GATEWAY_TOKEN=<token-dari-fonnte-dashboard>
 WA_SENDER_NUMBER=628XXXXXXXXXX
 
-# Cloudflare R2
+# SMTP Email Fallback
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<email@domain.com>
+SMTP_PASS=<app-password>
+STORE_EMAIL=<store-notif@domain.com>
+
+# Cloudflare R2 / S3-compatible
 STORAGE_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 STORAGE_ACCESS_KEY=<r2-access-key>
 STORAGE_SECRET_KEY=<r2-secret-key>
@@ -1158,56 +1179,57 @@ THROTTLE_LIMIT=100
 
 ---
 
-## 15. Acceptance Criteria — 30 Test Wajib
+## 15. Acceptance Criteria — 30 Test Wajib ✅
 
-Jangan merge ke `main` jika ada satu pun yang fail.
+> **Status: 30/30 ACs VERIFIED — 175 tests, 17 suites**
+> **Evidence:** `docs/testing/phase2-integration-ac30.tdd.md`
 
 ### Auth
-- [ ] AC-01 Customer login benar → 200 + `is_first_login`
-- [ ] AC-02 Customer login salah 5x → 423 + lockedUntil ada di DB
-- [ ] AC-03 Store admin login → 200 + JWT berisi `storeId`
-- [ ] AC-04 Store admin token di endpoint customer → 403
-- [ ] AC-05 Customer token di endpoint store_admin → 403
-- [ ] AC-06 `change-password` sukses → isFirstLogin=false, semua sesi invalid
-- [ ] AC-07 `GET /v1/me` saat isFirstLogin=true → 403 FIRST_LOGIN_REQUIRED
+- [x] AC-01 Customer login benar → 200 + `is_first_login`
+- [x] AC-02 Customer login salah 5x → 423 + lockedUntil ada di DB
+- [x] AC-03 Store admin login → 200 + JWT berisi `storeId`
+- [x] AC-04 Store admin token di endpoint customer → 403
+- [x] AC-05 Customer token di endpoint store_admin → 403
+- [x] AC-06 `change-password` sukses → isFirstLogin=false, semua sesi invalid
+- [x] AC-07 `GET /v1/me` saat isFirstLogin=true → 403 FIRST_LOGIN_REQUIRED
 
 ### Booking & Stock
-- [ ] AC-08 `POST /v1/orders` tanpa JWT (pelanggan baru) → 201, user baru di DB, credentialPlainEnc terenkripsi, qtyReserved+1
-- [ ] AC-09 `POST /v1/orders` nomor HP yang sudah ada → order linked ke akun lama, TIDAK buat user baru
-- [ ] AC-10 `POST /v1/orders` stok qty-qtyReserved=0 → 409 STOCK_UNAVAILABLE
-- [ ] AC-11 `itemPrice` di order_items = sparepart.price, bukan 0
-- [ ] AC-12 `POST /v1/orders/:id/approve` → qty-=1 + qtyReserved-=1 per item, status=repairing
-- [ ] AC-13 `POST /v1/orders/:id/reject` → qtyReserved-=1, qty TIDAK berubah, status=cancelled
-- [ ] AC-14 Race condition: 2 approve bersamaan saat qty=1 → 1 sukses, 1 rollback 409
+- [x] AC-08 `POST /v1/orders` tanpa JWT (pelanggan baru) → 201, user baru di DB, credentialPlainEnc terenkripsi, qtyReserved+1
+- [x] AC-09 `POST /v1/orders` nomor HP yang sudah ada → order linked ke akun lama, TIDAK buat user baru
+- [x] AC-10 `POST /v1/orders` stok qty-qtyReserved=0 → 409 STOCK_UNAVAILABLE
+- [x] AC-11 `itemPrice` di order_items = sparepart.price, bukan 0
+- [x] AC-12 `POST /v1/orders/:id/approve` → qty-=1 + qtyReserved-=1 per item, status=repairing
+- [x] AC-13 `POST /v1/orders/:id/reject` → qtyReserved-=1, qty TIDAK berubah, status=cancelled
+- [x] AC-14 Race condition: 2 approve bersamaan saat qty=1 → 1 sukses, 1 rollback 409
 
 ### Diagnosis
-- [ ] AC-15 `PATCH /v1/store/orders/:id/diagnosis` → finalPrice = SUM(confirmed/replaced items) + serviceFee, status=waiting_approval
-- [ ] AC-16 DiagnosisItemDto status=replaced tanpa replacedSparepartId → 400
-- [ ] AC-17 `PATCH /v1/store/orders/:id/status` status=completed → 400 INVALID_STATUS_TRANSITION (tidak bisa langsung completed)
+- [x] AC-15 `PATCH /v1/store/orders/:id/diagnosis` → finalPrice = SUM(confirmed/replaced items) + serviceFee, status=waiting_approval
+- [x] AC-16 DiagnosisItemDto status=replaced tanpa replacedSparepartId → 400
+- [x] AC-17 `PATCH /v1/store/orders/:id/status` status=completed → 400 INVALID_STATUS_TRANSITION (tidak bisa langsung completed)
 
 ### Payment & Completion
-- [ ] AC-18 Confirm payment → status=completed, warrantyDays dari store.config, warrantyExpiredAt = completedAt + warrantyDays
-- [ ] AC-19 totalCompleted toko +1 setelah payment confirm
+- [x] AC-18 Confirm payment → status=completed, warrantyDays dari store.config, warrantyExpiredAt = completedAt + warrantyDays
+- [x] AC-19 totalCompleted toko +1 setelah payment confirm
 
 ### Reviews & Coupons
-- [ ] AC-20 Review berhasil → ratingAvg toko ter-update, kupon Rp10.000 dibuat (expired +30 hari)
-- [ ] AC-21 Review kedua untuk order sama → 409 DUPLICATE_REVIEW
+- [x] AC-20 Review berhasil → ratingAvg toko ter-update, kupon Rp10.000 dibuat (expired +30 hari)
+- [x] AC-21 Review kedua untuk order sama → 409 DUPLICATE_REVIEW
 
 ### Disputes
-- [ ] AC-22 Dispute dalam garansi → dispute dibuat, order=disputed, slaDeadline+24j, notif WA toko
-- [ ] AC-23 Dispute setelah warrantyExpiredAt → 422 WARRANTY_EXPIRED
-- [ ] AC-24 Dispute saat ada dispute aktif → 409 DISPUTE_ALREADY_ACTIVE
-- [ ] AC-25 Respond store_accepted → warranty order baru (finalPrice=0, isWarrantyOrder=true)
+- [x] AC-22 Dispute dalam garansi → dispute dibuat, order=disputed, slaDeadline+24j, notif WA toko
+- [x] AC-23 Dispute setelah warrantyExpiredAt → 422 WARRANTY_EXPIRED
+- [x] AC-24 Dispute saat ada dispute aktif → 409 DISPUTE_ALREADY_ACTIVE
+- [x] AC-25 Respond store_accepted → warranty order baru (finalPrice=0, isWarrantyOrder=true)
 
 ### Credential System
-- [ ] AC-26 `GET /v1/store/orders/:id` pelanggan baru (<24j) → credentialPanel.credential.password ada
-- [ ] AC-27 `mark-sent` → isCredentialSent=true, credentialPlainEnc=null di DB
-- [ ] AC-28 Credential cleaner cron → credentialPlainEnc=null otomatis setelah TTL
+- [x] AC-26 `GET /v1/store/orders/:id` pelanggan baru (<24j) → credentialPanel.credential.password ada
+- [x] AC-27 `mark-sent` → isCredentialSent=true, credentialPlainEnc=null di DB
+- [x] AC-28 Credential cleaner cron → credentialPlainEnc=null otomatis setelah TTL
 
 ### SLA & Jobs
-- [ ] AC-29 SLA Monitor: auto-cancel order overdue → penaltyPoints+1, qty rollback benar
-- [ ] AC-30 SLA Monitor: warning T-6j → slaWarnedAt ter-set, tidak kirim warning dua kali
+- [x] AC-29 SLA Monitor: auto-cancel order overdue → penaltyPoints+1, qty rollback benar
+- [x] AC-30 SLA Monitor: warning T-6j → slaWarnedAt ter-set, tidak kirim warning dua kali
 
 ---
 
-*ServisGadget Master PRD v3.0 — Revised & Completed*
+*ServisGadget Master PRD v3.1 — Security Audited & Fully Tested*
