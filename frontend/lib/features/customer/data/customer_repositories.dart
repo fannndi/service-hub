@@ -24,6 +24,8 @@ String parseApiError(Object error) {
     if (data is Map<String, dynamic>) {
       final errorBody = data['error'];
       if (errorBody is Map<String, dynamic>) {
+        final details = _validationDetails(errorBody['details']);
+        if (details != null) return details;
         final userMessage = errorBody['user_message'];
         if (userMessage is String && userMessage.isNotEmpty) return userMessage;
         return _codeToMessage(errorBody['code'] as String?);
@@ -31,6 +33,14 @@ String parseApiError(Object error) {
     }
   }
   return 'Terjadi kesalahan. Coba lagi nanti.';
+}
+
+String? _validationDetails(Object? details) {
+  if (details is String && details.isNotEmpty) return details;
+  if (details is List && details.isNotEmpty) {
+    return details.take(3).map((item) => item.toString()).join('\n');
+  }
+  return null;
 }
 
 String _codeToMessage(String? code) => switch (code) {

@@ -1,12 +1,27 @@
 import { Type, Transform } from 'class-transformer';
 import {
-  IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty,
-  IsOptional, IsUUID, MinLength, ArrayMinSize, IsNumber, Min,
+  IsString,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  MinLength,
+  ArrayMinSize,
+  IsNumber,
+  Min,
 } from 'class-validator';
 import { normalizePhone } from '../../../common/utils';
 
 export class CreateOrderItemDto {
-  @IsEnum(['screen_replacement', 'battery_replacement', 'charging_port', 'camera', 'other'])
+  @IsEnum([
+    'screen_replacement',
+    'battery_replacement',
+    'charging_port',
+    'camera',
+    'other',
+  ])
   serviceType: string;
 
   @IsString()
@@ -16,6 +31,12 @@ export class CreateOrderItemDto {
   @IsOptional()
   @IsUUID()
   sparepartId?: string;
+
+  // Backward-compatible with older app builds. Server calculates trusted price.
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  itemPrice?: number;
 }
 
 export class CreateOrderDto {
@@ -42,8 +63,16 @@ export class CreateOrderDto {
 
   @IsString()
   @IsNotEmpty()
-  @Transform(({ value, obj }: { value: string; obj: Record<string, unknown> }) => value ?? obj?.fullName ?? '')
+  @Transform(
+    ({ value, obj }: { value: string; obj: Record<string, unknown> }) =>
+      value ?? obj?.fullName ?? '',
+  )
   customerName: string;
+
+  // Backward-compatible alias for older customer app payloads.
+  @IsOptional()
+  @IsString()
+  fullName?: string;
 
   @IsString()
   @Transform(({ value }: { value: string }) => normalizePhone(value))
@@ -97,8 +126,13 @@ export class SubmitDiagnosisDto {
 
 export class UpdateOrderStatusDto {
   @IsEnum([
-    'device_received', 'diagnosing', 'waiting_sparepart',
-    'repairing', 'quality_check', 'waiting_payment', 'cancelled',
+    'device_received',
+    'diagnosing',
+    'waiting_sparepart',
+    'repairing',
+    'quality_check',
+    'waiting_payment',
+    'cancelled',
   ])
   status: string;
 
