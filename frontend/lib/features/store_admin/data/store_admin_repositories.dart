@@ -155,7 +155,7 @@ class StoreOperationsRepository {
   Future<DashboardSummary> dashboard(StoreAdminSession? session) async {
     final response =
         await _dio.get<Map<String, dynamic>>('/store/dashboard/summary');
-    final data = response.data ?? const {};
+    final data = _map(response.data);
     if (data.isEmpty) return DashboardSummary.empty(session);
     return DashboardSummary.fromJson(data);
   }
@@ -179,13 +179,13 @@ class StoreOperationsRepository {
 
   Future<StoreOrder> orderDetail(String id) async {
     final response = await _dio.get<Map<String, dynamic>>('/store/orders/$id');
-    return StoreOrder.fromJson(response.data ?? const {});
+    return StoreOrder.fromJson(_map(response.data));
   }
 
   Future<StoreOrder> updateOrderStatus(String id, String action) async {
     final response = await _dio
         .post<Map<String, dynamic>>('/store/orders/$id/actions/$action');
-    return StoreOrder.fromJson(response.data ?? const {});
+    return StoreOrder.fromJson(_map(response.data));
   }
 
   Future<StoreOrder> submitDiagnosis(
@@ -193,7 +193,7 @@ class StoreOperationsRepository {
     final response = await _dio.post<Map<String, dynamic>>(
         '/store/orders/$orderId/diagnosis',
         data: payload);
-    return StoreOrder.fromJson(response.data ?? const {});
+    return StoreOrder.fromJson(_map(response.data));
   }
 
   Future<List<TrackingEvent>> tracking(String orderId) async {
@@ -206,7 +206,7 @@ class StoreOperationsRepository {
     final response = await _dio.post<Map<String, dynamic>>(
         '/store/orders/$orderId/tracking',
         data: {'title': title, 'note': note, 'status': status});
-    return TrackingEvent.fromJson(response.data ?? const {});
+    return TrackingEvent.fromJson(_map(response.data));
   }
 
   Future<PageResult<Sparepart>> spareparts(
@@ -237,25 +237,25 @@ class StoreOperationsRepository {
             data: payload)
         : await _dio.patch<Map<String, dynamic>>('/store/spareparts/$id',
             data: payload);
-    return Sparepart.fromJson(response.data ?? const {});
+    return Sparepart.fromJson(_map(response.data));
   }
 
   Future<List<String>> brands() async {
     final response = await _dio.get('/store/spareparts/brands');
-    return (response.data as List?)?.cast<String>() ?? [];
+    return (_data(response.data) as List?)?.cast<String>() ?? [];
   }
 
   Future<List<String>> deviceModels({String? brand}) async {
     final response = await _dio.get('/store/spareparts/device-models',
         queryParameters: {if (brand != null) 'brand': brand});
-    return (response.data as List?)?.cast<String>() ?? [];
+    return (_data(response.data) as List?)?.cast<String>() ?? [];
   }
 
   Future<Sparepart> adjustStock(String id, int delta) async {
     final response = await _dio.patch<Map<String, dynamic>>(
         '/store/spareparts/$id/stock',
         data: {'delta': delta});
-    return Sparepart.fromJson(response.data ?? const {});
+    return Sparepart.fromJson(_map(response.data));
   }
 
   Future<PageResult<CustomerProfile>> customers(
@@ -309,7 +309,7 @@ class StoreOperationsRepository {
 
   Future<Map<String, dynamic>> storeProfile() async {
     final response = await _dio.get<Map<String, dynamic>>('/store/profile');
-    return response.data ?? const {};
+    return _map(response.data);
   }
 
   Future<void> updateStoreProfile(Map<String, Object?> payload) async =>
@@ -317,24 +317,27 @@ class StoreOperationsRepository {
 
   Future<DashboardSummary> analytics(StoreAdminSession? session) async {
     final response = await _dio.get<Map<String, dynamic>>('/store/analytics');
-    return response.data == null
+    final data = _map(response.data);
+    return data.isEmpty
         ? DashboardSummary.empty(session)
-        : DashboardSummary.fromJson(response.data!);
+        : DashboardSummary.fromJson(data);
   }
 
   Future<Map<String, String>> presignUpload(
       String fileName, String mimeType, String folder) async {
     final response = await _dio.post<Map<String, dynamic>>('/uploads/presign',
         data: {'fileName': fileName, 'mimeType': mimeType, 'folder': folder});
-    return (response.data ?? const {})
+    return _map(response.data)
         .map((key, value) => MapEntry(key, value.toString()));
   }
 }
 
 PageResult<T> _page<T>(Object? raw, T Function(Map<String, dynamic>) parse) {
-  final data =
-      raw is Map ? raw.cast<String, dynamic>() : const <String, dynamic>{};
-  final source = data['items'] ?? data['data'] ?? raw;
+  final payload = _data(raw);
+  final data = payload is Map
+      ? payload.cast<String, dynamic>()
+      : const <String, dynamic>{};
+  final source = data['items'] ?? data['data'] ?? payload;
   final list = _items(source).map(parse).toList();
   return PageResult(
       items: list,
@@ -343,9 +346,35 @@ PageResult<T> _page<T>(Object? raw, T Function(Map<String, dynamic>) parse) {
       total: _int(data['total'], fallback: list.length));
 }
 
-List<Map<String, dynamic>> _items(Object? raw) => raw is List
-    ? raw.whereType<Map>().map((item) => item.cast<String, dynamic>()).toList()
-    : const [];
+Object? _data(Object? raw) {
+  if (raw is Map<String, dynamic> &&
+      raw.containsKey('success') &&
+      raw.containsKey('data')) {
+    return raw['data'];
+  }
+  return raw;
+}
+
+Map<String, dynamic> _map(Object? raw) {
+  final data = _data(raw);
+  return data is Map ? data.cast<String, dynamic>() : const <String, dynamic>{};
+}
+
+List<Map<String, dynamic>> _items(Object? raw) {
+  final data = _data(raw);
+  if (data is List) {
+    return data
+        .whereType<Map>()
+        .map((item) => item.cast<String, dynamic>())
+        .toList();
+  }
+  if (data is Map) {
+    final map = data.cast<String, dynamic>();
+    return _items(map['items'] ?? map['data']);
+  }
+  return const [];
+}
+
 int _int(Object? value, {int fallback = 0}) => value is num
     ? value.toInt()
     : int.tryParse(value?.toString() ?? '') ?? fallback;

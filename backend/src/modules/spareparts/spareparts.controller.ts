@@ -1,11 +1,25 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SparepartsService } from './spareparts.service';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { FirstLoginGuard } from '../../common/guards/first-login.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
-import { CreateSparepartDto, UpdateSparepartDto, AdjustStockDto } from './dto/sparepart.dto';
+import {
+  CreateSparepartDto,
+  UpdateSparepartDto,
+  AdjustStockDto,
+} from './dto/sparepart.dto';
 
 @ApiTags('Store Spareparts')
 @Controller('store/spareparts')
@@ -13,13 +27,21 @@ export class SparepartsController {
   constructor(private readonly sparepartsService: SparepartsService) {}
 
   @Get()
+  @UseGuards(StoreJwtAuthGuard)
+  @ApiBearerAuth()
   async findAvailable(
+    @GetUser() user: AuthenticatedUser,
     @Query('storeId') storeId: string,
     @Query('brand') brand?: string,
     @Query('deviceModel') deviceModel?: string,
     @Query('partType') partType?: string,
   ) {
-    return this.sparepartsService.findAvailable(storeId, brand, deviceModel, partType);
+    return this.sparepartsService.findAvailable(
+      user.storeId ?? storeId,
+      brand,
+      deviceModel,
+      partType,
+    );
   }
 
   @Get('brands')
@@ -32,14 +54,20 @@ export class SparepartsController {
   @Get('device-models')
   @UseGuards(StoreJwtAuthGuard)
   @ApiBearerAuth()
-  async getDeviceModels(@GetUser() user: AuthenticatedUser, @Query('brand') brand?: string) {
+  async getDeviceModels(
+    @GetUser() user: AuthenticatedUser,
+    @Query('brand') brand?: string,
+  ) {
     return this.sparepartsService.getDeviceModels(user.storeId!, brand ?? '');
   }
 
   @Post()
   @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
   @ApiBearerAuth()
-  async create(@GetUser() user: AuthenticatedUser, @Body() dto: CreateSparepartDto) {
+  async create(
+    @GetUser() user: AuthenticatedUser,
+    @Body() dto: CreateSparepartDto,
+  ) {
     return this.sparepartsService.create(user.storeId!, dto);
   }
 

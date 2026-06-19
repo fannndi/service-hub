@@ -5,9 +5,10 @@ import 'package:servisgadget_foundation/features/store_admin/presentation/screen
 
 void main() {
   testWidgets('shows store admin login screen', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: MaterialApp(home: StoreLoginScreen())));
+    await tester.pumpWidget(
+        const ProviderScope(child: MaterialApp(home: StoreLoginScreen())));
 
-    expect(find.text('ServisGadget - Portal Toko'), findsOneWidget);
-    expect(find.text('Masuk sebagai Admin Toko'), findsOneWidget);
+    expect(find.text('Portal Toko'), findsOneWidget);
+    expect(find.text('Masuk sebagai admin operasional'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { nid } from '../../common/utils';
 import { AppConfig } from '../../config/configuration';
+import { FileValidationException } from '../../common/exceptions';
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -22,8 +23,10 @@ export class UploadService {
       endpoint: this.config.get('storage.endpoint', { infer: true }),
       region: 'auto',
       credentials: {
-        accessKeyId: this.config.get('storage.accessKey', { infer: true }) ?? '',
-        secretAccessKey: this.config.get('storage.secretKey', { infer: true }) ?? '',
+        accessKeyId:
+          this.config.get('storage.accessKey', { infer: true }) ?? '',
+        secretAccessKey:
+          this.config.get('storage.secretKey', { infer: true }) ?? '',
       },
       forcePathStyle: true,
     });
@@ -35,7 +38,10 @@ export class UploadService {
     folder: string = 'uploads',
   ): Promise<{ uploadUrl: string; fileUrl: string; key: string }> {
     if (!ALLOWED_MIME_TYPES.includes(contentType)) {
-      return { uploadUrl: '', fileUrl: '', key: '' };
+      throw new FileValidationException(
+        `File type ${contentType} not allowed`,
+        'Tipe file tidak diizinkan. Hanya gambar dan PDF yang diperbolehkan.',
+      );
     }
 
     const ext = fileName.split('.').pop() ?? 'bin';
@@ -49,7 +55,8 @@ export class UploadService {
     });
 
     const uploadUrl = await getSignedUrl(this.s3, command, { expiresIn: 600 });
-    const publicUrlBase = this.config.get('storage.publicUrl', { infer: true }) ?? '';
+    const publicUrlBase =
+      this.config.get('storage.publicUrl', { infer: true }) ?? '';
     const fileUrl = `${publicUrlBase}/${key}`;
 
     return { uploadUrl, fileUrl, key };
