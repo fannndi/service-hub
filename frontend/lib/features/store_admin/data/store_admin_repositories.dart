@@ -182,18 +182,14 @@ class StoreOperationsRepository {
     return StoreOrder.fromJson(_map(response.data));
   }
 
-  Future<StoreOrder> updateOrderStatus(String id, String action) async {
-    final response = await _dio
-        .post<Map<String, dynamic>>('/store/orders/$id/actions/$action');
-    return StoreOrder.fromJson(_map(response.data));
+  Future<void> updateOrderStatus(String id, String action) async {
+    await _dio.post<Map<String, dynamic>>('/store/orders/$id/actions/$action');
   }
 
-  Future<StoreOrder> submitDiagnosis(
+  Future<void> submitDiagnosis(
       String orderId, Map<String, Object?> payload) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-        '/store/orders/$orderId/diagnosis',
+    await _dio.post<Map<String, dynamic>>('/store/orders/$orderId/diagnosis',
         data: payload);
-    return StoreOrder.fromJson(_map(response.data));
   }
 
   Future<List<TrackingEvent>> tracking(String orderId) async {

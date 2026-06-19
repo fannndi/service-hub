@@ -26,6 +26,24 @@ export const ACTION_STATUS_MAP: Record<string, string> = {
   mark_complete: 'completed',
 };
 
+const STATUS_ACTIONS: Record<string, string[]> = {
+  waiting_device: ['receive_device'],
+  device_received: ['start_diagnosis'],
+  diagnosing: ['submit_diagnosis'],
+  waiting_approval: [],
+  waiting_sparepart: ['sparepart_arrived'],
+  repairing: ['complete_repair'],
+  quality_check: ['request_payment'],
+  waiting_payment: [],
+  completed: [],
+  disputed: [],
+  cancelled: [],
+};
+
+export function allowedActionsForStatus(status: string): string[] {
+  return STATUS_ACTIONS[status] ?? [];
+}
+
 export function assertValidTransition(from: string, to: string): void {
   const allowed = VALID_TRANSITIONS[from];
   if (!allowed || !allowed.includes(to)) {

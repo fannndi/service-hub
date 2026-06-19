@@ -103,11 +103,26 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     if (_step >= 4) return;
     if (_step == 0 &&
         (_state.selectedBrand == null || _state.selectedModel == null)) {
+      _showFlowMessage('Pilih brand dan tipe perangkat dulu.');
       return;
     }
-    if (_step == 1 && _state.complaint.text.isEmpty) return;
-    if (_step == 2 && _state.selectedStoreId == null) return;
-    if (_step == 3 && (_state.name.text.isEmpty || _state.phone.text.isEmpty)) {
+    if (_step == 1 && _state.complaint.text.trim().length < 10) {
+      _showFlowMessage('Jelaskan keluhan minimal 10 karakter.');
+      return;
+    }
+    if (_step == 2 && _state.selectedStoreId == null) {
+      _showFlowMessage('Pilih toko servis dulu.');
+      return;
+    }
+    if (_step == 3 &&
+        (_state.name.text.trim().isEmpty || _state.phone.text.trim().isEmpty)) {
+      _showFlowMessage('Nama dan nomor WhatsApp wajib diisi.');
+      return;
+    }
+    if (_step == 3 &&
+        _state.delivery == 'courier_pickup' &&
+        _state.address.text.trim().isEmpty) {
+      _showFlowMessage('Alamat penjemputan wajib diisi untuk pickup kurir.');
       return;
     }
 
@@ -120,6 +135,11 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     }
 
     setState(() => _step += 1);
+  }
+
+  void _showFlowMessage(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _prevStep() {
@@ -209,7 +229,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                     },
                     onBack: _prevStep,
                   ),
-                  Step4Widget(state: _state),
+                  Step4Widget(state: _state, onChanged: () => setState(() {})),
                   Step5Widget(state: _state),
                 ],
               ),

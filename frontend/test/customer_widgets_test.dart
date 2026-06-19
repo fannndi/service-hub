@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:servisgadget_foundation/features/customer/presentation/screens/welcome_screen.dart';
+import 'package:servisgadget_foundation/features/customer/presentation/screens/service_flow_steps.dart';
 import 'package:servisgadget_foundation/features/customer/presentation/widgets/customer_widgets.dart';
 import 'package:servisgadget_foundation/shared_widgets/status_badge.dart';
 import 'package:flutter/material.dart';
@@ -35,5 +36,32 @@ void main() {
         const MaterialApp(home: Scaffold(body: EmptyMessage('No items'))));
 
     expect(find.text('No items'), findsOneWidget);
+  });
+
+  testWidgets('Step4 toggles courier pickup address field', (tester) async {
+    final state = FlowState();
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(MaterialApp(
+      home: StatefulBuilder(builder: (context, setState) {
+        return Scaffold(
+          body: Step4Widget(state: state, onChanged: () => setState(() {})),
+        );
+      }),
+    ));
+
+    expect(find.text('Alamat Penjemputan'), findsNothing);
+
+    await tester.tap(find.text('Pickup Kurir'));
+    await tester.pumpAndSettle();
+
+    expect(state.delivery, 'courier_pickup');
+    expect(find.text('Alamat Penjemputan'), findsOneWidget);
+
+    await tester.tap(find.text('Antar ke Toko'));
+    await tester.pumpAndSettle();
+
+    expect(state.delivery, 'walk_in');
+    expect(find.text('Alamat Penjemputan'), findsNothing);
   });
 }

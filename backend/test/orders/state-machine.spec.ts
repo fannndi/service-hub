@@ -1,4 +1,8 @@
-import { assertValidTransition, ACTION_STATUS_MAP } from '../../src/modules/orders/utils/state-machine.util';
+import {
+  assertValidTransition,
+  ACTION_STATUS_MAP,
+  allowedActionsForStatus,
+} from '../../src/modules/orders/utils/state-machine.util';
 import { InvalidStatusTransitionException } from '../../src/common/exceptions';
 
 describe('State Machine', () => {
@@ -43,7 +47,9 @@ describe('State Machine', () => {
     ];
 
     it.each(invalidTransitions)('should reject %s → %s', (from, to) => {
-      expect(() => assertValidTransition(from, to)).toThrow(InvalidStatusTransitionException);
+      expect(() => assertValidTransition(from, to)).toThrow(
+        InvalidStatusTransitionException,
+      );
     });
   });
 
@@ -77,6 +83,30 @@ describe('State Machine', () => {
 
     it('should return undefined for unknown actions', () => {
       expect(ACTION_STATUS_MAP['unknown_action']).toBeUndefined();
+    });
+  });
+
+  describe('allowedActionsForStatus', () => {
+    it('should expose actionable store admin actions for active statuses', () => {
+      expect(allowedActionsForStatus('waiting_device')).toEqual([
+        'receive_device',
+      ]);
+      expect(allowedActionsForStatus('device_received')).toEqual([
+        'start_diagnosis',
+      ]);
+      expect(allowedActionsForStatus('diagnosing')).toEqual([
+        'submit_diagnosis',
+      ]);
+      expect(allowedActionsForStatus('repairing')).toEqual(['complete_repair']);
+      expect(allowedActionsForStatus('quality_check')).toEqual([
+        'request_payment',
+      ]);
+    });
+
+    it('should not expose direct actions for customer/payment-gated statuses', () => {
+      expect(allowedActionsForStatus('waiting_approval')).toEqual([]);
+      expect(allowedActionsForStatus('waiting_payment')).toEqual([]);
+      expect(allowedActionsForStatus('completed')).toEqual([]);
     });
   });
 });

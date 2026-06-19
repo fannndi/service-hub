@@ -447,9 +447,10 @@ class _Step3WidgetState extends State<Step3Widget> {
 // ─── Step 4: Customer Info ───
 
 class Step4Widget extends StatelessWidget {
-  const Step4Widget({super.key, required this.state});
+  const Step4Widget({super.key, required this.state, required this.onChanged});
 
   final FlowState state;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -473,6 +474,7 @@ class Step4Widget extends StatelessWidget {
           selected: {state.delivery},
           onSelectionChanged: (v) {
             state.delivery = v.first;
+            onChanged();
           },
           showSelectedIcon: false,
         ),

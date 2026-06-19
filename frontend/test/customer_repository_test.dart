@@ -28,10 +28,13 @@ void main() {
     );
 
     expect(request.toJson(), containsPair('storeId', 'store-1'));
+    expect(request.toJson(), containsPair('customerName', 'Budi Santoso'));
+    expect(request.toJson(), isNot(contains('fullName')));
     expect(request.toJson(), containsPair('phoneNumber', '081234567890'));
     expect(request.toJson()['items'], isA<List<dynamic>>());
-    expect((request.toJson()['items'] as List).first,
-        containsPair('sparepartId', 'part-1'));
+    final itemJson = (request.toJson()['items'] as List).first as Map;
+    expect(itemJson, containsPair('sparepartId', 'part-1'));
+    expect(itemJson, isNot(contains('itemPrice')));
   });
 
   group('OrderStatus', () {

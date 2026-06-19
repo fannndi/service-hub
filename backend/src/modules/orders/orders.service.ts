@@ -12,7 +12,10 @@ import {
   OrderNotFoundException,
   InvalidStatusTransitionException,
 } from '../../common/exceptions';
-import { assertValidTransition } from './utils/state-machine.util';
+import {
+  allowedActionsForStatus,
+  assertValidTransition,
+} from './utils/state-machine.util';
 import { generateOrderNumber, normalizePhone } from '../../common/utils';
 import {
   CreateOrderDto,
@@ -32,7 +35,9 @@ export class OrdersService {
     if (dto.deliveryMethod === 'courier_pickup' && !dto.deliveryAddress)
       throw new DeliveryAddressRequiredException();
 
-    const store = await this.prisma.store.findUnique({ where: { id: dto.storeId } });
+    const store = await this.prisma.store.findUnique({
+      where: { id: dto.storeId },
+    });
     if (!store || !store.isActive) throw new StoreNotActiveException();
 
     const itemData: Array<{
@@ -45,8 +50,11 @@ export class OrdersService {
     for (const item of dto.items) {
       let itemPrice = 0;
       if (item.sparepartId) {
-        const sp = await this.prisma.sparePart.findUnique({ where: { id: item.sparepartId } });
-        if (!sp || sp.storeId !== dto.storeId) throw new StockUnavailableException();
+        const sp = await this.prisma.sparePart.findUnique({
+          where: { id: item.sparepartId },
+        });
+        if (!sp || sp.storeId !== dto.storeId)
+          throw new StockUnavailableException();
         if (sp.qty - sp.qtyReserved <= 0) throw new StockUnavailableException();
         itemPrice = Number(sp.price);
       }
@@ -62,12 +70,17 @@ export class OrdersService {
     let couponId: string | undefined;
     if (dto.couponCode) {
       const phone = normalizePhone(dto.phoneNumber);
-      const user = await this.prisma.user.findUnique({ where: { phoneNumber: phone } });
-      const coupon = await this.prisma.coupon.findFirst({ where: { code: dto.couponCode } });
+      const user = await this.prisma.user.findUnique({
+        where: { phoneNumber: phone },
+      });
+      const coupon = await this.prisma.coupon.findFirst({
+        where: { code: dto.couponCode },
+      });
       if (!coupon) throw new CouponAlreadyUsedException();
       if (coupon.isUsed) throw new CouponAlreadyUsedException();
       if (coupon.expiredAt <= new Date()) throw new CouponExpiredException();
-      if (!user || coupon.userId !== user.id) throw new CouponNotOwnedException();
+      if (!user || coupon.userId !== user.id)
+        throw new CouponNotOwnedException();
       discountAmount = Number(coupon.amount);
       couponId = coupon.id;
     }
@@ -87,7 +100,7 @@ export class OrdersService {
     const order = await this.prisma.$transaction(async (tx) => {
       for (const item of dto.items) {
         if (!item.sparepartId) continue;
-        const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+        const result = await tx.$queryRawUnsafe<Array<{ id: string }>>(
           `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0 RETURNING id`,
           item.sparepartId,
         );
@@ -170,7 +183,7 @@ export class OrdersService {
       for (const item of order.items) {
         if (!item.sparepartId) continue;
         if (item.status === 'cancelled') continue;
-        const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+        const result = await tx.$queryRawUnsafe<Array<{ id: string }>>(
           `UPDATE spareparts SET qty = qty - 1, qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0 RETURNING id`,
           item.sparepartId,
         );
@@ -232,7 +245,12 @@ export class OrdersService {
     return { status: 'cancelled' };
   }
 
-  async updateStatus(orderId: string, adminId: string, storeId: string, dto: UpdateOrderStatusDto) {
+  async updateStatus(
+    orderId: string,
+    adminId: string,
+    storeId: string,
+    dto: UpdateOrderStatusDto,
+  ) {
     const order = await this.prisma.serviceOrder.findFirst({
       where: { id: orderId, storeId },
     });
@@ -242,7 +260,11 @@ export class OrdersService {
     if (dto.status === 'completed')
       throw new InvalidStatusTransitionException(order.status, 'completed');
 
-    const newSla = ['device_received', 'diagnosing', 'waiting_approval'].includes(dto.status)
+    const newSla = [
+      'device_received',
+      'diagnosing',
+      'waiting_approval',
+    ].includes(dto.status)
       ? new Date(Date.now() + 24 * 60 * 60 * 1000)
       : dto.status === 'waiting_payment'
         ? new Date(Date.now() + 48 * 60 * 60 * 1000)
@@ -265,14 +287,30 @@ export class OrdersService {
       await tx.serviceOrder.update({
         where: { id: orderId },
         data: {
-          status: dto.status as 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'cancelled',
+          status: dto.status as
+            | 'device_received'
+            | 'diagnosing'
+            | 'waiting_approval'
+            | 'waiting_sparepart'
+            | 'repairing'
+            | 'quality_check'
+            | 'waiting_payment'
+            | 'cancelled',
           ...(newSla && { slaDeadline: newSla, slaWarnedAt: null }),
         },
       });
       await tx.serviceTracking.create({
         data: {
           orderId,
-          status: dto.status as 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'cancelled',
+          status: dto.status as
+            | 'device_received'
+            | 'diagnosing'
+            | 'waiting_approval'
+            | 'waiting_sparepart'
+            | 'repairing'
+            | 'quality_check'
+            | 'waiting_payment'
+            | 'cancelled',
           createdByType: 'store_admin',
           createdById: adminId,
           note: dto.note ?? null,
@@ -296,7 +334,12 @@ export class OrdersService {
     return { status: dto.status };
   }
 
-  async submitDiagnosis(orderId: string, adminId: string, storeId: string, dto: SubmitDiagnosisDto) {
+  async submitDiagnosis(
+    orderId: string,
+    adminId: string,
+    storeId: string,
+    dto: SubmitDiagnosisDto,
+  ) {
     const order = await this.prisma.serviceOrder.findFirst({
       where: { id: orderId, storeId, status: 'diagnosing' },
       include: { items: true, user: true },
@@ -309,12 +352,18 @@ export class OrdersService {
         throw new OrderNotFoundException();
       }
       if (diagItem.status === 'replaced' && !diagItem.replacedSparepartId) {
-        throw new InvalidStatusTransitionException('diagnosing', 'waiting_approval');
+        throw new InvalidStatusTransitionException(
+          'diagnosing',
+          'waiting_approval',
+        );
       }
     }
 
     if (dto.items.length !== order.items.length) {
-      throw new InvalidStatusTransitionException('diagnosing', 'waiting_approval');
+      throw new InvalidStatusTransitionException(
+        'diagnosing',
+        'waiting_approval',
+      );
     }
 
     let finalPrice = Number(dto.serviceFee);
@@ -338,14 +387,16 @@ export class OrdersService {
         };
 
         if (diagItem.status === 'replaced' && diagItem.replacedSparepartId) {
-          const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
+          const oldItem = order.items.find(
+            (i) => i.id === diagItem.orderItemId,
+          );
           if (oldItem?.sparepartId) {
             await tx.$queryRawUnsafe(
               `UPDATE spareparts SET qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0`,
               oldItem.sparepartId,
             );
           }
-          const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+          const result = await tx.$queryRawUnsafe<Array<{ id: string }>>(
             `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0 RETURNING id`,
             diagItem.replacedSparepartId,
           );
@@ -354,7 +405,9 @@ export class OrdersService {
         }
 
         if (diagItem.status === 'cancelled') {
-          const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
+          const oldItem = order.items.find(
+            (i) => i.id === diagItem.orderItemId,
+          );
           if (oldItem?.sparepartId) {
             await tx.$queryRawUnsafe(
               `UPDATE spareparts SET qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0`,
@@ -403,7 +456,10 @@ export class OrdersService {
   async findMyOrders(userId: string) {
     return this.prisma.serviceOrder.findMany({
       where: { userId },
-      include: { items: true, store: { select: { id: true, storeName: true } } },
+      include: {
+        items: true,
+        store: { select: { id: true, storeName: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -413,7 +469,14 @@ export class OrdersService {
       where: { id: orderId, userId },
       include: {
         items: { include: { sparepart: true } },
-        store: { select: { id: true, storeName: true, phoneNumber: true, address: true } },
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            phoneNumber: true,
+            address: true,
+          },
+        },
         tracking: { orderBy: { createdAt: 'asc' } },
         payments: true,
         shipments: true,
@@ -428,11 +491,15 @@ export class OrdersService {
   async findStoreOrders(storeId: string, status?: string) {
     const where: Record<string, unknown> = { storeId };
     if (status) where.status = status;
-    return this.prisma.serviceOrder.findMany({
+    const orders = await this.prisma.serviceOrder.findMany({
       where,
-      include: { items: true, user: { select: { id: true, fullName: true, phoneNumber: true } } },
+      include: {
+        items: true,
+        user: { select: { id: true, fullName: true, phoneNumber: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
+    return orders.map((order) => this.withAllowedActions(order));
   }
 
   async findStoreOrderById(storeId: string, orderId: string) {
@@ -461,7 +528,13 @@ export class OrdersService {
     if (!order) throw new OrderNotFoundException();
 
     const credentialPanel = this.buildCredentialPanel(order.user);
-    return { ...order, credentialPanel };
+    return this.withAllowedActions({ ...order, credentialPanel });
+  }
+
+  private withAllowedActions<T extends { status: string }>(
+    order: T,
+  ): T & { allowedActions: string[] } {
+    return { ...order, allowedActions: allowedActionsForStatus(order.status) };
   }
 
   async getOrderProgress(userId: string, orderId: string) {
@@ -511,7 +584,13 @@ export class OrdersService {
     };
   }
 
-  async addStoreOrderTracking(orderId: string, adminId: string, storeId: string, status: string, note?: string) {
+  async addStoreOrderTracking(
+    orderId: string,
+    adminId: string,
+    storeId: string,
+    status: string,
+    note?: string,
+  ) {
     const order = await this.prisma.serviceOrder.findFirst({
       where: { id: orderId, storeId },
     });
@@ -520,7 +599,18 @@ export class OrdersService {
     return this.prisma.serviceTracking.create({
       data: {
         orderId,
-        status: status as 'waiting_device' | 'device_received' | 'diagnosing' | 'waiting_approval' | 'waiting_sparepart' | 'repairing' | 'quality_check' | 'waiting_payment' | 'completed' | 'cancelled' | 'disputed',
+        status: status as
+          | 'waiting_device'
+          | 'device_received'
+          | 'diagnosing'
+          | 'waiting_approval'
+          | 'waiting_sparepart'
+          | 'repairing'
+          | 'quality_check'
+          | 'waiting_payment'
+          | 'completed'
+          | 'cancelled'
+          | 'disputed',
         createdByType: 'store_admin',
         createdById: adminId,
         note: note ?? null,
@@ -549,7 +639,8 @@ export class OrdersService {
     isCredentialSent: boolean;
     createdAt: Date;
   }) {
-    const isNewCustomer = user.credentialPlainEnc !== null && user.isCredentialSent === false;
+    const isNewCustomer =
+      user.credentialPlainEnc !== null && user.isCredentialSent === false;
 
     return {
       isNewCustomer: !!user.credentialPlainEnc,

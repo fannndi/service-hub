@@ -216,7 +216,6 @@ class CreateOrderItemInput {
         'serviceType': serviceType,
         'complaint': complaint,
         if (sparepartId != null) 'sparepartId': sparepartId,
-        'itemPrice': itemPrice,
       };
 }
 
@@ -247,7 +246,7 @@ class CreateOrderRequest {
 
   Map<String, dynamic> toJson() => {
         'storeId': storeId,
-        'fullName': fullName,
+        'customerName': fullName,
         'phoneNumber': phoneNumber,
         'deviceType': deviceType,
         'brand': brand,
