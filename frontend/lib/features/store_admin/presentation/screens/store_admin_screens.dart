@@ -516,17 +516,17 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brands = ref.watch(brandsProvider);
-    final deviceModels = ref.watch(deviceModelsProvider(_selectedBrand));
+    final brands = ref.watch(brandsProvider).valueOrNull;
+    final deviceModels = ref.watch(deviceModelsProvider(_selectedBrand)).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.item == null ? 'Tambah Sparepart' : 'Edit Sparepart')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         // Brand
-        _buildBrandField(brands),
+        _buildBrandField(brands ?? []),
         const SizedBox(height: 12),
         // Device Model
-        _buildModelField(deviceModels),
+        _buildModelField(deviceModels ?? []),
         const SizedBox(height: 12),
         // Part Type
         DropdownButtonFormField<String>(

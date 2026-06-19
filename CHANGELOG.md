@@ -1,5 +1,27 @@
 ﻿# Changelog
 
+## v2.0.0 — 2026-06-19 — POS-Style Sparepart, Versioning, Dependency Update
+
+### Added
+- **POS-style sparepart management** — Brand/Device Model dropdown with create-on-fly, Part Type dropdown (Layar/Baterai/Charging Port/Kamera/Lainnya)
+- **Quick stock adjustment** — +/- buttons langsung di inventory list. New endpoint `PATCH /store/spareparts/:id/stock`
+- **Brand/Device Model endpoints** — `GET /store/spareparts/brands`, `GET /store/spareparts/device-models` (per-store, distinct values)
+- **Inventory filters** — Search + Brand dropdown + Part Type dropdown
+- **Smart card-based inventory list** — Info: name, brand, model, type, price, stock + reserved count
+- **Auto-fetch tunnel URL** — Flutter app fetches `tunel.txt` from GitHub with 3x retry + cache fallback
+- **Maintenance mode auto-detect** — If no cache and fetch fails 3x, app goes to maintenance mode
+- **Version 1.0.0 → 2.0.0** — Backend `0.1.0` → `1.0.0`, Frontend `1.0.0` → `2.0.0`
+- **Dependencies updated** — All Flutter packages upgraded to latest within major versions
+
+### Fixed
+- **SparepartFormScreen broken** — Was sending `name`/`description`, backend expects `brand`/`deviceModel`/`partType`/`partName`. Every create returned 400.
+- **Sparepart model misaligned** — Frontend `Sparepart` had `name`/`description`/`imageUrl`, missing `brand`/`deviceModel`/`partType`/`partName`. `fromJson` fell back to `'Sparepart'` because backend returns `partName` not `name`.
+- **Update endpoint** — Now allows updating `brand`, `deviceModel`, `partType` (previously frozen after create)
+- **AsyncValue build error** — `AsyncValue<List<String>>` properly unwrapped with `.valueOrNull`
+- **Model tests** — Updated to use new Sparepart fields
+
+---
+
 ## 2026-06-19 — Race Condition Fixes, Session Invalidation, Frontend Audit
 
 ### Fixed (Security — HIGH)
