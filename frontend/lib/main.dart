@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'ui/theme/app_theme.dart';
 import 'core/app_config.dart';
@@ -15,6 +16,7 @@ import 'features/maintenance/maintenance_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID');
   await EnvironmentService.init();
   runApp(const ProviderScope(child: ServisGadgetApp()));
 }
