@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'ui/theme/app_theme.dart';
 import 'core/app_config.dart';
 import 'core/config/config_service.dart';
 import 'features/customer/presentation/routing/customer_router.dart';
@@ -250,8 +251,8 @@ class ServisGadgetApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'ServisGadget',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-      darkTheme: ThemeData(colorSchemeSeed: Colors.teal, brightness: Brightness.dark, useMaterial3: true),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: router,
     );
   }

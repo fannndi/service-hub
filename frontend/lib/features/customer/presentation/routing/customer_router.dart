@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 
 import '../../domain/customer_models.dart';
-import '../screens/splash_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/service_flow_screen.dart';
@@ -20,12 +19,8 @@ import '../screens/warranty_claim_screen.dart';
 import '../screens/review_success_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/sessions_screen.dart';
-import '../screens/security_screen.dart';
 import '../screens/settings_screen.dart';
-import '../screens/coupons_screen.dart';
 import '../screens/notifications_screen.dart';
-import '../screens/notification_detail_screen.dart';
-import '../screens/notification_preferences_screen.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
@@ -52,10 +47,6 @@ final customerRoutes = <RouteBase>[
   GoRoute(path: '/review-success', builder: (_, state) => ReviewSuccessScreen(result: state.extra as ReviewResult)),
   GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   GoRoute(path: '/sessions', builder: (_, __) => const SessionsScreen()),
-  GoRoute(path: '/security', builder: (_, __) => const SecurityScreen()),
   GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-  GoRoute(path: '/coupons', builder: (_, __) => const CouponsScreen()),
   GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
-  GoRoute(path: '/notifications/:id', builder: (_, state) => NotificationDetailScreen(item: state.extra as NotificationItem?)),
-  GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationPreferencesScreen()),
 ];

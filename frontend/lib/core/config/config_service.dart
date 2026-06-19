@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_config.dart';
 
 class AppConfigData {
@@ -46,7 +45,3 @@ class ConfigService {
     return AppConfigData.fromJson(body);
   }
 }
-
-final configProvider = FutureProvider<AppConfigData>((ref) async {
-  return ConfigService.fetch();
-});
