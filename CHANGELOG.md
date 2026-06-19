@@ -29,11 +29,23 @@
 - **`POST /store/auth/refresh`** — New refresh endpoint for store admins with session validation.
 - **`Warranty order stock reservation** — Warranty order creation now increments `qtyReserved` atomically. Prevents oversell.
 - **Render.yaml — Added `REDIS_HOST` env var** — Was missing from config.
+- **Cloudflare Tunnel auto-fetch** — Flutter app fetches tunnel URL from GitHub `tunel.txt` with 3x retry + cache fallback.
+- **Maintenance mode auto-detect** — If tunnel URL fetch fails 3x and no cache exists, app goes to maintenance mode.
+- **API URL caching** — Successful tunnel URL saved to SharedPreferences for offline resilience.
+- **Secrets generation** — `secrets/.env.production` updated with Supabase connection string + generated JWT secrets.
 
 ### Changed
 - **`/store/auth/login`** — Now accepts `X-Forwarded-For` header. Records IP in session.
 - **`/store/auth/logout`** — Now requires `refresh_token` body. Invalidates the specific session.
 - **`store-admin-sessions` Prisma migration** — New table, index on `adminId` + `isActive`.
+- **`app_config.dart`** — From static env switching → auto-fetch URL with GitHub + cache.
+- **`settings_screen.dart`** — Simplified: shows current active URL instead of environment switcher.
+- **`README.md`** — Comprehensive overhaul: Docker guide, Cloudflare tunnel, demo flow, auto-fetch.
+
+### Fixed
+- **WSL networking for Docker** — `.env` hostnames fixed to use Docker service names (`postgres`/`redis`) instead of `localhost`.
+- **Supabase connectivity documented** — Not reachable from current network (IPv6 only). Docker volume persists data.
+- **Backend health after env switch** — `docker compose up -d --force-recreate` to pick up new .env vars.
 
 ---
 

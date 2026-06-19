@@ -2,7 +2,7 @@
   <h1 align="center">ServisGadget</h1>
   <p align="center">
     <b>Platform Marketplace Servis Gadget Dua Sisi</b><br>
-    <sub>Pelanggan booking tanpa daftar · Admin toko kelola dari mobile</sub>
+    <sub>Pelanggan booking tanpa daftar · Admin toko kelola dari mobile · Deploy via Docker + Cloudflare Tunnel</sub>
   </p>
 </p>
 
@@ -25,13 +25,156 @@
 
 ---
 
+## Quick Start (Docker + Cloudflare Tunnel)
+
+Rekomendasi utama: **Docker di WSL + Cloudflare Tunnel** untuk deploy instan tanpa VPS.
+
+### Prasyarat
+
+- **WSL 2** + Ubuntu/Debian distro
+- **Docker Engine** di WSL (bukan Docker Desktop)
+- **Node.js 20+** di WSL
+- **Flutter SDK 3.4+**
+- **Git** credentials ter-cache di WSL
+
+### Setup
+
+```bash
+# 1. Clone & install
+git clone https://github.com/fannndi/service-hub.git
+cd service-hub
+
+# 2. Setup .env (otomatis dari secrets/.env.local)
+./switch-env.sh local
+
+# 3. Fix hostnames untuk Docker networking
+sed -i 's|@localhost:5432/|@postgres:5432/|' .env
+sed -i 's|REDIS_HOST=localhost|REDIS_HOST=redis|' .env
+
+# 4. Build & start semua services
+docker compose up -d --build
+
+# 5. Migrasi database + seed data
+docker compose exec backend npx prisma db push
+docker compose exec backend npx prisma db seed
+
+# 6. Verify health
+curl http://localhost:3000/v1/health
+```
+
+### Start Cloudflare Tunnel (untuk HP connect dari mana saja)
+
+```bash
+# Install cloudflared
+sudo curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+  -o /usr/local/bin/cloudflared
+sudo chmod +x /usr/local/bin/cloudflared
+
+# Start tunnel
+cloudflared tunnel --url http://localhost:3000
+# URL akan muncul: https://xxxx.trycloudflare.com
+
+# Update tunel.txt + push ke GitHub
+echo "https://xxxx.trycloudflare.com/v1" > tunel.txt
+git add tunel.txt && git commit -m "tunnel: xxxx" && git push
+```
+
+**Flutter app otomatis fetch URL baru dari `tunel.txt` saat startup** — tidak perlu rebuild APK.
+
+### Build APK
+
+```bash
+cd frontend
+flutter build apk
+```
+
+APK output: `build/app/outputs/flutter-apk/app-release.apk`
+
+Distribute ke HP via WhatsApp/Bluetooth/USB.
+
+### Default Accounts
+
+| Role | Login | Password |
+|------|-------|----------|
+| Platform Admin | `/admin/login` | `admin` / `admin` |
+| Store Admin | `/store-login` | Dibuat dari Platform Admin |
+| Customer | `/login` | Booking langsung (stealth account) |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | NestJS 10.x, TypeScript 5.x, Node.js 20+ |
+| **Frontend** | Flutter 3.4+, Dart 3.x, Riverpod 2.5, GoRouter 14 |
+| **Database** | PostgreSQL 16 (Docker / Supabase) |
+| **Cache** | Redis 7 (Docker) |
+| **ORM** | Prisma 5.x |
+| **Auth** | 3 JWT systems (Customer, Store Admin, Platform Admin) |
+| **Queue** | BullMQ via @nestjs/bullmq |
+| **Notifications** | WhatsApp (Fonnte) + SMTP email fallback |
+| **Storage** | Cloudflare R2 / S3 (presigned URLs) |
+| **CI/CD** | GitHub Actions |
+| **Tunnel** | Cloudflare Quick Tunnel (auto-fetch by Flutter app) |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      HP (3 device)                       │
+│  Customer │ Store Admin │ Platform Admin                 │
+└─────┬─────┴──────┬──────┴────────┬──────────────────────┘
+      │            │               │
+      ▼            ▼               ▼
+┌─────────────────────────────────────────────────────────┐
+│              Cloudflare Tunnel (public URL)              │
+│         https://xxxx.trycloudflare.com/v1               │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Backend (NestJS)                       │
+│               Docker Container (port 3000)               │
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌────────────────────────┐ │
+│  │  Auth     │  │  Orders  │  │  15 Domain Modules     │ │
+│  │  (3 JWT)  │  │  + State │  │  + Background Jobs     │ │
+│  └──────────┘  │  Machine │  └────────────────────────┘ │
+│                └──────────┘                               │
+└───────────────┬──────────────────────┬──────────────────┘
+                │                      │
+                ▼                      ▼
+┌──────────────────────┐  ┌──────────────────────┐
+│  PostgreSQL 16       │  │  Redis 7             │
+│  (Docker Volume)     │  │  (Docker)            │
+│  Data persist        │  │  Cache-aside         │
+└──────────────────────┘  └──────────────────────┘
+```
+
+### Auto-Fetch Tunnel URL
+
+Flutter app fetch URL dari GitHub saat startup:
+
+```
+1. GET https://raw.githubusercontent.com/fannndi/service-hub/main/tunel.txt
+2. Berhasil? → pakai URL itu
+3. Gagal 3x? → cek cache
+4. Cache ada? → pakai cache
+5. Tidak ada? → maintenance mode
+```
+
+---
+
 ## Dalam Satu Lihat
 
 | Aktor | Login | Dashboard |
 |---|---|---|
 | **Pelanggan** | `/login` — HP + password | Home: ringkasan order, kupon, garansi |
 | **Admin Toko** | `/store-login` — HP + password | Dashboard: order, inventori, pembayaran, analitik |
-| **Admin Platform** | `/admin/login` — username + password | Buat toko, set device types (Android/iOS), kelola akun toko |
+| **Admin Platform** | `/admin/login` — username + password | Buat toko, kelola akun toko |
 
 ---
 
@@ -42,53 +185,14 @@
 - **Matching engine** — Auto-filter toko by brand, model, sparepart, stock tersedia
 - **Multi-step booking** — 5 langkah: device → kerusakan → match toko → data diri → booking
 - **State machine order** — 11 status transisi dengan validasi ketat, SLA timer per status
+- **Atomic stock operations** — Sparepart qty ops pakai `$queryRawUnsafe` — race condition safe
+- **Session invalidation** — Store admin sessions di-track & invalidate on change-password/logout
 - **Real-time tracking** — Polling 30 detik, pelanggan lihat progress perbaikan
 - **Background jobs** — SLA monitor auto-cancel, credential cleaner (via `@nestjs/schedule`)
 - **Kupon reward otomatis** — Pelanggan dapat Rp10.000 setiap beri ulasan
-- **Security audited** — IDOR protection, stock over-commitment guard, store deactivation check, rate limiting
-- **175+ tests** — 152 backend (12 suites) + 23 frontend, 30/30 PRD acceptance criteria covered
-
----
-
-## Mulai Cepat (No Docker)
-
-### Prasyarat
-- Node.js 20+ · Flutter SDK 3.4+ · Database Supabase
-
-### Backend
-
-```bash
-cd backend
-cp .env .env.example          # edit DATABASE_URL dengan connection string Supabase
-npm install
-npx prisma generate
-npx prisma db push
-npm run start:dev             # jalan di http://localhost:3000
-```
-
-Swagger: http://localhost:3000/docs
-
-### Flutter
-
-```bash
-cd frontend
-flutter pub get
-flutter run                    # emulator otomatis konek ke localhost
-```
-
-### Build APK Release
-
-```bash
-flutter build apk --release \
-  --dart-define=API_BASE_URL=https://api-domainmu.com/v1
-```
-
-### Akun Default
-
-| Role | Login | Password |
-|------|-------|----------|
-| Admin Platform | `admin` | `admin` |
-| Pelanggan | `081212345678` | `customer123` |
+- **Security audited** — IDOR protection, stock over-commitment guard, rate limiting
+- **175+ tests** — 152 backend (12 suites) + 23 frontend, 30/30 PRD acceptance criteria
+- **Cloudflare Tunnel** — Deploy instan tanpa VPS, auto-fetch URL dari GitHub
 
 ---
 
@@ -102,6 +206,7 @@ flutter build apk --release \
 - **Bayar** — Upload bukti transfer langsung dari app
 - **Ulas** — Rating bintang + komentar, otomatis dapat kupon Rp10.000
 - **Garansi** — Klaim garansi langsung dari order detail
+- **Sesi** — Lihat & revoke active sessions
 
 ### Sisi Admin Toko
 - **Dashboard** — Analitik 30 hari: total order, pendapatan, rating rata-rata
@@ -113,194 +218,240 @@ flutter build apk --release \
 - **Dispute** — Tangani klaim garansi, setujui/tolak
 
 ### Sisi Admin Platform
-- **Buat Toko** — Input nama, alamat, admin toko, password, pilih Android/iOS
-- **Daftar Toko** — Lihat semua toko dengan chip Android/iOS
+- **Buat Toko** — Input nama, alamat, admin toko, password
+- **Daftar Toko** — Lihat semua toko
 
 ---
 
-## Endpoint API
-
-### Prefix `/v1` — Public & Customer
-
-```
-POST   /auth/login                      PUBLIC
-POST   /auth/change-password            Customer
-POST   /auth/logout                     Customer
-GET    /me                              Customer
-PATCH  /me                              Customer
-GET    /me/summary                      Customer
-GET    /me/orders                       Customer
-GET    /me/orders/:id/progress          Customer
-GET    /me/coupons                      Customer
-GET    /me/notifications                Customer
-GET    /stores                          PUBLIC
-GET    /stores/:id                      PUBLIC
-GET    /stores/match                    PUBLIC    ← Matching Engine
-GET    /stores/:id/spareparts           PUBLIC
-POST   /orders                          PUBLIC    ← No auth (stealth account)
-GET    /orders/:id                      Customer
-POST   /orders/:id/approve              Customer
-POST   /orders/:id/reject               Customer
-POST   /orders/:id/payments             Customer
-POST   /orders/:id/reviews              Customer
-POST   /orders/:id/disputes             Customer
-POST   /uploads/presign                 Customer
-```
-
-### Prefix `/v1/store` — Admin Toko
-
-```
-POST   /auth/login                      PUBLIC
-POST   /auth/change-password            Store
-POST   /auth/logout                     Store
-GET    /profile                         Store
-PATCH  /profile                         Store
-GET    /analytics                       Store
-GET    /orders                          Store
-GET    /orders/:id                      Store
-PATCH  /orders/:id/status               Store
-POST   /orders/:id/diagnosis            Store
-PATCH  /orders/:id/diagnosis            Store
-POST   /orders/:id/actions/:action      Store
-GET    /orders/:id/tracking             Store
-POST   /orders/:id/tracking             Store
-POST   /orders/:id/payments/:pid/confirm Store
-POST   /orders/:id/mark-credential-sent Store
-GET    /customers                       Store
-GET    /payments                        Store
-GET    /reviews                         Store
-POST   /reviews/:id/response            Store
-GET    /notifications                   Store
-GET    /spareparts                      Store
-POST   /spareparts                      Store
-PATCH  /spareparts/:id                  Store
-DELETE /spareparts/:id                  Store
-GET    /dashboard/summary               Store
-PATCH  /settings                        Store
-GET    /disputes                        Store
-POST   /disputes/:id/respond            Store
-```
-
-### Prefix `/v1/platform` — Admin Platform
-
-```
-POST   /login                           PUBLIC
-POST   /stores                          Admin
-GET    /stores                          Admin
-```
-
-### Prefix `/v1/store` — Registrasi
-
-```
-POST   /register                        PUBLIC    ← Self-registration toko
-```
-
----
-
-## Struktur Project
+## Project Structure
 
 ```
 service-hub/
 ├── backend/                     NestJS API
 │   ├── src/modules/
 │   │   ├── auth/                Customer auth + stealth account
-│   │   ├── store-auth/          Store admin auth
+│   │   ├── store-auth/          Store admin auth + session management
 │   │   ├── platform-admin/      Platform admin auth + store creation
 │   │   ├── users/               /me endpoints
 │   │   ├── stores/              Store listing + matching engine
-│   │   ├── store-register/      Store self-registration
-│   │   ├── orders/              Order CRUD + state machine + diagnosis
+│   │   ├── orders/              Order CRUD + atomic state machine
 │   │   ├── spareparts/          Sparepart inventory
 │   │   ├── payments/            Payment + confirmation
 │   │   ├── reviews/             Reviews + coupon rewards
-│   │   ├── disputes/            Dispute + warranty claims
-│   │   ├── notifications/       WhatsApp notifications
+│   │   ├── disputes/            Dispute + warranty claims + stock reservation
+│   │   ├── notifications/       WhatsApp + email notifications
 │   │   ├── uploads/             S3 presigned uploads
 │   │   └── jobs/                SLA monitor + credential cleaner
-│   ├── prisma/                  Schema + seed
+│   ├── prisma/                  22 models + 20+ enums + seed
 │   └── Dockerfile               Multi-stage production build
 │
-├── frontend/                    Flutter
+├── frontend/                    Flutter mobile app (3 roles)
 │   └── lib/
-│       ├── core/                Shared: config, json_helpers, domain types
-│       │   ├── json_helpers.dart    Unified deserialization helpers
-│       │   └── domain/             OrderStatus, PaymentRecordStatus, PageResult
-│       ├── network/             Dio client, auth factory, error mapping
+│       ├── core/                Config, auto-fetch URL, address system
+│       ├── network/             Dio client + token refresh mutex
 │       ├── shared_widgets/      StatusBadge, ErrorState, EmptyState, Formatters
-│       ├── storage/             Secure token storage abstraction
+│       ├── storage/             Secure token storage
 │       └── features/
-│           ├── customer/            Pelanggan (26 screens, 7 domain model files)
-│           ├── store_admin/         Admin Toko (14 screens, 9 domain model files)
-│           └── platform_admin/      Admin Platform (2 screens)
+│           ├── customer/        26 screens, 11 repositories
+│           ├── store_admin/     14 screens, responsive layout
+│           └── platform_admin/  2 screens
 │
-├── docs/                        Dokumentasi lengkap
-│   ├── backend/                 Backend reference (5 files)
-│   │   ├── BACKEND_API_REFERENCE.md
-│   │   ├── BACKEND_DATABASE_SCHEMA.md
-│   │   ├── BACKEND_AUTH_SYSTEM.md
-│   │   ├── BACKEND_BUSINESS_LOGIC.md
-│   │   └── BACKEND_SETUP.md
-│   ├── frontend/                Frontend reference (5 files)
-│   │   ├── FRONTEND_ARCHITECTURE.md
-│   │   ├── FRONTEND_CUSTOMER.md
-│   │   ├── FRONTEND_STORE_ADMIN.md
-│   │   ├── FRONTEND_PLATFORM_ADMIN.md
-│   │   └── FRONTEND_NETWORK_LAYER.md
-│   ├── PRD/                     Product Requirements Documents
-│   └── *.md                     Arsitektur, run-guide, task-list
-│
+├── docs/                        Documentation
+├── secrets/                     .env files (gitignored, shared manually)
+├── tunel.txt                    Cloudflare tunnel URL (auto-fetched by Flutter)
+├── docker-compose.yml           Local dev: Postgres + Redis + Backend
 ├── render.yaml                  One-click Render deployment
-└── CHANGELOG.md                 Riwayat perubahan lengkap
+└── switch-env.sh                Switch local/production env
+```
+
+---
+
+## Docker & Environment
+
+### Local Development (Docker)
+
+```bash
+# Start all services
+docker compose up -d --build
+
+# View logs
+docker compose logs -f backend
+
+# Stop (data persists via volume)
+docker compose down
+
+# Fresh start (deletes data)
+docker compose down -v
+```
+
+### Environment Switching
+
+```bash
+# Switch to local (Docker PostgreSQL)
+./switch-env.sh local
+
+# Switch to production (Supabase)
+./switch-env.sh production
+
+# Check current environment
+./switch-env.sh status
+```
+
+### Docker Hostname Fix
+
+Setelah `switch-env.sh`, fix hostnames untuk Docker networking:
+
+```bash
+# DATABASE_URL: postgres:5432 (bukan localhost:5432)
+sed -i 's|@localhost:5432/|@postgres:5432/|' .env
+
+# REDIS_HOST: redis (bukan localhost)
+sed -i 's|REDIS_HOST=localhost|REDIS_HOST=redis|' .env
+```
+
+### Data Persistence
+
+Data PostgreSQL tersimpan di Docker **named volume** (`service-hub_postgres_data`). Data persist meskipun:
+- Container di-stop (`docker compose down`)
+- Container di-restart
+- WSL di-restart
+
+Data hanya hilang jika:
+- `docker compose down -v` (hapus volume secara eksplisit)
+
+---
+
+## Cloudflare Tunnel
+
+Cloudflare Tunnel memungkinkan HP connect ke backend dari **mana saja** tanpa VPS.
+
+### Cara Kerja
+
+```
+1. cloudflared tunnel → URL publik (contoh: https://abc.trycloudflare.com)
+2. URL ditulis ke tunel.txt → commit + push ke GitHub
+3. Flutter app fetch tunel.txt saat startup (3x retry)
+4. HP otomatis pakai URL baru — tanpa rebuild APK
+```
+
+### Workflow
+
+```bash
+# Laptop:
+cloudflared tunnel --url http://localhost:3000
+# Catat URL yang muncul
+
+# Update tunel.txt:
+echo "https://abc.trycloudflare.com/v1" > tunel.txt
+git add tunel.txt && git commit -m "tunnel: abc" && git push
+
+# Flutter app (di HP) otomatis detect URL baru
+```
+
+### Auto-Fetch Logic (Flutter)
+
+```dart
+// app_config.dart
+// 1. Fetch https://raw.githubusercontent.com/.../tunel.txt
+// 2. 3x retry dengan 2 detik delay
+// 3. Simpan ke SharedPreferences sebagai cache
+// 4. Kalau gagal 3x + tidak ada cache → maintenance mode
+```
+
+---
+
+## API Endpoints
+
+### `/v1` — Customer & Public
+
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/auth/login` | Public |
+| POST | `/auth/change-password` | Customer |
+| GET | `/me`, `/me/summary`, `/me/orders` | Customer |
+| GET | `/stores`, `/stores/match` | Public |
+| POST | `/orders` | Public (stealth) |
+| POST | `/orders/:id/approve`, `/:id/reject` | Customer |
+| POST | `/orders/:id/payments`, `/:id/reviews` | Customer |
+
+### `/v1/store` — Admin Toko
+
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/auth/login`, `/auth/refresh` | Public/Session |
+| POST | `/auth/change-password`, `/auth/logout` | Store |
+| GET | `/orders`, `/orders/:id` | Store |
+| POST | `/orders/:id/diagnosis`, `/orders/:id/tracking` | Store |
+| GET/POST/PATCH/DELETE | `/spareparts` | Store |
+| GET | `/dashboard/summary`, `/analytics` | Store |
+| POST | `/disputes/:id/respond` | Store |
+
+### `/v1/platform` — Admin Platform
+
+| Method | Endpoint | Auth |
+|--------|----------|------|
+| POST | `/login` | Public |
+| POST | `/stores`, GET `/stores` | Admin |
 
 ---
 
 ## Deployment
 
-### Production (Play Store)
-1. Deploy backend ke Render (via `render.yaml`) atau VPS
-2. Build Flutter dengan production URL:
-   ```bash
-   flutter build appbundle --release --dart-define=API_BASE_URL=https://api.yourdomain.com/v1
-   ```
-3. Upload AAB ke Google Play Console
+### Option 1: Cloudflare Tunnel (Instant)
 
-Lihat **[docs/run-guide.md](docs/run-guide.md)** untuk panduan lengkap.
+Tidak perlu VPS. Backend jalan di Docker, expose via tunnel. Lihat [Cloudflare Tunnel](#cloudflare-tunnel).
+
+### Option 2: Render (Free Tier)
+
+```bash
+# Fork repo, set env vars di Render Dashboard, deploy
+# render.yaml sudah tersedia di root project
+```
+
+### Option 3: VPS
+
+```bash
+# Clone repo
+git clone https://github.com/fannndi/service-hub.git
+cd service-hub
+
+# Setup
+./switch-env.sh production
+# Edit .env: isi Supabase connection string, JWT secrets, dll.
+sed -i 's|@localhost:5432/|@postgres:5432/|' .env
+sed -i 's|REDIS_HOST=localhost|REDIS_HOST=redis|' .env
+
+# Deploy
+docker compose up -d --build
+docker compose exec backend npx prisma db push
+docker compose exec backend npx prisma db seed
+```
 
 ---
 
-## Dokumentasi
-
-### Backend Docs
+## Documentation
 
 | Dokumen | Isi |
 |---------|-----|
-| [BACKEND_API_REFERENCE.md](docs/backend/BACKEND_API_REFERENCE.md) | Referensi lengkap semua endpoint API, request/response, error codes |
-| [BACKEND_DATABASE_SCHEMA.md](docs/backend/BACKEND_DATABASE_SCHEMA.md) | Schema database: 21 models, 20+ enums, relasi, indexes |
-| [BACKEND_AUTH_SYSTEM.md](docs/backend/BACKEND_AUTH_SYSTEM.md) | 3 sistem JWT auth, stealth account, enkripsi credential, security |
-| [BACKEND_BUSINESS_LOGIC.md](docs/backend/BACKEND_BUSINESS_LOGIC.md) | Order lifecycle, state machine, SLA, payments, reviews, disputes |
-| [BACKEND_SETUP.md](docs/backend/BACKEND_SETUP.md) | Environment variables, Docker setup, deployment, project structure |
-
-### Frontend Docs
-
-| Dokumen | Isi |
-|---------|-----|
-| [FRONTEND_ARCHITECTURE.md](docs/frontend/FRONTEND_ARCHITECTURE.md) | Clean architecture, Riverpod, GoRouter, shared widgets |
-| [FRONTEND_CUSTOMER.md](docs/frontend/FRONTEND_CUSTOMER.md) | Customer feature: 24 screens, models, repos, providers |
-| [FRONTEND_STORE_ADMIN.md](docs/frontend/FRONTEND_STORE_ADMIN.md) | Store admin feature: 18 screens, responsive layout |
-| [FRONTEND_PLATFORM_ADMIN.md](docs/frontend/FRONTEND_PLATFORM_ADMIN.md) | Platform admin feature: 2 screens, admin flow |
-| [FRONTEND_NETWORK_LAYER.md](docs/frontend/FRONTEND_NETWORK_LAYER.md) | Dio client, error handling, token management, provider system |
-
-### Other Docs
-
-| Dokumen | Isi |
-|---------|-----|
-| [PRD/00_MASTER_PRD.md](docs/PRD/00_MASTER_PRD.md) | Single source of truth — business rules, API contracts |
-| [docs/run-guide.md](docs/run-guide.md) | Panduan menjalankan backend + Flutter |
-| [CHANGELOG.md](CHANGELOG.md) | Riwayat perubahan semua phase |
+| [docs/run-guide.md](docs/run-guide.md) | Panduan menjalankan (Docker + Non-Docker) |
 | [docs/architecture.md](docs/architecture.md) | Detail arsitektur sistem |
+| [docs/deployment.md](docs/deployment.md) | Deployment guide (Render, VPS) |
+| [docs/backend/](docs/backend/) | 5 backend reference docs |
+| [docs/frontend/](docs/frontend/) | 5 frontend reference docs |
+| [docs/PRD/](docs/PRD/) | Product Requirements Documents |
+| [CHANGELOG.md](CHANGELOG.md) | Riwayat perubahan |
+
+---
+
+## Changelog
+
+Lihat [CHANGELOG.md](CHANGELOG.md) untuk riwayat lengkap. Highlights terbaru:
+
+- **2026-06-19** — Race condition fixes, session invalidation, frontend audit, Cloudflare tunnel auto-fetch
+- **2026-06-17** — Precision audit, security fixes, 30 AC integration tests (175 tests)
 
 ---
 
 <p align="center">
-  <b>ServisGadget</b> — Siap deploy Play Store.
+  <b>ServisGadget</b> — Siap deploy tanpa VPS, connect dari mana saja.
 </p>
