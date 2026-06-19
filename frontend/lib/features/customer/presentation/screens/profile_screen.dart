@@ -4,12 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -17,6 +11,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
+
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _name = TextEditingController();
   final _address = TextEditingController();
@@ -31,9 +26,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           .updateProfile(fullName: _name.text, address: _address.text);
       setState(() => _dirty = false);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

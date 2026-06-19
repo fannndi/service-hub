@@ -33,6 +33,7 @@ class SparePart {
         partName: readString(json, 'part_name', 'partName'),
         price: moneyFromJson(json['price']),
         qty: json['qty'] as int? ?? 0,
-        qtyReserved: json['qty_reserved'] as int? ?? json['qtyReserved'] as int? ?? 0,
+        qtyReserved:
+            json['qty_reserved'] as int? ?? json['qtyReserved'] as int? ?? 0,
       );
 }

@@ -78,8 +78,10 @@ class AddressDropdownsState extends State<AddressDropdowns> {
   }
 
   String get addressString {
-    if (_selectedProvince == null || _selectedCity == null ||
-        _selectedDistrict == null || _selectedVillage == null) {
+    if (_selectedProvince == null ||
+        _selectedCity == null ||
+        _selectedDistrict == null ||
+        _selectedVillage == null) {
       return '';
     }
     return AddressRepository.formatAddress(
@@ -179,7 +181,7 @@ class AddressDropdownsState extends State<AddressDropdowns> {
     void Function(T?)? onChanged,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),

@@ -17,17 +17,42 @@ class OrderListScreen extends ConsumerWidget {
       body: Column(children: [
         QueryToolbar(
           hint: 'Cari order, pelanggan, device',
-          onSearch: (q) => ref.read(orderQueryProvider.notifier).state = ref.read(orderQueryProvider).copyWith(search: q, page: 1),
-          filters: [for (final s in [null, ...StoreOrderStatus.values]) FilterChip(label: Text(s?.label ?? 'Semua'), selected: ref.watch(orderQueryProvider).status == s?.value, onSelected: (_) => ref.read(orderQueryProvider.notifier).state = ref.read(orderQueryProvider).copyWith(status: s?.value, page: 1))],
+          onSearch: (q) => ref.read(orderQueryProvider.notifier).state =
+              ref.read(orderQueryProvider).copyWith(search: q, page: 1),
+          filters: [
+            for (final s in [null, ...StoreOrderStatus.values])
+              FilterChip(
+                  label: Text(s?.label ?? 'Semua'),
+                  selected: ref.watch(orderQueryProvider).status == s?.value,
+                  onSelected: (_) =>
+                      ref.read(orderQueryProvider.notifier).state = ref
+                          .read(orderQueryProvider)
+                          .copyWith(status: s?.value, page: 1))
+          ],
         ),
         Expanded(
           child: data.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => ErrorPanel(message: err.toString(), onRetry: () => ref.invalidate(storeOrdersProvider)),
+            error: (err, _) => ErrorPanel(
+                message: err.toString(),
+                onRetry: () => ref.invalidate(storeOrdersProvider)),
             data: (page) => AdminDataTable<StoreOrder>(
               items: page.items,
-              columns: const [DataColumn(label: Text('Order')), DataColumn(label: Text('Pelanggan')), DataColumn(label: Text('Device')), DataColumn(label: Text('Status')), DataColumn(label: Text('SLA'))],
-              cells: (o) => [DataCell(Text(o.orderNumber)), DataCell(Text(o.customerName)), DataCell(Text(o.deviceName)), DataCell(StatusPill(label: o.status.label)), DataCell(Text(o.slaDeadline == null ? '-' : dateText(o.slaDeadline!)))],
+              columns: const [
+                DataColumn(label: Text('Order')),
+                DataColumn(label: Text('Pelanggan')),
+                DataColumn(label: Text('Device')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('SLA'))
+              ],
+              cells: (o) => [
+                DataCell(Text(o.orderNumber)),
+                DataCell(Text(o.customerName)),
+                DataCell(Text(o.deviceName)),
+                DataCell(StatusPill(label: o.status.label)),
+                DataCell(Text(
+                    o.slaDeadline == null ? '-' : dateText(o.slaDeadline!)))
+              ],
               onTap: (o) => context.go('/store/orders/${o.id}'),
             ),
           ),

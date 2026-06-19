@@ -29,9 +29,12 @@ class Sparepart {
   factory Sparepart.fromJson(Map<String, dynamic> json) => Sparepart(
         id: jsonString(json['id']),
         brand: jsonString(json['brand'], fallback: ''),
-        deviceModel: jsonString(json['deviceModel'] ?? json['device_model'], fallback: ''),
-        partType: jsonString(json['partType'] ?? json['part_type'], fallback: ''),
-        partName: jsonString(json['partName'] ?? json['part_name'], fallback: 'Sparepart'),
+        deviceModel: jsonString(json['deviceModel'] ?? json['device_model'],
+            fallback: ''),
+        partType:
+            jsonString(json['partType'] ?? json['part_type'], fallback: ''),
+        partName: jsonString(json['partName'] ?? json['part_name'],
+            fallback: 'Sparepart'),
         price: jsonNum(json['price']),
         qty: jsonInt(json['qty']),
         qtyReserved: jsonInt(json['qtyReserved'] ?? json['qty_reserved']),
@@ -50,14 +53,24 @@ class Sparepart {
 }
 
 class InventoryQuery {
-  const InventoryQuery({this.search, this.brand, this.deviceModel, this.partType, this.page = 1});
+  const InventoryQuery(
+      {this.search,
+      this.brand,
+      this.deviceModel,
+      this.partType,
+      this.page = 1});
   final String? search;
   final String? brand;
   final String? deviceModel;
   final String? partType;
   final int page;
 
-  InventoryQuery copyWith({String? search, String? brand, String? deviceModel, String? partType, int? page}) =>
+  InventoryQuery copyWith(
+          {String? search,
+          String? brand,
+          String? deviceModel,
+          String? partType,
+          int? page}) =>
       InventoryQuery(
         search: search ?? this.search,
         brand: brand ?? this.brand,

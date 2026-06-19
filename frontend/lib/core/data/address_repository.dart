@@ -3,8 +3,6 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../domain/address_models.dart';
 
 class AddressRepository {
-  static const _provinceIdJateng = '33';
-
   static List<Province> _provinces = [];
   static List<City> _cities = [];
   static List<District> _districts = [];
@@ -37,7 +35,8 @@ class AddressRepository {
     _loaded = true;
   }
 
-  static List<T> _parseList<T>(String json, T Function(Map<String, dynamic>) fromJson) {
+  static List<T> _parseList<T>(
+      String json, T Function(Map<String, dynamic>) fromJson) {
     final list = jsonDecode(json) as List<dynamic>;
     return list.map((e) => fromJson(e as Map<String, dynamic>)).toList();
   }

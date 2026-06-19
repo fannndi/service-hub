@@ -14,11 +14,15 @@ class AdminSessionStorage {
 
   Future<String?> readToken() => _storage.read(key: _tokenKey);
   Future<String?> readRefreshToken() => _storage.read(key: _refreshKey);
-  Future<void> saveToken(String token) => _storage.write(key: _tokenKey, value: token);
-  Future<void> saveRefreshToken(String token) => _storage.write(key: _refreshKey, value: token);
+  Future<void> saveToken(String token) =>
+      _storage.write(key: _tokenKey, value: token);
+  Future<void> saveRefreshToken(String token) =>
+      _storage.write(key: _refreshKey, value: token);
 
   Future<void> saveSession(AdminSession session) async {
-    await _storage.write(key: _sessionKey, value: '${session.id}|${session.username}|${session.fullName}');
+    await _storage.write(
+        key: _sessionKey,
+        value: '${session.id}|${session.username}|${session.fullName}');
   }
 
   Future<AdminSession?> readSession() async {
@@ -37,20 +41,19 @@ class AdminSessionStorage {
 }
 
 class AdminApiClient {
-  AdminApiClient(AppConfig config, this._session)
+  AdminApiClient(AppConfig config, AdminSessionStorage session)
       : dio = createAuthDio(
           baseUrl: config.apiBaseUrl,
-          readAccessToken: () => _session.readToken(),
-          readRefreshToken: () => _session.readRefreshToken(),
+          readAccessToken: () => session.readToken(),
+          readRefreshToken: () => session.readRefreshToken(),
           onSaveTokens: (accessToken, refreshToken) async {
-            await _session.saveToken(accessToken);
-            await _session.saveRefreshToken(refreshToken);
+            await session.saveToken(accessToken);
+            await session.saveRefreshToken(refreshToken);
           },
-          onClearSession: () => _session.clear(),
+          onClearSession: () => session.clear(),
           refreshEndpoint: '/platform/refresh',
         );
 
-  final AdminSessionStorage _session;
   final Dio dio;
 
   static Map<String, dynamic> unwrap(Object? body) {
@@ -68,10 +71,14 @@ class AdminRepository {
   final AdminSessionStorage _session;
 
   Future<AdminLoginResult> login(String username, String password) async {
-    final response = await _api.dio.post('/platform/login', data: {'username': username, 'password': password});
-    final result = AdminLoginResult.fromJson(AdminApiClient.unwrap(response.data));
+    final response = await _api.dio.post('/platform/login',
+        data: {'username': username, 'password': password});
+    final result =
+        AdminLoginResult.fromJson(AdminApiClient.unwrap(response.data));
     await _session.saveToken(result.accessToken);
-    if (result.refreshToken != null) await _session.saveRefreshToken(result.refreshToken!);
+    if (result.refreshToken != null) {
+      await _session.saveRefreshToken(result.refreshToken!);
+    }
     await _session.saveSession(result.admin);
     return result;
   }
@@ -80,7 +87,12 @@ class AdminRepository {
     final response = await _api.dio.get('/platform/stores');
     final data = response.data;
     final list = data is Map ? (data['data'] ?? data['items'] ?? []) : data;
-    if (list is List) return list.whereType<Map<String, dynamic>>().map(StoreListItem.fromJson).toList();
+    if (list is List) {
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(StoreListItem.fromJson)
+          .toList();
+    }
     return [];
   }
 

@@ -4,13 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../application/customer_providers.dart';
-import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 import 'diagnosis_approval_card.dart';
 
@@ -88,6 +82,7 @@ class OrderDetailScreen extends ConsumerWidget {
     );
   }
 }
+
 class _OrderActions extends StatelessWidget {
   const _OrderActions({required this.order});
   final CustomerOrder order;
@@ -141,4 +136,3 @@ class _InfoCard extends StatelessWidget {
         ),
       );
 }
-

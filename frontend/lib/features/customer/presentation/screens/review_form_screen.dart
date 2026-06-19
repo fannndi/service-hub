@@ -4,12 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class ReviewFormScreen extends ConsumerStatefulWidget {
@@ -18,6 +12,7 @@ class ReviewFormScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<ReviewFormScreen> createState() => _ReviewFormScreenState();
 }
+
 class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
   final _comment = TextEditingController();
   int _rating = 5;
@@ -30,9 +25,10 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
       ref.invalidate(orderDetailProvider(widget.orderId));
       if (mounted) context.go('/review-success', extra: result);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -3,13 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/customer_providers.dart';
-import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class StoreListScreen extends ConsumerStatefulWidget {
@@ -17,13 +10,18 @@ class StoreListScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<StoreListScreen> createState() => _StoreListScreenState();
 }
+
 class _StoreListScreenState extends ConsumerState<StoreListScreen> {
   String _brand = 'All';
   final _model = TextEditingController();
   @override
   Widget build(BuildContext context) {
     final deviceModels = ref.watch(deviceModelsProvider);
-    final brands = deviceModels.valueOrNull?.map((group) => group.brand).toSet().toList() ?? const <String>[];
+    final brands = deviceModels.valueOrNull
+            ?.map((group) => group.brand)
+            .toSet()
+            .toList() ??
+        const <String>[];
     brands.sort();
     final stores =
         ref.watch(storeListProvider((brand: _brand, model: _model.text)));

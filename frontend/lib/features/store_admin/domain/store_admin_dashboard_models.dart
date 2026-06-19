@@ -45,29 +45,53 @@ class DashboardSummary {
   final List<CategoryMetric> sparepartConsumption;
   final List<StoreOrder> recentOrders;
 
-  factory DashboardSummary.fromJson(Map<String, dynamic> json) => DashboardSummary(
-        adminName: jsonString(json['adminName'] ?? json['admin_name'], fallback: 'Admin Toko'),
-        storeName: jsonString(json['storeName'] ?? json['store_name'], fallback: 'Toko Servis'),
+  factory DashboardSummary.fromJson(Map<String, dynamic> json) =>
+      DashboardSummary(
+        adminName: jsonString(json['adminName'] ?? json['admin_name'],
+            fallback: 'Admin Toko'),
+        storeName: jsonString(json['storeName'] ?? json['store_name'],
+            fallback: 'Toko Servis'),
         ratingAvg: jsonDouble(json['ratingAvg'] ?? json['rating_avg']),
         todayOrders: jsonInt(json['todayOrders'] ?? json['today_orders']),
-        activeOrders: jsonInt(json['activeOrders'] ?? json['active_orders'] ?? json['active']),
-        pendingOrders: jsonInt(json['pendingOrders'] ?? json['pending_orders'] ?? json['pending']),
+        activeOrders: jsonInt(
+            json['activeOrders'] ?? json['active_orders'] ?? json['active']),
+        pendingOrders: jsonInt(
+            json['pendingOrders'] ?? json['pending_orders'] ?? json['pending']),
         customers: jsonInt(json['customers'] ?? json['customer_count']),
-        pendingPayments: jsonInt(json['pendingPayments'] ?? json['pending_payments']),
-        waitingApproval: jsonInt(json['waitingApproval'] ?? json['waiting_approval']),
-        activeDisputes: jsonInt(json['activeDisputes'] ?? json['active_disputes'] ?? json['disputes']),
+        pendingPayments:
+            jsonInt(json['pendingPayments'] ?? json['pending_payments']),
+        waitingApproval:
+            jsonInt(json['waitingApproval'] ?? json['waiting_approval']),
+        activeDisputes: jsonInt(json['activeDisputes'] ??
+            json['active_disputes'] ??
+            json['disputes']),
         revenueToday: jsonNum(json['revenueToday'] ?? json['revenue_today']),
         revenueMonth: jsonNum(json['revenueMonth'] ?? json['revenue_month']),
-        completionRate: jsonDouble(json['completionRate'] ?? json['completion_rate']),
-        statusBreakdown: jsonIntMap(json['statusBreakdown'] ?? json['status_breakdown']),
-        revenueTrend: jsonList(json['revenueTrend'] ?? json['revenue_trend']).map(MetricPoint.fromJson).toList(),
-        ordersTrend: jsonList(json['ordersTrend'] ?? json['orders_trend']).map(MetricPoint.fromJson).toList(),
-        serviceCategories: jsonList(json['serviceCategories'] ?? json['service_categories']).map(CategoryMetric.fromJson).toList(),
-        sparepartConsumption: jsonList(json['sparepartConsumption'] ?? json['sparepart_consumption']).map(CategoryMetric.fromJson).toList(),
-        recentOrders: jsonList(json['recentOrders'] ?? json['recent_orders']).map(StoreOrder.fromJson).toList(),
+        completionRate:
+            jsonDouble(json['completionRate'] ?? json['completion_rate']),
+        statusBreakdown:
+            jsonIntMap(json['statusBreakdown'] ?? json['status_breakdown']),
+        revenueTrend: jsonList(json['revenueTrend'] ?? json['revenue_trend'])
+            .map(MetricPoint.fromJson)
+            .toList(),
+        ordersTrend: jsonList(json['ordersTrend'] ?? json['orders_trend'])
+            .map(MetricPoint.fromJson)
+            .toList(),
+        serviceCategories:
+            jsonList(json['serviceCategories'] ?? json['service_categories'])
+                .map(CategoryMetric.fromJson)
+                .toList(),
+        sparepartConsumption: jsonList(
+                json['sparepartConsumption'] ?? json['sparepart_consumption'])
+            .map(CategoryMetric.fromJson)
+            .toList(),
+        recentOrders: jsonList(json['recentOrders'] ?? json['recent_orders'])
+            .map(StoreOrder.fromJson)
+            .toList(),
       );
 
-  factory DashboardSummary.empty(StoreAdminSession? session) => DashboardSummary(
+  factory DashboardSummary.empty(StoreAdminSession? session) =>
+      DashboardSummary(
         adminName: session?.adminName ?? 'Admin Toko',
         storeName: session?.storeName ?? 'Toko Servis',
         ratingAvg: 0,
@@ -94,12 +118,16 @@ class MetricPoint {
   const MetricPoint(this.label, this.value);
   final String label;
   final num value;
-  factory MetricPoint.fromJson(Map<String, dynamic> json) => MetricPoint(jsonString(json['label'] ?? json['date']), jsonNum(json['value'] ?? json['total']));
+  factory MetricPoint.fromJson(Map<String, dynamic> json) => MetricPoint(
+      jsonString(json['label'] ?? json['date']),
+      jsonNum(json['value'] ?? json['total']));
 }
 
 class CategoryMetric {
   const CategoryMetric(this.label, this.value);
   final String label;
   final num value;
-  factory CategoryMetric.fromJson(Map<String, dynamic> json) => CategoryMetric(jsonString(json['label'] ?? json['name']), jsonNum(json['value'] ?? json['count']));
+  factory CategoryMetric.fromJson(Map<String, dynamic> json) => CategoryMetric(
+      jsonString(json['label'] ?? json['name']),
+      jsonNum(json['value'] ?? json['count']));
 }

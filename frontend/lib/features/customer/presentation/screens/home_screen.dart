@@ -3,13 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/customer_providers.dart';
-import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -19,6 +12,7 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(customerAuthProvider).valueOrNull;
     final summary = ref.watch(homeSummaryProvider);
     final recent = ref.watch(customerOrdersProvider('recent'));
+    final scheme = Theme.of(context).colorScheme;
     return CustomerScaffold(
       title: 'ServisGadget',
       actions: [
@@ -42,22 +36,61 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: 24),
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Halo, ${user?.fullName ?? 'Pelanggan'}!',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800)),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: scheme.outlineVariant.withValues(alpha: .75)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Halo, ${user?.fullName ?? 'Pelanggan'}',
+                                style:
+                                    Theme.of(context).textTheme.headlineSmall),
+                            const SizedBox(height: 6),
+                            Text(
+                                'Pantau servis, garansi, dan kupon tanpa chat bolak-balik.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: scheme.onSurfaceVariant)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.phone_iphone_outlined, color: scheme.primary),
+                    ],
+                  ),
+                ),
+              ),
             ),
             summary.when(
-              data: (data) => Row(children: [
-                _SummaryTile(
-                    label: 'Aktif', value: data.activeOrders.toString()),
-                _SummaryTile(
-                    label: 'Kupon', value: data.activeCoupons.toString()),
-                _SummaryTile(
-                    label: 'Garansi', value: data.activeWarranties.toString()),
-              ]),
+              data: (data) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(children: [
+                  _SummaryTile(
+                      label: 'Aktif',
+                      value: data.activeOrders.toString(),
+                      icon: Icons.pending_actions_outlined),
+                  const SizedBox(width: 10),
+                  _SummaryTile(
+                      label: 'Kupon',
+                      value: data.activeCoupons.toString(),
+                      icon: Icons.local_offer_outlined),
+                  const SizedBox(width: 10),
+                  _SummaryTile(
+                      label: 'Garansi',
+                      value: data.activeWarranties.toString(),
+                      icon: Icons.verified_outlined),
+                ]),
+              ),
               loading: () => const SizedBox(
                   height: 88,
                   child: Center(child: CircularProgressIndicator())),
@@ -71,13 +104,13 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                     child: FilledButton.icon(
                         onPressed: () => context.push('/stores'),
-                        icon: const Icon(Icons.build),
+                        icon: const Icon(Icons.add_task_outlined),
                         label: const Text('Servis'))),
                 const SizedBox(width: 8),
                 Expanded(
                     child: OutlinedButton.icon(
                         onPressed: () => context.push('/orders'),
-                        icon: const Icon(Icons.inventory_2),
+                        icon: const Icon(Icons.receipt_long_outlined),
                         label: const Text('Pesanan'))),
                 const SizedBox(width: 8),
                 Expanded(
@@ -105,14 +138,25 @@ class HomeScreen extends ConsumerWidget {
               error: (_, __) =>
                   const EmptyMessage('Pesanan belum bisa dimuat.'),
             ),
-            Card(
-              margin: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              child: const Padding(
-                padding: EdgeInsets.all(18),
-                child: Text(
-                    'Promo servis bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                color: scheme.tertiaryContainer.withValues(alpha: .55),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.bolt_outlined,
+                          color: scheme.onTertiaryContainer),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                            'Promo bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
+                            style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
@@ -121,23 +165,31 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
+
 class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({required this.label, required this.value});
+  const _SummaryTile(
+      {required this.label, required this.value, required this.icon});
   final String label;
   final String value;
+  final IconData icon;
   @override
   Widget build(BuildContext context) => Expanded(
         child: Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(children: [
+            padding: const EdgeInsets.all(14),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(icon,
+                  size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 10),
               Text(value,
                   style: Theme.of(context)
                       .textTheme
                       .headlineSmall
                       ?.copyWith(fontWeight: FontWeight.w900)),
-              Text(label)
+              Text(label,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant))
             ]),
           ),
         ),

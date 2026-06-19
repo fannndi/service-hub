@@ -21,10 +21,15 @@ class StoreAdminSession {
     final admin = jsonMap(json['store_admin']) ?? json;
     return StoreAdminSession(
       adminId: jsonString(admin['id']),
-      adminName: jsonString(admin['full_name'] ?? admin['fullName'] ?? admin['name'], fallback: 'Admin Toko'),
+      adminName: jsonString(
+          admin['full_name'] ?? admin['fullName'] ?? admin['name'],
+          fallback: 'Admin Toko'),
       phoneNumber: jsonString(admin['phone_number'] ?? admin['phoneNumber']),
-      storeId: jsonString(admin['store_id'] ?? admin['storeId'] ?? json['storeId']),
-      storeName: jsonString(admin['store_name'] ?? admin['storeName'] ?? json['storeName'], fallback: 'Toko Servis'),
+      storeId:
+          jsonString(admin['store_id'] ?? admin['storeId'] ?? json['storeId']),
+      storeName: jsonString(
+          admin['store_name'] ?? admin['storeName'] ?? json['storeName'],
+          fallback: 'Toko Servis'),
       isFirstLogin: jsonBool(admin['is_first_login'] ?? admin['isFirstLogin']),
     );
   }
@@ -38,7 +43,8 @@ class StoreAdminSession {
         'isFirstLogin': isFirstLogin.toString(),
       };
 
-  factory StoreAdminSession.fromStorage(Map<String, String?> values) => StoreAdminSession(
+  factory StoreAdminSession.fromStorage(Map<String, String?> values) =>
+      StoreAdminSession(
         adminId: values['adminId'] ?? '',
         adminName: values['adminName'] ?? 'Admin Toko',
         phoneNumber: values['phoneNumber'] ?? '',

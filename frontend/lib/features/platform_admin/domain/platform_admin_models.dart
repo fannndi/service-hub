@@ -1,7 +1,8 @@
 import '../../../core/json_helpers.dart';
 
 class AdminSession {
-  const AdminSession({required this.id, required this.username, required this.fullName});
+  const AdminSession(
+      {required this.id, required this.username, required this.fullName});
   final String id;
   final String username;
   final String fullName;
@@ -14,15 +15,18 @@ class AdminSession {
 }
 
 class AdminLoginResult {
-  const AdminLoginResult({required this.accessToken, this.refreshToken, required this.admin});
+  const AdminLoginResult(
+      {required this.accessToken, this.refreshToken, required this.admin});
   final String accessToken;
   final String? refreshToken;
   final AdminSession admin;
 
-  factory AdminLoginResult.fromJson(Map<String, dynamic> json) => AdminLoginResult(
+  factory AdminLoginResult.fromJson(Map<String, dynamic> json) =>
+      AdminLoginResult(
         accessToken: readString(json, 'accessToken'),
         refreshToken: json['refreshToken'] as String?,
-        admin: AdminSession.fromJson((json['admin'] as Map<String, dynamic>?) ?? {}),
+        admin: AdminSession.fromJson(
+            (json['admin'] as Map<String, dynamic>?) ?? {}),
       );
 }
 
@@ -59,7 +63,9 @@ class StoreListItem {
       ratingAvg: moneyFromJson(json['ratingAvg']),
       totalCompleted: json['totalCompleted'] as int? ?? 0,
       createdAt: readString(json, 'createdAt'),
-      admins: (json['admins'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList(),
+      admins: (json['admins'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .toList(),
     );
   }
 }

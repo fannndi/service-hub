@@ -26,7 +26,10 @@ class CustomerScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: Text(title), actions: actions),
-        body: child,
+        body: ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: child,
+        ),
         floatingActionButton: floatingActionButton,
       );
 }
@@ -73,8 +76,8 @@ class StatusPill extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withValues(alpha: 0.4))),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.32))),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Text(status.label,
@@ -91,23 +94,31 @@ class StoreCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: ListTile(
-          onTap: onTap,
-          leading: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: const Icon(Icons.storefront)),
-          title: Text(store.storeName,
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(store.address, maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text(
-                'Rating ${store.ratingAvg.toStringAsFixed(1)} (${store.reviewCount} ulasan)${store.verifiedAt != null ? '  - Verified' : ''}'),
-          ]),
-          trailing: const Icon(Icons.chevron_right),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Card(
+          child: ListTile(
+            onTap: onTap,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            leading: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor:
+                    Theme.of(context).colorScheme.onPrimaryContainer,
+                child: const Icon(Icons.storefront_outlined)),
+            title: Text(store.storeName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+            subtitle:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(store.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(
+                  'Rating ${store.ratingAvg.toStringAsFixed(1)} (${store.reviewCount} ulasan)${store.verifiedAt != null ? '  - Verified' : ''}'),
+            ]),
+            trailing: const Icon(Icons.chevron_right),
+          ),
         ),
       );
 }
@@ -122,30 +133,34 @@ class OrderCard extends StatelessWidget {
     final urgent = order.slaDeadline != null &&
         order.slaDeadline!.difference(DateTime.now()).inHours < 6 &&
         order.status.isActive;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        onTap: onTap,
-        title: Row(children: [
-          Expanded(
-              child: Text(order.orderNumber,
-                  style: const TextStyle(fontWeight: FontWeight.w800))),
-          StatusPill(order.status),
-        ]),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(order.storeName ?? 'Toko servis'),
-            Text('${order.brand} ${order.deviceModel}'),
-            Text(shortDate(order.createdAt),
-                style: Theme.of(context).textTheme.bodySmall),
-            if (urgent)
-              Text('Batas waktu kurang dari 6 jam',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontWeight: FontWeight.w700)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Card(
+        child: ListTile(
+          onTap: onTap,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          title: Row(children: [
+            Expanded(
+                child: Text(order.orderNumber,
+                    style: const TextStyle(fontWeight: FontWeight.w800))),
+            StatusPill(order.status),
           ]),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(order.storeName ?? 'Toko servis'),
+              Text('${order.brand} ${order.deviceModel}'),
+              Text(shortDate(order.createdAt),
+                  style: Theme.of(context).textTheme.bodySmall),
+              if (urgent)
+                Text('Batas waktu kurang dari 6 jam',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w700)),
+            ]),
+          ),
         ),
       ),
     );
@@ -159,7 +174,7 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 22, 16, 10),
         child: Row(children: [
           Expanded(
               child: Text(title,
@@ -180,9 +195,13 @@ class EmptyMessage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.inbox_outlined, size: 48),
+            Icon(Icons.inbox_outlined,
+                size: 44, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ]),
         ),
       );
@@ -225,7 +244,10 @@ class CouponRewardBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        color: Theme.of(context).colorScheme.primaryContainer,
+        color: Theme.of(context)
+            .colorScheme
+            .primaryContainer
+            .withValues(alpha: .72),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child:
@@ -246,16 +268,18 @@ class SkeletonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView.builder(
         itemCount: count,
-        itemBuilder: (context, index) => Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Container(
-              height: 84,
-              decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(12))),
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Card(
+            child: Container(
+                height: 84,
+                decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(8))),
+          ),
         ),
       );
 }

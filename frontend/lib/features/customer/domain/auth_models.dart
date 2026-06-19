@@ -24,12 +24,20 @@ class CustomerUser {
         id: readString(json, 'id'),
         fullName: readString(json, 'full_name', 'fullName'),
         phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
-        avatarUrl: json['avatar_url'] as String? ?? json['avatarUrl'] as String?,
+        avatarUrl:
+            json['avatar_url'] as String? ?? json['avatarUrl'] as String?,
         address: json['address'] as String?,
-        isFirstLogin: json['is_first_login'] as bool? ?? json['isFirstLogin'] as bool? ?? false,
+        isFirstLogin: json['is_first_login'] as bool? ??
+            json['isFirstLogin'] as bool? ??
+            false,
       );
 
-  CustomerUser copyWith({String? fullName, String? address, String? avatarUrl, bool? isFirstLogin}) => CustomerUser(
+  CustomerUser copyWith(
+          {String? fullName,
+          String? address,
+          String? avatarUrl,
+          bool? isFirstLogin}) =>
+      CustomerUser(
         id: id,
         fullName: fullName ?? this.fullName,
         phoneNumber: phoneNumber,
@@ -40,7 +48,11 @@ class CustomerUser {
 }
 
 class LoginResult {
-  const LoginResult({required this.accessToken, required this.refreshToken, required this.user, required this.isFirstLogin});
+  const LoginResult(
+      {required this.accessToken,
+      required this.refreshToken,
+      required this.user,
+      required this.isFirstLogin});
   final String accessToken;
   final String refreshToken;
   final CustomerUser user;
@@ -48,8 +60,12 @@ class LoginResult {
 
   factory LoginResult.fromJson(Map<String, dynamic> json) {
     final rawUser = json['user'];
-    final user = rawUser is Map<String, dynamic> ? CustomerUser.fromJson(rawUser) : CustomerUser.fromJson(json);
-    final firstLogin = json['is_first_login'] as bool? ?? json['isFirstLogin'] as bool? ?? user.isFirstLogin;
+    final user = rawUser is Map<String, dynamic>
+        ? CustomerUser.fromJson(rawUser)
+        : CustomerUser.fromJson(json);
+    final firstLogin = json['is_first_login'] as bool? ??
+        json['isFirstLogin'] as bool? ??
+        user.isFirstLogin;
     return LoginResult(
       accessToken: readString(json, 'access_token', 'accessToken'),
       refreshToken: readString(json, 'refresh_token', 'refreshToken'),

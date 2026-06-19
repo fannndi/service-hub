@@ -17,7 +17,9 @@ class NotificationsScreen extends ConsumerWidget {
         data: (page) => ListView(children: [
           for (final item in page.items)
             ListTile(
-              leading: Icon(item.isRead ? Icons.mark_email_read_outlined : Icons.notifications_active_outlined),
+              leading: Icon(item.isRead
+                  ? Icons.mark_email_read_outlined
+                  : Icons.notifications_active_outlined),
               title: Text(item.title),
               subtitle: Text('${item.message}\n${dateText(item.createdAt)}'),
             ),

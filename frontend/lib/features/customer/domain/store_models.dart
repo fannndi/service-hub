@@ -30,14 +30,20 @@ class ServiceStore {
         address: readString(json, 'address'),
         phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
         ratingAvg: moneyFromJson(json['rating_avg'] ?? json['ratingAvg']),
-        reviewCount: json['review_count'] as int? ?? json['reviewCount'] as int? ?? json['totalReviews'] as int? ?? 0,
+        reviewCount: json['review_count'] as int? ??
+            json['reviewCount'] as int? ??
+            json['totalReviews'] as int? ??
+            0,
         verifiedAt: dateFromJson(json['verified_at'] ?? json['verifiedAt']),
         operationalHours: json['operational_hours'] is Map<String, dynamic>
             ? json['operational_hours'] as Map<String, dynamic>
             : json['operationalHours'] is Map<String, dynamic>
                 ? json['operationalHours'] as Map<String, dynamic>
                 : const {},
-        reviews: (json['reviews'] as List? ?? const []).whereType<Map<String, dynamic>>().map(ReviewItem.fromJson).toList(),
+        reviews: (json['reviews'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(ReviewItem.fromJson)
+            .toList(),
       );
 }
 
@@ -71,7 +77,10 @@ class StoreMatchResult {
       phoneNumber: readString(json, 'phoneNumber'),
       ratingAvg: (json['ratingAvg'] as num?)?.toDouble() ?? 0,
       totalCompleted: json['totalCompleted'] as int? ?? 0,
-      spareparts: sparepartsJson.whereType<Map<String, dynamic>>().map(MatchSparePart.fromJson).toList(),
+      spareparts: sparepartsJson
+          .whereType<Map<String, dynamic>>()
+          .map(MatchSparePart.fromJson)
+          .toList(),
       estimatedCost: moneyFromJson(json['estimatedCost']),
     );
   }

@@ -33,7 +33,8 @@ class District {
   final String regencyId;
   final String name;
 
-  const District({required this.id, required this.regencyId, required this.name});
+  const District(
+      {required this.id, required this.regencyId, required this.name});
 
   factory District.fromJson(Map<String, dynamic> json) {
     return District(
@@ -49,7 +50,8 @@ class Village {
   final String districtId;
   final String name;
 
-  const Village({required this.id, required this.districtId, required this.name});
+  const Village(
+      {required this.id, required this.districtId, required this.name});
 
   factory Village.fromJson(Map<String, dynamic> json) {
     return Village(

@@ -21,20 +21,29 @@ class ReviewsScreen extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      Text(r.customerName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      const Spacer(),
-                      Text('${r.rating}/5', style: const TextStyle(color: Colors.amber)),
-                    ]),
-                    if (r.comment.isNotEmpty) Text(r.comment),
-                    Text(dateText(r.createdAt), style: Theme.of(context).textTheme.bodySmall),
-                    if (r.response != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text('Balasan: ${r.response}', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-                      ),
-                  ]),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Text(r.customerName,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700)),
+                          const Spacer(),
+                          Text('${r.rating}/5',
+                              style: const TextStyle(color: Colors.amber)),
+                        ]),
+                        if (r.comment.isNotEmpty) Text(r.comment),
+                        Text(dateText(r.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall),
+                        if (r.response != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text('Balasan: ${r.response}',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.primary)),
+                          ),
+                      ]),
                 ),
               ),
           ],

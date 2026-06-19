@@ -5,9 +5,13 @@ import '../../../core/app_config.dart';
 import '../data/platform_admin_repositories.dart';
 import '../domain/platform_admin_models.dart';
 
-final adminStorageProvider = Provider<AdminSessionStorage>((ref) => const AdminSessionStorage(FlutterSecureStorage()));
-final adminApiClientProvider = Provider<AdminApiClient>((ref) => AdminApiClient(ref.watch(appConfigProvider), ref.watch(adminStorageProvider)));
-final adminRepositoryProvider = Provider<AdminRepository>((ref) => AdminRepository(ref.watch(adminApiClientProvider), ref.watch(adminStorageProvider)));
+final adminStorageProvider = Provider<AdminSessionStorage>(
+    (ref) => const AdminSessionStorage(FlutterSecureStorage()));
+final adminApiClientProvider = Provider<AdminApiClient>((ref) => AdminApiClient(
+    ref.watch(appConfigProvider), ref.watch(adminStorageProvider)));
+final adminRepositoryProvider = Provider<AdminRepository>((ref) =>
+    AdminRepository(
+        ref.watch(adminApiClientProvider), ref.watch(adminStorageProvider)));
 
 class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
   @override
@@ -25,7 +29,8 @@ class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
 
   Future<AdminSession> login(String username, String password) async {
     state = const AsyncLoading();
-    final result = await ref.read(adminRepositoryProvider).login(username, password);
+    final result =
+        await ref.read(adminRepositoryProvider).login(username, password);
     state = AsyncData(result.admin);
     return result.admin;
   }
@@ -36,7 +41,9 @@ class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
   }
 }
 
-final adminAuthProvider = AsyncNotifierProvider<AdminAuthNotifier, AdminSession?>(AdminAuthNotifier.new);
+final adminAuthProvider =
+    AsyncNotifierProvider<AdminAuthNotifier, AdminSession?>(
+        AdminAuthNotifier.new);
 
 final storeListProvider = FutureProvider<List<StoreListItem>>((ref) {
   return ref.watch(adminRepositoryProvider).listStores();

@@ -1,5 +1,6 @@
 /// Barrel file — re-exports all store admin domain models.
 /// Existing imports of store_admin_models.dart continue to work.
+library;
 
 export 'store_admin_enums.dart';
 export 'store_admin_session.dart';

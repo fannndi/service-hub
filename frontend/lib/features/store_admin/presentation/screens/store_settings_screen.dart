@@ -8,7 +8,8 @@ import '../widgets/store_admin_widgets.dart';
 class StoreSettingsScreen extends ConsumerStatefulWidget {
   const StoreSettingsScreen({super.key});
   @override
-  ConsumerState<StoreSettingsScreen> createState() => _StoreSettingsScreenState();
+  ConsumerState<StoreSettingsScreen> createState() =>
+      _StoreSettingsScreenState();
 }
 
 class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
@@ -37,30 +38,56 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              TextField(controller: storeName, decoration: const InputDecoration(labelText: 'Nama Toko')),
+              TextField(
+                  controller: storeName,
+                  decoration: const InputDecoration(labelText: 'Nama Toko')),
               const SizedBox(height: 12),
-              TextField(controller: address, maxLines: 2, decoration: const InputDecoration(labelText: 'Alamat')),
+              TextField(
+                  controller: address,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'Alamat')),
               const SizedBox(height: 12),
-              TextField(controller: phoneNumber, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP')),
+              TextField(
+                  controller: phoneNumber,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'No HP')),
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: _loading ? null : () async {
-                  setState(() => _loading = true);
-                  try {
-                    await ref.read(storeOperationsRepositoryProvider).updateStoreProfile({
-                      'storeName': storeName.text,
-                      'address': address.text,
-                      'phoneNumber': phoneNumber.text,
-                    });
-                    ref.invalidate(storeProfileProvider);
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil toko berhasil diupdate.')));
-                  } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
-                  } finally {
-                    if (mounted) setState(() => _loading = false);
-                  }
-                },
-                icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        setState(() => _loading = true);
+                        try {
+                          await ref
+                              .read(storeOperationsRepositoryProvider)
+                              .updateStoreProfile({
+                            'storeName': storeName.text,
+                            'address': address.text,
+                            'phoneNumber': phoneNumber.text,
+                          });
+                          ref.invalidate(storeProfileProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Profil toko berhasil diupdate.')));
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Gagal: $e')));
+                          }
+                        } finally {
+                          if (mounted) setState(() => _loading = false);
+                        }
+                      },
+                icon: _loading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.save_outlined),
                 label: const Text('Simpan Perubahan'),
               ),
             ],

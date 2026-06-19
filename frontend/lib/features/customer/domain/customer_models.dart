@@ -1,5 +1,6 @@
 /// Barrel file — re-exports all customer domain models.
 /// Existing imports of customer_models.dart continue to work.
+library;
 
 export 'auth_models.dart';
 export 'order_models.dart';

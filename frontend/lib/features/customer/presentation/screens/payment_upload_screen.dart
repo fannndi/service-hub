@@ -6,11 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class PaymentUploadScreen extends ConsumerStatefulWidget {
@@ -20,6 +15,7 @@ class PaymentUploadScreen extends ConsumerStatefulWidget {
   ConsumerState<PaymentUploadScreen> createState() =>
       _PaymentUploadScreenState();
 }
+
 class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
   final _amount = TextEditingController();
   String _method = 'transfer_bank';
@@ -56,9 +52,10 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
         context.pop();
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -76,8 +73,9 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
               .where((p) => p.status == 'confirmed')
               .fold<double>(0, (sum, p) => sum + p.amount);
           final due = (order.finalPrice ?? order.totalEstimasi) - confirmed;
-          if (_amount.text.isEmpty)
+          if (_amount.text.isEmpty) {
             _amount.text = due.clamp(0, double.infinity).toStringAsFixed(0);
+          }
           return ListView(padding: const EdgeInsets.all(16), children: [
             _InfoCard(title: 'Tagihan', rows: {
               'Order': order.orderNumber,
@@ -86,7 +84,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
               'Sisa': rupiah(due)
             }),
             DropdownButtonFormField(
-                value: _method,
+                initialValue: _method,
                 decoration:
                     const InputDecoration(labelText: 'Metode Pembayaran'),
                 items: const [
@@ -98,7 +96,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                 ],
                 onChanged: (v) => setState(() => _method = v!)),
             DropdownButtonFormField(
-                value: _type,
+                initialValue: _type,
                 decoration:
                     const InputDecoration(labelText: 'Jenis Pembayaran'),
                 items: const [
@@ -167,4 +165,3 @@ class _InfoCard extends StatelessWidget {
         ),
       );
 }
-

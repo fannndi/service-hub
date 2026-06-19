@@ -2,7 +2,15 @@ import '../../../core/json_helpers.dart';
 import 'store_admin_enums.dart';
 
 class DisputeCase {
-  const DisputeCase({required this.id, required this.orderId, required this.orderNumber, required this.customerName, required this.type, required this.description, required this.status, required this.createdAt});
+  const DisputeCase(
+      {required this.id,
+      required this.orderId,
+      required this.orderNumber,
+      required this.customerName,
+      required this.type,
+      required this.description,
+      required this.status,
+      required this.createdAt});
   final String id;
   final String orderId;
   final String orderNumber;
@@ -18,9 +26,14 @@ class DisputeCase {
     return DisputeCase(
       id: jsonString(json['id']),
       orderId: jsonString(json['orderId'] ?? json['order_id']),
-      orderNumber: jsonString(order['orderNumber'] ?? order['order_number'] ?? json['orderNumber'], fallback: '-'),
-      customerName: jsonString(user['fullName'] ?? user['full_name'] ?? json['customerName'], fallback: 'Pelanggan'),
-      type: jsonString(json['disputeType'] ?? json['dispute_type'], fallback: 'warranty_claim'),
+      orderNumber: jsonString(
+          order['orderNumber'] ?? order['order_number'] ?? json['orderNumber'],
+          fallback: '-'),
+      customerName: jsonString(
+          user['fullName'] ?? user['full_name'] ?? json['customerName'],
+          fallback: 'Pelanggan'),
+      type: jsonString(json['disputeType'] ?? json['dispute_type'],
+          fallback: 'warranty_claim'),
       description: jsonString(json['description']),
       status: DisputeStatus.fromJson(json['status']),
       createdAt: jsonDate(json['createdAt'] ?? json['created_at']),

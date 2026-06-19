@@ -27,6 +27,7 @@ class UserSession {
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);
     if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.tryParse(value.toString()) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
   }
 }

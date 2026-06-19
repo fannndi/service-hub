@@ -58,46 +58,88 @@ class Step1Widget extends ConsumerWidget {
       children: [
         Text('Pilih Perangkat', style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('Pilih brand dan tipe smartphone kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text('Pilih brand dan tipe smartphone kamu.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
         SegmentedButton<String>(
           segments: const [
-            ButtonSegment(value: 'android', label: Text('Android'), icon: Icon(Icons.android)),
-            ButtonSegment(value: 'ios', label: Text('iPhone / iOS'), icon: Icon(Icons.phone_iphone)),
+            ButtonSegment(
+                value: 'android',
+                label: Text('Android'),
+                icon: Icon(Icons.android)),
+            ButtonSegment(
+                value: 'ios',
+                label: Text('iPhone / iOS'),
+                icon: Icon(Icons.phone_iphone)),
           ],
           selected: {state.deviceType},
-          onSelectionChanged: (v) { state.deviceType = v.first; onChanged(); },
+          onSelectionChanged: (v) {
+            state.deviceType = v.first;
+            onChanged();
+          },
           showSelectedIcon: false,
         ),
         const SizedBox(height: 24),
         deviceModels.when(
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
-          error: (error, _) => Text('Gagal memuat daftar perangkat: $error', style: TextStyle(color: theme.colorScheme.error)),
+          loading: () => const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator())),
+          error: (error, _) => Text('Gagal memuat daftar perangkat: $error',
+              style: TextStyle(color: theme.colorScheme.error)),
           data: (groups) {
-            if (groups.isEmpty) return const EmptyMessage('Belum ada sparepart tersedia');
+            if (groups.isEmpty) {
+              return const EmptyMessage('Belum ada sparepart tersedia');
+            }
 
             final brands = groups.map((g) => g.brand).toSet().toList()..sort();
-            final selectedGroups = groups.where((g) => g.brand == state.selectedBrand).toList();
-            final models = selectedGroups.isEmpty ? const <String>[]
+            final selectedGroups =
+                groups.where((g) => g.brand == state.selectedBrand).toList();
+            final models = selectedGroups.isEmpty
+                ? const <String>[]
                 : (selectedGroups.first.models.toSet().toList()..sort());
-            final brandValue = brands.contains(state.selectedBrand) ? state.selectedBrand : null;
-            final modelValue = models.contains(state.selectedModel) ? state.selectedModel : null;
+            final brandValue = brands.contains(state.selectedBrand)
+                ? state.selectedBrand
+                : null;
+            final modelValue = models.contains(state.selectedModel)
+                ? state.selectedModel
+                : null;
 
-            return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              DropdownButtonFormField<String>(
-                value: brandValue,
-                decoration: const InputDecoration(labelText: 'Brand Smartphone', prefixIcon: Icon(Icons.branding_watermark)),
-                items: brands.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                onChanged: (v) { state.selectedBrand = v; state.selectedModel = null; onChanged(); },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: modelValue,
-                decoration: const InputDecoration(labelText: 'Tipe Smartphone', prefixIcon: Icon(Icons.smartphone)),
-                items: models.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
-                onChanged: state.selectedBrand == null ? null : (v) { state.selectedModel = v; onChanged(); },
-              ),
-            ]);
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: brandValue,
+                    decoration: const InputDecoration(
+                        labelText: 'Brand Smartphone',
+                        prefixIcon: Icon(Icons.branding_watermark)),
+                    items: brands
+                        .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                        .toList(),
+                    onChanged: (v) {
+                      state.selectedBrand = v;
+                      state.selectedModel = null;
+                      onChanged();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: modelValue,
+                    decoration: const InputDecoration(
+                        labelText: 'Tipe Smartphone',
+                        prefixIcon: Icon(Icons.smartphone)),
+                    items: models
+                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .toList(),
+                    onChanged: state.selectedBrand == null
+                        ? null
+                        : (v) {
+                            state.selectedModel = v;
+                            onChanged();
+                          },
+                  ),
+                ]);
           },
         ),
       ],
@@ -129,25 +171,38 @@ class Step2Widget extends StatelessWidget {
       children: [
         Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
         Wrap(
-          spacing: 8, runSpacing: 8,
-          children: labels.entries.map((e) => ChoiceChip(
-            label: Text(e.value),
-            selected: state.serviceType == e.key,
-            onSelected: (v) {
-              if (v) { state.serviceType = e.key; onChanged(); }
-            },
-          )).toList(),
+          spacing: 8,
+          runSpacing: 8,
+          children: labels.entries
+              .map((e) => ChoiceChip(
+                    label: Text(e.value),
+                    selected: state.serviceType == e.key,
+                    onSelected: (v) {
+                      if (v) {
+                        state.serviceType = e.key;
+                        onChanged();
+                      }
+                    },
+                  ))
+              .toList(),
         ),
         const SizedBox(height: 24),
         TextField(
-          controller: state.complaint, maxLines: 4, textCapitalization: TextCapitalization.sentences,
+          controller: state.complaint,
+          maxLines: 4,
+          textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(
             labelText: 'Keluhan / Deskripsi Kerusakan',
-            hintText: 'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
-            prefixIcon: Padding(padding: EdgeInsets.only(bottom: 64), child: Icon(Icons.report_problem_outlined)),
+            hintText:
+                'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
+            prefixIcon: Padding(
+                padding: EdgeInsets.only(bottom: 64),
+                child: Icon(Icons.report_problem_outlined)),
             alignLabelWithHint: true,
           ),
         ),
@@ -169,7 +224,8 @@ class Step3Widget extends StatefulWidget {
 
   final FlowState state;
   final void Function(StoreMatchResult) onSelectStore;
-  final void Function(String partId, String partName, double price) onSelectPart;
+  final void Function(String partId, String partName, double price)
+      onSelectPart;
   final VoidCallback onBack;
 
   @override
@@ -193,11 +249,21 @@ class _Step3WidgetState extends State<Step3Widget> {
           const SizedBox(height: 24),
           const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          Text('Tidak ada toko yang cocok untuk perangkat ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'} dengan layanan ini.', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+          Text(
+              'Tidak ada toko yang cocok untuk perangkat ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'} dengan layanan ini.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
-          Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+              'Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
-          FilledButton.icon(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), label: const Text('Kembali')),
+          FilledButton.icon(
+              onPressed: widget.onBack,
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Kembali')),
         ],
       );
     }
@@ -206,7 +272,10 @@ class _Step3WidgetState extends State<Step3Widget> {
       children: [
         Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('${state.matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+            '${state.matchedStores.length} toko tersedia untuk perangkat kamu.',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 16),
 
         // Selected sparepart indicator
@@ -214,8 +283,10 @@ class _Step3WidgetState extends State<Step3Widget> {
           Card(
             color: theme.colorScheme.primaryContainer,
             child: ListTile(
-              leading: Icon(Icons.check_circle, color: theme.colorScheme.primary),
-              title: Text(state.selectedPartName ?? 'Sparepart dipilih', style: const TextStyle(fontWeight: FontWeight.w600)),
+              leading:
+                  Icon(Icons.check_circle, color: theme.colorScheme.primary),
+              title: Text(state.selectedPartName ?? 'Sparepart dipilih',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text('Harga: ${formatRupiah(state.selectedPartPrice)}'),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
@@ -238,88 +309,132 @@ class _Step3WidgetState extends State<Step3Widget> {
             color: selected ? theme.colorScheme.primaryContainer : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: selected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
+              side: selected
+                  ? BorderSide(color: theme.colorScheme.primary)
+                  : BorderSide.none,
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () => widget.onSelectStore(store),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                    Row(children: [
-                      const Icon(Icons.star, size: 18, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodyMedium),
-                    ]),
-                  ]),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(child: Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.tertiary)),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Expanded(
+                            child: Text(store.storeName,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold))),
+                        Row(children: [
+                          const Icon(Icons.star, size: 18, color: Colors.amber),
+                          const SizedBox(width: 4),
+                          Text(store.ratingAvg.toStringAsFixed(1),
+                              style: theme.textTheme.bodyMedium),
+                        ]),
+                      ]),
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                            child: Text(store.address,
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis)),
+                      ]),
+                      const SizedBox(height: 8),
+                      Text('${store.totalCompleted} servis selesai',
+                          style: theme.textTheme.labelSmall
+                              ?.copyWith(color: theme.colorScheme.tertiary)),
 
-                  // Spareparts — tappable
-                  if (store.spareparts.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text('Sparepart Tersedia', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    ...store.spareparts.map((sp) {
-                      final isPartSelected = sp.id == state.selectedPartId;
-                      return InkWell(
-                        onTap: sp.status != 'available'
-                            ? null
-                            : () {
-                                setState(() {
-                                  state.selectedPartId = sp.id;
-                                  state.selectedPartName = sp.partName;
-                                  state.selectedPartPrice = sp.price;
-                                  // Set estimate cost to sparepart price
-                                  state.estimateCost = sp.price;
-                                });
-                              },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                          margin: const EdgeInsets.symmetric(vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isPartSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+                      // Spareparts — tappable
+                      if (store.spareparts.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text('Sparepart Tersedia',
+                            style: theme.textTheme.labelMedium
+                                ?.copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        ...store.spareparts.map((sp) {
+                          final isPartSelected = sp.id == state.selectedPartId;
+                          return InkWell(
+                            onTap: sp.status != 'available'
+                                ? null
+                                : () {
+                                    setState(() {
+                                      state.selectedPartId = sp.id;
+                                      state.selectedPartName = sp.partName;
+                                      state.selectedPartPrice = sp.price;
+                                      // Set estimate cost to sparepart price
+                                      state.estimateCost = sp.price;
+                                    });
+                                  },
                             borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(children: [
-                            Icon(
-                              isPartSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                              size: 16,
-                              color: isPartSelected ? theme.colorScheme.primary : Colors.grey,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(sp.partName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isPartSelected ? FontWeight.w600 : FontWeight.normal)),
-                                  Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                                ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 6, horizontal: 8),
+                              margin: const EdgeInsets.symmetric(vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isPartSelected
+                                    ? theme.colorScheme.primaryContainer
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: Row(children: [
+                                Icon(
+                                  isPartSelected
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  size: 16,
+                                  color: isPartSelected
+                                      ? theme.colorScheme.primary
+                                      : Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(sp.partName,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                  fontWeight: isPartSelected
+                                                      ? FontWeight.w600
+                                                      : FontWeight.normal)),
+                                      Text(
+                                          sp.status == 'available'
+                                              ? 'Tersedia'
+                                              : 'Preorder',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: sp.status == 'available'
+                                                  ? Colors.green
+                                                  : Colors.orange)),
+                                    ],
+                                  ),
+                                ),
+                                Text(formatRupiah(sp.price),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.bold)),
+                              ]),
                             ),
-                            Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          ]),
-                        ),
-                      );
-                    }),
-                  ],
+                          );
+                        }),
+                      ],
 
-                  const Divider(height: 16),
-                  Row(children: [
-                    const Icon(Icons.info_outline, size: 16),
-                    const SizedBox(width: 4),
-                    Text('Estimasi awal: ${formatRupiah(store.estimatedCost)}', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                  ]),
-                ]),
+                      const Divider(height: 16),
+                      Row(children: [
+                        const Icon(Icons.info_outline, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                            'Estimasi awal: ${formatRupiah(store.estimatedCost)}',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w600)),
+                      ]),
+                    ]),
               ),
             ),
           );
@@ -346,28 +461,48 @@ class Step4Widget extends StatelessWidget {
         const SizedBox(height: 24),
         SegmentedButton<String>(
           segments: const [
-            ButtonSegment(value: 'walk_in', label: Text('Antar ke Toko'), icon: Icon(Icons.store)),
-            ButtonSegment(value: 'courier_pickup', label: Text('Pickup Kurir'), icon: Icon(Icons.local_shipping)),
+            ButtonSegment(
+                value: 'walk_in',
+                label: Text('Antar ke Toko'),
+                icon: Icon(Icons.store)),
+            ButtonSegment(
+                value: 'courier_pickup',
+                label: Text('Pickup Kurir'),
+                icon: Icon(Icons.local_shipping)),
           ],
           selected: {state.delivery},
-          onSelectionChanged: (v) { state.delivery = v.first; },
+          onSelectionChanged: (v) {
+            state.delivery = v.first;
+          },
           showSelectedIcon: false,
         ),
         const SizedBox(height: 24),
         TextField(
-          controller: state.name, textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Nama Lengkap', prefixIcon: Icon(Icons.person_outline)),
+          controller: state.name,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+              labelText: 'Nama Lengkap',
+              prefixIcon: Icon(Icons.person_outline)),
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: state.phone, keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(labelText: 'Nomor WhatsApp', prefixText: '08', prefixIcon: Icon(Icons.phone_outlined)),
+          controller: state.phone,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(
+              labelText: 'Nomor WhatsApp',
+              prefixText: '08',
+              prefixIcon: Icon(Icons.phone_outlined)),
         ),
         if (state.delivery == 'courier_pickup') ...[
           const SizedBox(height: 16),
           TextField(
-            controller: state.address, maxLines: 2, textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Alamat Penjemputan', prefixIcon: Icon(Icons.location_on_outlined), alignLabelWithHint: true),
+            controller: state.address,
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+                labelText: 'Alamat Penjemputan',
+                prefixIcon: Icon(Icons.location_on_outlined),
+                alignLabelWithHint: true),
           ),
         ],
       ],
@@ -388,7 +523,11 @@ class _ConfirmRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
+        SizedBox(
+            width: 80,
+            child: Text(label,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
         Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
       ]),
     );
@@ -419,13 +558,21 @@ class Step5Widget extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _ConfirmRow(label: 'Perangkat', value: '${state.deviceType.toUpperCase()} - ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'}'),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _ConfirmRow(
+                  label: 'Perangkat',
+                  value:
+                      '${state.deviceType.toUpperCase()} - ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'}'),
               const Divider(),
-              _ConfirmRow(label: 'Layanan', value: typeLabels[state.serviceType]!),
+              _ConfirmRow(
+                  label: 'Layanan', value: typeLabels[state.serviceType]!),
               if (state.selectedPartId != null) ...[
                 const Divider(),
-                _ConfirmRow(label: 'Sparepart', value: '${state.selectedPartName ?? '-'} — ${formatRupiah(state.selectedPartPrice)}'),
+                _ConfirmRow(
+                    label: 'Sparepart',
+                    value:
+                        '${state.selectedPartName ?? '-'} — ${formatRupiah(state.selectedPartPrice)}'),
               ],
               const Divider(),
               _ConfirmRow(label: 'Keluhan', value: state.complaint.text),
@@ -438,22 +585,37 @@ class Step5Widget extends StatelessWidget {
                 _ConfirmRow(label: 'Alamat', value: state.address.text),
               ],
               const Divider(),
-              _ConfirmRow(label: 'Pengiriman', value: state.delivery == 'walk_in' ? 'Antar ke Toko' : 'Pickup Kurir'),
+              _ConfirmRow(
+                  label: 'Pengiriman',
+                  value: state.delivery == 'walk_in'
+                      ? 'Antar ke Toko'
+                      : 'Pickup Kurir'),
               const Divider(height: 24),
               Row(children: [
-                Text('Estimasi Biaya', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Estimasi Biaya',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 const Spacer(),
-                Text(formatRupiah(state.estimateCost), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                Text(formatRupiah(state.estimateCost),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary)),
               ]),
               const SizedBox(height: 4),
-              Text('* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              Text(
+                  '* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.',
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
             ]),
           ),
         ),
         const SizedBox(height: 16),
         TextField(
           controller: state.coupon,
-          decoration: const InputDecoration(labelText: 'Kode Kupon (opsional)', prefixIcon: Icon(Icons.local_offer_outlined), isDense: true),
+          decoration: const InputDecoration(
+              labelText: 'Kode Kupon (opsional)',
+              prefixIcon: Icon(Icons.local_offer_outlined),
+              isDense: true),
         ),
       ],
     );

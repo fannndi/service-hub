@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.title, this.description, this.icon});
+  const EmptyState(
+      {super.key, required this.title, this.description, this.icon});
 
   final String title;
   final String? description;
@@ -20,10 +21,15 @@ class EmptyState extends StatelessWidget {
               Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(height: 12),
             ],
-            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+            Text(title,
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center),
             if (description != null) ...[
               const SizedBox(height: 8),
-              Text(description!, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              Text(description!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
             ],
           ],
         ),

@@ -1,16 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../application/customer_providers.dart';
-import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
-import '../widgets/customer_widgets.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -18,70 +7,123 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.build, size: 80, color: theme.colorScheme.primary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'ServisGadget',
-                    style: theme.textTheme.headlineLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Servis smartphone cepat & terpercaya',
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 48),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton.icon(
-                      onPressed: () => context.go('/service'),
-                      icon: const Icon(Icons.build, size: 22),
-                      label: const Text('Service Now',
-                          style: TextStyle(fontSize: 16)),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.push('/login'),
-                          icon: const Icon(Icons.person_outline, size: 20),
-                          label: const Text('Pelanggan'),
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: scheme.primaryContainer.withValues(alpha: .82),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color:
+                                  scheme.outlineVariant.withValues(alpha: .7)),
                         ),
+                        child: Icon(Icons.handyman_outlined,
+                            color: scheme.onPrimaryContainer),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.push('/store-login'),
-                          icon: const Icon(Icons.store_outlined, size: 20),
-                          label: const Text('Toko'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('ServisGadget',
+                                style: theme.textTheme.headlineMedium),
+                            Text(
+                                'Servis gadget, tracking jelas, pembayaran rapi.',
+                                style: theme.textTheme.bodyMedium
+                                    ?.copyWith(color: scheme.onSurfaceVariant)),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/admin/login'),
-                      icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
-                      label: const Text('Admin'),
+                  const SizedBox(height: 34),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: scheme.outlineVariant.withValues(alpha: .75)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text('Mulai dari sini',
+                              style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 52,
+                            child: FilledButton.icon(
+                              onPressed: () => context.go('/service'),
+                              icon:
+                                  const Icon(Icons.add_task_outlined, size: 21),
+                              label: const Text('Ajukan Servis'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => context.push('/login'),
+                                  icon: const Icon(Icons.person_outline,
+                                      size: 20),
+                                  label: const Text('Pelanggan'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => context.push('/store-login'),
+                                  icon: const Icon(Icons.storefront_outlined,
+                                      size: 20),
+                                  label: const Text('Toko'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            onPressed: () => context.push('/admin/login'),
+                            icon: const Icon(
+                                Icons.admin_panel_settings_outlined,
+                                size: 20),
+                            label: const Text('Admin Platform'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Icon(Icons.verified_user_outlined,
+                          size: 18, color: scheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Progress servis, estimasi biaya, dan riwayat pembayaran dalam satu tempat.',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

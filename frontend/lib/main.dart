@@ -25,7 +25,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: _AppRefresh(ref),
     redirect: (context, state) {
       final loc = state.matchedLocation;
-      final publicRoutes = {'/splash', '/welcome', '/login', '/store-login', '/service', '/stores', '/maintenance'};
+      final publicRoutes = {
+        '/splash',
+        '/welcome',
+        '/login',
+        '/store-login',
+        '/service',
+        '/stores',
+        '/maintenance'
+      };
 
       final storeAuth = ref.read(storeAuthControllerProvider);
       final custAuth = ref.read(customerAuthProvider);
@@ -39,15 +47,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (adminAuth.isLoading) return null;
         final adminUser = adminAuth.valueOrNull;
         if (adminUser == null && loc != '/admin/login') return '/admin/login';
-        if (adminUser != null && loc == '/admin/login') return '/admin/dashboard';
+        if (adminUser != null && loc == '/admin/login') {
+          return '/admin/dashboard';
+        }
         return null;
       }
 
       if (loc.startsWith('/store/')) {
         final storeUser = storeAuth.valueOrNull;
         if (storeUser == null && loc != '/store-login') return '/store-login';
-        if (storeUser != null && storeUser.isFirstLogin && loc != '/store/change-password') return '/store/change-password';
-        if (storeUser != null && loc == '/store-login') return '/store/dashboard';
+        if (storeUser != null &&
+            storeUser.isFirstLogin &&
+            loc != '/store/change-password') {
+          return '/store/change-password';
+        }
+        if (storeUser != null && loc == '/store-login') {
+          return '/store/dashboard';
+        }
         return null;
       }
 
@@ -55,18 +71,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final custUser = custAuth.valueOrNull;
 
       if (storeUser != null) {
-        if (storeUser.isFirstLogin && loc != '/store/change-password') return '/store/change-password';
-        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/store/dashboard';
+        if (storeUser.isFirstLogin && loc != '/store/change-password') {
+          return '/store/change-password';
+        }
+        if (loc == '/store-login' || publicRoutes.contains(loc)) {
+          return '/store/dashboard';
+        }
         return null;
       }
 
       if (custUser != null) {
-        if (custUser.isFirstLogin && loc != '/change-password') return '/change-password';
+        if (custUser.isFirstLogin && loc != '/change-password') {
+          return '/change-password';
+        }
         if (publicRoutes.contains(loc)) return '/home';
         return null;
       }
 
-      if (!publicRoutes.contains(loc) && !loc.startsWith('/stores/') && !loc.startsWith('/booking/')) {
+      if (!publicRoutes.contains(loc) &&
+          !loc.startsWith('/stores/') &&
+          !loc.startsWith('/booking/')) {
         return '/welcome';
       }
       return null;
@@ -205,37 +229,56 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              width: 120,
-              errorBuilder: (_, __, ___) => const Icon(Icons.build, size: 80, color: Colors.teal),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border:
+                Border.all(color: scheme.outlineVariant.withValues(alpha: .7)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 30),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 96,
+                  errorBuilder: (_, __, ___) => Icon(Icons.handyman_outlined,
+                      size: 58, color: scheme.primary),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'ServisGadget',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _status,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _status.contains('✓')
+                        ? scheme.primary
+                        : _status.contains('tidak ditemukan') ||
+                                _status.contains('perbaikan')
+                            ? scheme.tertiary
+                            : scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                if (!_status.contains('✓') &&
+                    !_status.contains('tidak ditemukan') &&
+                    !_status.contains('perbaikan'))
+                  const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.4)),
+              ],
             ),
-            const SizedBox(height: 24),
-            Text(
-              'ServisGadget',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _status,
-              style: TextStyle(
-                fontSize: 14,
-                color: _status.contains('✓')
-                    ? Colors.green
-                    : _status.contains('tidak ditemukan') || _status.contains('perbaikan')
-                        ? Colors.orange
-                        : Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (!_status.contains('✓') && !_status.contains('tidak ditemukan') && !_status.contains('perbaikan'))
-              const CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
     );

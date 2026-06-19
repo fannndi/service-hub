@@ -30,7 +30,8 @@ Dio createAuthDio({
   required String baseUrl,
   required Future<String?> Function() readAccessToken,
   required Future<String?> Function() readRefreshToken,
-  required Future<void> Function(String accessToken, String refreshToken) onSaveTokens,
+  required Future<void> Function(String accessToken, String refreshToken)
+      onSaveTokens,
   required Future<void> Function() onClearSession,
   String refreshEndpoint = '/auth/refresh',
 }) {
@@ -75,7 +76,8 @@ Dio createAuthDio({
           return;
         }
         final publicDio = Dio(BaseOptions(baseUrl: baseUrl));
-        final response = await publicDio.post(refreshEndpoint, data: {'refresh_token': refresh});
+        final response = await publicDio
+            .post(refreshEndpoint, data: {'refresh_token': refresh});
         final data = unwrap(response.data);
         final newAccess = readString(data, 'access_token', 'accessToken');
         final newRefresh = readString(data, 'refresh_token', 'refreshToken');

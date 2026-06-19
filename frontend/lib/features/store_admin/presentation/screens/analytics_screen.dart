@@ -18,14 +18,32 @@ class AnalyticsScreen extends ConsumerWidget {
         error: (e, _) => ErrorPanel(message: e.toString()),
         data: (data) => ListView(padding: const EdgeInsets.all(16), children: [
           MetricGrid(cards: [
-            MetricCard(title: 'Revenue', value: money(data.revenueMonth), icon: Icons.payments_outlined),
-            MetricCard(title: 'Orders', value: '${data.activeOrders + data.pendingOrders}', icon: Icons.receipt_long_outlined),
-            MetricCard(title: 'Completion', value: '${data.completionRate.toStringAsFixed(1)}%', icon: Icons.task_alt_outlined),
-            MetricCard(title: 'Rating', value: data.ratingAvg.toStringAsFixed(1), icon: Icons.star_outline),
+            MetricCard(
+                title: 'Revenue',
+                value: money(data.revenueMonth),
+                icon: Icons.payments_outlined),
+            MetricCard(
+                title: 'Orders',
+                value: '${data.activeOrders + data.pendingOrders}',
+                icon: Icons.receipt_long_outlined),
+            MetricCard(
+                title: 'Completion',
+                value: '${data.completionRate.toStringAsFixed(1)}%',
+                icon: Icons.task_alt_outlined),
+            MetricCard(
+                title: 'Rating',
+                value: data.ratingAvg.toStringAsFixed(1),
+                icon: Icons.star_outline),
           ]),
-          SimpleBarChart(title: 'Order Trends', items: data.ordersTrend.map((e) => CategoryMetric(e.label, e.value)).toList()),
-          SimpleBarChart(title: 'Popular Services', items: data.serviceCategories),
-          SimpleBarChart(title: 'Sparepart Usage', items: data.sparepartConsumption),
+          SimpleBarChart(
+              title: 'Order Trends',
+              items: data.ordersTrend
+                  .map((e) => CategoryMetric(e.label, e.value))
+                  .toList()),
+          SimpleBarChart(
+              title: 'Popular Services', items: data.serviceCategories),
+          SimpleBarChart(
+              title: 'Sparepart Usage', items: data.sparepartConsumption),
         ]),
       ),
     );

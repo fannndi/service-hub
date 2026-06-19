@@ -28,19 +28,27 @@ class OrderItem {
         id: readString(json, 'id'),
         serviceType: readString(json, 'service_type', 'serviceType'),
         complaint: readString(json, 'complaint'),
-        sparepartId: json['sparepart_id'] as String? ?? json['sparepartId'] as String?,
-        sparepartName: json['sparepart_name'] as String? ?? json['sparepartName'] as String?,
+        sparepartId:
+            json['sparepart_id'] as String? ?? json['sparepartId'] as String?,
+        sparepartName: json['sparepart_name'] as String? ??
+            json['sparepartName'] as String?,
         itemPrice: moneyFromJson(json['item_price'] ?? json['itemPrice']),
-        finalItemPrice: json['final_item_price'] == null && json['finalItemPrice'] == null
+        finalItemPrice: json['final_item_price'] == null &&
+                json['finalItemPrice'] == null
             ? null
             : moneyFromJson(json['final_item_price'] ?? json['finalItemPrice']),
         status: readString(json, 'status'),
-        technicianNote: json['technician_note'] as String? ?? json['technicianNote'] as String?,
+        technicianNote: json['technician_note'] as String? ??
+            json['technicianNote'] as String?,
       );
 }
 
 class TrackingEntry {
-  const TrackingEntry({required this.id, required this.status, this.note, required this.createdAt});
+  const TrackingEntry(
+      {required this.id,
+      required this.status,
+      this.note,
+      required this.createdAt});
   final String id;
   final OrderStatus status;
   final String? note;
@@ -50,12 +58,20 @@ class TrackingEntry {
         id: readString(json, 'id'),
         status: OrderStatus.fromJson(json['status']),
         note: json['note'] as String?,
-        createdAt: dateFromJson(json['created_at'] ?? json['createdAt']) ?? DateTime.now(),
+        createdAt: dateFromJson(json['created_at'] ?? json['createdAt']) ??
+            DateTime.now(),
       );
 }
 
 class PaymentRecord {
-  const PaymentRecord({required this.id, required this.amount, required this.paymentMethod, required this.paymentType, required this.status, this.proofUrl, required this.createdAt});
+  const PaymentRecord(
+      {required this.id,
+      required this.amount,
+      required this.paymentMethod,
+      required this.paymentType,
+      required this.status,
+      this.proofUrl,
+      required this.createdAt});
   final String id;
   final double amount;
   final String paymentMethod;
@@ -71,7 +87,8 @@ class PaymentRecord {
         paymentType: readString(json, 'payment_type', 'paymentType'),
         status: readString(json, 'status'),
         proofUrl: json['proof_url'] as String? ?? json['proofUrl'] as String?,
-        createdAt: dateFromJson(json['created_at'] ?? json['createdAt']) ?? DateTime.now(),
+        createdAt: dateFromJson(json['created_at'] ?? json['createdAt']) ??
+            DateTime.now(),
       );
 }
 
@@ -129,7 +146,9 @@ class CustomerOrder {
   final bool reviewed;
 
   factory CustomerOrder.fromJson(Map<String, dynamic> json) {
-    final store = json['store'] is Map<String, dynamic> ? json['store'] as Map<String, dynamic> : <String, dynamic>{};
+    final store = json['store'] is Map<String, dynamic>
+        ? json['store'] as Map<String, dynamic>
+        : <String, dynamic>{};
     final storeName = readString(store, 'store_name', 'storeName');
     return CustomerOrder(
       id: readString(json, 'id'),
@@ -139,39 +158,66 @@ class CustomerOrder {
       deviceModel: readString(json, 'device_model', 'deviceModel'),
       deviceType: readString(json, 'device_type', 'deviceType'),
       deliveryMethod: readString(json, 'delivery_method', 'deliveryMethod'),
-      deliveryAddress: json['delivery_address'] as String? ?? json['deliveryAddress'] as String?,
+      deliveryAddress: json['delivery_address'] as String? ??
+          json['deliveryAddress'] as String?,
       storeName: storeName.isEmpty ? json['storeName'] as String? : storeName,
-      storeAddress: store['address'] as String? ?? json['storeAddress'] as String?,
-      storePhone: store['phone_number'] as String? ?? store['phoneNumber'] as String? ?? json['storePhone'] as String?,
-      totalEstimasi: moneyFromJson(json['total_estimasi'] ?? json['totalEstimasi']),
-      discountAmount: moneyFromJson(json['discount_amount'] ?? json['discountAmount']),
-      finalPrice: json['final_price'] == null && json['finalPrice'] == null ? null : moneyFromJson(json['final_price'] ?? json['finalPrice']),
-      serviceFee: json['service_fee'] == null && json['serviceFee'] == null ? null : moneyFromJson(json['service_fee'] ?? json['serviceFee']),
-      diagnosisNote: json['diagnosis_note'] as String? ?? json['diagnosisNote'] as String?,
+      storeAddress:
+          store['address'] as String? ?? json['storeAddress'] as String?,
+      storePhone: store['phone_number'] as String? ??
+          store['phoneNumber'] as String? ??
+          json['storePhone'] as String?,
+      totalEstimasi:
+          moneyFromJson(json['total_estimasi'] ?? json['totalEstimasi']),
+      discountAmount:
+          moneyFromJson(json['discount_amount'] ?? json['discountAmount']),
+      finalPrice: json['final_price'] == null && json['finalPrice'] == null
+          ? null
+          : moneyFromJson(json['final_price'] ?? json['finalPrice']),
+      serviceFee: json['service_fee'] == null && json['serviceFee'] == null
+          ? null
+          : moneyFromJson(json['service_fee'] ?? json['serviceFee']),
+      diagnosisNote:
+          json['diagnosis_note'] as String? ?? json['diagnosisNote'] as String?,
       paymentStatus: readString(json, 'payment_status', 'paymentStatus'),
-      warrantyExpiredAt: dateFromJson(json['warranty_expired_at'] ?? json['warrantyExpiredAt']),
+      warrantyExpiredAt: dateFromJson(
+          json['warranty_expired_at'] ?? json['warrantyExpiredAt']),
       slaDeadline: dateFromJson(json['sla_deadline'] ?? json['slaDeadline']),
       createdAt: dateFromJson(json['created_at'] ?? json['createdAt']),
-      items: (json['items'] as List? ?? const []).whereType<Map<String, dynamic>>().map(OrderItem.fromJson).toList(),
-      tracking: (json['tracking'] as List? ?? const []).whereType<Map<String, dynamic>>().map(TrackingEntry.fromJson).toList(),
-      payments: (json['payments'] as List? ?? const []).whereType<Map<String, dynamic>>().map(PaymentRecord.fromJson).toList(),
-      reviewed: json['reviewed'] as bool? ?? json['hasReview'] as bool? ?? json['review'] != null,
+      items: (json['items'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(OrderItem.fromJson)
+          .toList(),
+      tracking: (json['tracking'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(TrackingEntry.fromJson)
+          .toList(),
+      payments: (json['payments'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(PaymentRecord.fromJson)
+          .toList(),
+      reviewed: json['reviewed'] as bool? ??
+          json['hasReview'] as bool? ??
+          json['review'] != null,
     );
   }
 }
 
 class CreateOrderItemInput {
-  const CreateOrderItemInput({required this.serviceType, required this.complaint, this.sparepartId, this.itemPrice = 0});
+  const CreateOrderItemInput(
+      {required this.serviceType,
+      required this.complaint,
+      this.sparepartId,
+      this.itemPrice = 0});
   final String serviceType;
   final String complaint;
   final String? sparepartId;
   final double itemPrice;
   Map<String, dynamic> toJson() => {
-    'serviceType': serviceType,
-    'complaint': complaint,
-    if (sparepartId != null) 'sparepartId': sparepartId,
-    'itemPrice': itemPrice,
-  };
+        'serviceType': serviceType,
+        'complaint': complaint,
+        if (sparepartId != null) 'sparepartId': sparepartId,
+        'itemPrice': itemPrice,
+      };
 }
 
 class CreateOrderRequest {
@@ -207,26 +253,38 @@ class CreateOrderRequest {
         'brand': brand,
         'deviceModel': deviceModel,
         'deliveryMethod': deliveryMethod,
-        if (deliveryAddress != null && deliveryAddress!.isNotEmpty) 'deliveryAddress': deliveryAddress,
-        if (couponCode != null && couponCode!.isNotEmpty) 'couponCode': couponCode,
+        if (deliveryAddress != null && deliveryAddress!.isNotEmpty)
+          'deliveryAddress': deliveryAddress,
+        if (couponCode != null && couponCode!.isNotEmpty)
+          'couponCode': couponCode,
         'items': items.map((item) => item.toJson()).toList(),
       };
 }
 
 class CreateOrderResult {
-  const CreateOrderResult({required this.id, required this.orderNumber, required this.status, required this.totalEstimasi, required this.isNewCustomer, required this.message});
+  const CreateOrderResult(
+      {required this.id,
+      required this.orderNumber,
+      required this.status,
+      required this.totalEstimasi,
+      required this.isNewCustomer,
+      required this.message});
   final String id;
   final String orderNumber;
   final OrderStatus status;
   final double totalEstimasi;
   final bool isNewCustomer;
   final String message;
-  factory CreateOrderResult.fromJson(Map<String, dynamic> json) => CreateOrderResult(
+  factory CreateOrderResult.fromJson(Map<String, dynamic> json) =>
+      CreateOrderResult(
         id: readString(json, 'id'),
         orderNumber: readString(json, 'order_number', 'orderNumber'),
         status: OrderStatus.fromJson(json['status']),
-        totalEstimasi: moneyFromJson(json['total_estimasi'] ?? json['totalEstimasi']),
-        isNewCustomer: json['is_new_customer'] as bool? ?? json['isNewCustomer'] as bool? ?? false,
+        totalEstimasi:
+            moneyFromJson(json['total_estimasi'] ?? json['totalEstimasi']),
+        isNewCustomer: json['is_new_customer'] as bool? ??
+            json['isNewCustomer'] as bool? ??
+            false,
         message: readString(json, 'message'),
       );
 }

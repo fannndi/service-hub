@@ -18,7 +18,8 @@ class AppConfigData {
     return AppConfigData(
       environment: json['environment'] as String? ?? 'local',
       maintenanceMode: json['maintenanceMode'] as bool? ?? false,
-      maintenanceMessage: json['maintenanceMessage'] as String? ?? 'Sedang Maintenance',
+      maintenanceMessage:
+          json['maintenanceMessage'] as String? ?? 'Sedang Maintenance',
       version: json['version'] as String? ?? '1.0.0',
     );
   }
@@ -36,12 +37,14 @@ class ConfigService {
 
   static Future<AppConfigData> fetch() async {
     final url = EnvironmentService.currentUrl;
-    final dio = Dio(BaseOptions(baseUrl: url, connectTimeout: _timeout, receiveTimeout: _timeout));
+    final dio = Dio(BaseOptions(
+        baseUrl: url, connectTimeout: _timeout, receiveTimeout: _timeout));
     final response = await dio.get('/config');
     final data = response.data;
-    final body = data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
-        ? data['data'] as Map<String, dynamic>
-        : data as Map<String, dynamic>;
+    final body =
+        data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
+            ? data['data'] as Map<String, dynamic>
+            : data as Map<String, dynamic>;
     return AppConfigData.fromJson(body);
   }
 }

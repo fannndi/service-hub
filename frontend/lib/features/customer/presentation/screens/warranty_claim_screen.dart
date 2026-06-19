@@ -5,12 +5,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class WarrantyClaimScreen extends ConsumerStatefulWidget {
@@ -20,6 +14,7 @@ class WarrantyClaimScreen extends ConsumerStatefulWidget {
   ConsumerState<WarrantyClaimScreen> createState() =>
       _WarrantyClaimScreenState();
 }
+
 class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
   final _description = TextEditingController();
   String _type = 'warranty_claim';
@@ -53,9 +48,10 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
         context.pop();
       }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -77,7 +73,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
             return ListView(padding: const EdgeInsets.all(16), children: [
               Text('Garansi aktif s/d ${shortDate(data.warrantyExpiredAt)}'),
               DropdownButtonFormField(
-                  value: _type,
+                  initialValue: _type,
                   decoration: const InputDecoration(labelText: 'Jenis Masalah'),
                   items: const [
                     DropdownMenuItem(
@@ -107,8 +103,9 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
                               source: ImageSource.gallery,
                               imageQuality: 72,
                               maxWidth: 1600);
-                          if (picked != null)
+                          if (picked != null) {
                             setState(() => _files.add(picked));
+                          }
                         },
                   icon: const Icon(Icons.add_a_photo),
                   label: const Text('Tambah Foto')),

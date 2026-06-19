@@ -17,8 +17,18 @@ class CustomersScreen extends ConsumerWidget {
         error: (e, _) => ErrorPanel(message: e.toString()),
         data: (page) => AdminDataTable<CustomerProfile>(
           items: page.items,
-          columns: const [DataColumn(label: Text('Nama')), DataColumn(label: Text('HP')), DataColumn(label: Text('Order')), DataColumn(label: Text('Total Spend'))],
-          cells: (c) => [DataCell(Text(c.name)), DataCell(Text(c.phone)), DataCell(Text('${c.totalOrders}')), DataCell(Text(money(c.totalSpent)))],
+          columns: const [
+            DataColumn(label: Text('Nama')),
+            DataColumn(label: Text('HP')),
+            DataColumn(label: Text('Order')),
+            DataColumn(label: Text('Total Spend'))
+          ],
+          cells: (c) => [
+            DataCell(Text(c.name)),
+            DataCell(Text(c.phone)),
+            DataCell(Text('${c.totalOrders}')),
+            DataCell(Text(money(c.totalSpent)))
+          ],
         ),
       ),
     );

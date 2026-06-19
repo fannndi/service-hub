@@ -4,12 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
-import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
-import '../../../../shared_widgets/status_badge.dart';
-import '../../../../shared_widgets/empty_state.dart';
-import '../../../../shared_widgets/formatters.dart';
 import '../widgets/customer_widgets.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -18,6 +12,7 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
   ConsumerState<ChangePasswordScreen> createState() =>
       _ChangePasswordScreenState();
 }
+
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _old = TextEditingController();
@@ -34,9 +29,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           .changePassword(_old.text, _next.text);
       if (mounted) context.go('/home');
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -73,8 +69,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       labelText: 'Password Baru', border: OutlineInputBorder()),
                   validator: (v) {
                     if (v == null || v.length < 8) return 'Minimal 8 karakter.';
-                    if (v == _old.text)
+                    if (v == _old.text) {
                       return 'Password baru tidak boleh sama.';
+                    }
                     return null;
                   }),
               const SizedBox(height: 12),

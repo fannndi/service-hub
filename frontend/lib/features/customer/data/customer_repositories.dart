@@ -37,7 +37,8 @@ String _codeToMessage(String? code) => switch (code) {
       'INVALID_CREDENTIALS' => 'Nomor HP atau password salah.',
       'ACCOUNT_LOCKED' => 'Akun terkunci sementara.',
       'ACCOUNT_SUSPENDED' => 'Akun dinonaktifkan. Hubungi support.',
-      'PASSWORD_SAME_AS_OLD' => 'Password baru tidak boleh sama dengan yang lama.',
+      'PASSWORD_SAME_AS_OLD' =>
+        'Password baru tidak boleh sama dengan yang lama.',
       'STOCK_UNAVAILABLE' => 'Stok sparepart habis, pilih sparepart lain.',
       'STORE_NOT_ACTIVE' => 'Toko tidak aktif.',
       'PROOF_REQUIRED' => 'Bukti pembayaran wajib diunggah.',
@@ -63,10 +64,14 @@ class CustomerSessionStorage {
     await _storage.write(key: _refreshKey, value: refreshToken);
   }
 
-  Future<void> cacheProfile(CustomerUser user) => _storage.write(key: _cachedProfileKey, value: '${user.fullName}|${user.phoneNumber}|${user.address ?? ''}');
+  Future<void> cacheProfile(CustomerUser user) => _storage.write(
+      key: _cachedProfileKey,
+      value: '${user.fullName}|${user.phoneNumber}|${user.address ?? ''}');
   Future<String?> readCachedProfile() => _storage.read(key: _cachedProfileKey);
-  Future<void> saveNotificationPreference(bool enabled) => _storage.write(key: _cachedSettingsKey, value: enabled ? '1' : '0');
-  Future<bool> readNotificationPreference() async => (await _storage.read(key: _cachedSettingsKey)) != '0';
+  Future<void> saveNotificationPreference(bool enabled) =>
+      _storage.write(key: _cachedSettingsKey, value: enabled ? '1' : '0');
+  Future<bool> readNotificationPreference() async =>
+      (await _storage.read(key: _cachedSettingsKey)) != '0';
 
   Future<void> clearAll() async {
     await _storage.delete(key: _accessKey);
@@ -75,17 +80,16 @@ class CustomerSessionStorage {
 }
 
 class CustomerApiClient {
-  CustomerApiClient(AppConfig config, this._session)
+  CustomerApiClient(AppConfig config, CustomerSessionStorage session)
       : publicDio = createApiClient(config.apiBaseUrl),
         authDio = createAuthDio(
           baseUrl: config.apiBaseUrl,
-          readAccessToken: _session.readAccessToken,
-          readRefreshToken: _session.readRefreshToken,
-          onSaveTokens: _session.saveTokens,
-          onClearSession: _session.clearAll,
+          readAccessToken: session.readAccessToken,
+          readRefreshToken: session.readRefreshToken,
+          onSaveTokens: session.saveTokens,
+          onClearSession: session.clearAll,
         );
 
-  final CustomerSessionStorage _session;
   final Dio publicDio;
   final Dio authDio;
 }
@@ -96,7 +100,8 @@ class CustomerAuthRepository {
   final CustomerSessionStorage _session;
 
   Future<LoginResult> login(String phone, String password) async {
-    final response = await _api.publicDio.post('/auth/login', data: {'phone_number': normalizePhone(phone), 'password': password});
+    final response = await _api.publicDio.post('/auth/login',
+        data: {'phone_number': normalizePhone(phone), 'password': password});
     final result = LoginResult.fromJson(unwrap(response.data));
     await _session.saveTokens(result.accessToken, result.refreshToken);
     await _session.cacheProfile(result.user);
@@ -116,11 +121,17 @@ class CustomerAuthRepository {
   }
 
   Future<void> changePassword(String oldPassword, String newPassword) async {
-    await _api.authDio.post('/auth/change-password', data: {'old_password': oldPassword, 'new_password': newPassword});
+    await _api.authDio.post('/auth/change-password',
+        data: {'old_password': oldPassword, 'new_password': newPassword});
   }
 
-  Future<CustomerUser> updateProfile({required String fullName, String? address, String? avatarUrl}) async {
-    final response = await _api.authDio.patch('/me', data: {'full_name': fullName, 'address': address, if (avatarUrl != null) 'avatar_url': avatarUrl});
+  Future<CustomerUser> updateProfile(
+      {required String fullName, String? address, String? avatarUrl}) async {
+    final response = await _api.authDio.patch('/me', data: {
+      'full_name': fullName,
+      'address': address,
+      if (avatarUrl != null) 'avatar_url': avatarUrl
+    });
     final user = CustomerUser.fromJson(unwrap(response.data));
     await _session.cacheProfile(user);
     return user;
@@ -130,7 +141,8 @@ class CustomerAuthRepository {
     final refresh = await _session.readRefreshToken();
     if (refresh != null) {
       try {
-        await _api.authDio.post('/auth/logout', data: {'refresh_token': refresh});
+        await _api.authDio
+            .post('/auth/logout', data: {'refresh_token': refresh});
       } catch (_) {}
     }
     await _session.clearAll();
@@ -141,8 +153,15 @@ class StoreDiscoveryRepository {
   StoreDiscoveryRepository(this._api);
   final CustomerApiClient _api;
 
-  Future<List<ServiceStore>> getStores({String? brand, String? deviceModel, int page = 1}) async {
-    final response = await _api.publicDio.get('/stores', queryParameters: {'page': page, 'limit': 20, if (brand != null && brand != 'All') 'brand': brand, if (deviceModel != null && deviceModel.isNotEmpty) 'deviceModel': deviceModel});
+  Future<List<ServiceStore>> getStores(
+      {String? brand, String? deviceModel, int page = 1}) async {
+    final response = await _api.publicDio.get('/stores', queryParameters: {
+      'page': page,
+      'limit': 20,
+      if (brand != null && brand != 'All') 'brand': brand,
+      if (deviceModel != null && deviceModel.isNotEmpty)
+        'deviceModel': deviceModel
+    });
     return unwrapList(response.data).map(ServiceStore.fromJson).toList();
   }
 
@@ -166,7 +185,8 @@ class StoreDiscoveryRepository {
     required String deviceModel,
     String? partType,
   }) async {
-    final response = await _api.publicDio.get('/stores/match', queryParameters: {
+    final response =
+        await _api.publicDio.get('/stores/match', queryParameters: {
       'brand': brand,
       'deviceModel': deviceModel,
       if (partType != null) 'partType': partType,
@@ -180,12 +200,18 @@ class OrderRepository {
   final CustomerApiClient _api;
 
   Future<CreateOrderResult> createOrder(CreateOrderRequest request) async {
-    final response = await _api.publicDio.post('/orders', data: request.toJson());
+    final response =
+        await _api.publicDio.post('/orders', data: request.toJson());
     return CreateOrderResult.fromJson(unwrap(response.data));
   }
 
-  Future<List<CustomerOrder>> getMyOrders({String? status, int page = 1, int limit = 20}) async {
-    final response = await _api.authDio.get('/me/orders', queryParameters: {'page': page, 'limit': limit, if (status != null) 'status': status});
+  Future<List<CustomerOrder>> getMyOrders(
+      {String? status, int page = 1, int limit = 20}) async {
+    final response = await _api.authDio.get('/me/orders', queryParameters: {
+      'page': page,
+      'limit': limit,
+      if (status != null) 'status': status
+    });
     return unwrapList(response.data).map(CustomerOrder.fromJson).toList();
   }
 
@@ -199,17 +225,21 @@ class OrderRepository {
     return CustomerOrder.fromJson(unwrap(response.data));
   }
 
-  Future<void> approveOrder(String orderId) => _api.authDio.post('/orders/$orderId/approve').then((_) {});
-  Future<void> rejectOrder(String orderId) => _api.authDio.post('/orders/$orderId/reject').then((_) {});
+  Future<void> approveOrder(String orderId) =>
+      _api.authDio.post('/orders/$orderId/approve').then((_) {});
+  Future<void> rejectOrder(String orderId) =>
+      _api.authDio.post('/orders/$orderId/reject').then((_) {});
 }
 
 class UploadRepository {
   UploadRepository(this._api);
   final CustomerApiClient _api;
 
-  Future<String> uploadFile(XFile file, String folder, void Function(double progress)? onProgress) async {
+  Future<String> uploadFile(XFile file, String folder,
+      void Function(double progress)? onProgress) async {
     final mimeType = _guessMime(file.name);
-    final presign = await _api.authDio.post('/uploads/presign', data: {'fileName': file.name, 'mimeType': mimeType, 'folder': folder});
+    final presign = await _api.authDio.post('/uploads/presign',
+        data: {'fileName': file.name, 'mimeType': mimeType, 'folder': folder});
     final data = unwrap(presign.data);
     final uploadUrl = readString(data, 'uploadUrl', 'upload_url');
     final fileUrl = readString(data, 'fileUrl', 'file_url');
@@ -221,7 +251,10 @@ class UploadRepository {
     await uploadDio.put(
       uploadUrl,
       data: diskFile.openRead(),
-      options: Options(headers: {'Content-Type': mimeType, 'Content-Length': await diskFile.length()}),
+      options: Options(headers: {
+        'Content-Type': mimeType,
+        'Content-Length': await diskFile.length()
+      }),
       onSendProgress: (sent, total) {
         if (total > 0) onProgress?.call(sent / total);
       },
@@ -241,8 +274,18 @@ class PaymentRepository {
   PaymentRepository(this._api);
   final CustomerApiClient _api;
 
-  Future<void> createPayment({required String orderId, required double amount, required String method, required String type, String? proofUrl}) async {
-    await _api.authDio.post('/orders/$orderId/payments', data: {'amount': amount, 'paymentMethod': method, 'paymentType': type, if (proofUrl != null) 'proofUrl': proofUrl});
+  Future<void> createPayment(
+      {required String orderId,
+      required double amount,
+      required String method,
+      required String type,
+      String? proofUrl}) async {
+    await _api.authDio.post('/orders/$orderId/payments', data: {
+      'amount': amount,
+      'paymentMethod': method,
+      'paymentType': type,
+      if (proofUrl != null) 'proofUrl': proofUrl
+    });
   }
 }
 
@@ -250,8 +293,12 @@ class ReviewRepository {
   ReviewRepository(this._api);
   final CustomerApiClient _api;
 
-  Future<ReviewResult> createReview({required String orderId, required int rating, String? comment}) async {
-    final response = await _api.authDio.post('/orders/$orderId/reviews', data: {'rating': rating, if (comment != null && comment.isNotEmpty) 'comment': comment});
+  Future<ReviewResult> createReview(
+      {required String orderId, required int rating, String? comment}) async {
+    final response = await _api.authDio.post('/orders/$orderId/reviews', data: {
+      'rating': rating,
+      if (comment != null && comment.isNotEmpty) 'comment': comment
+    });
     return ReviewResult.fromJson(unwrap(response.data));
   }
 
@@ -265,8 +312,16 @@ class DisputeRepository {
   DisputeRepository(this._api);
   final CustomerApiClient _api;
 
-  Future<void> createDispute({required String orderId, required String disputeType, required String description, required List<String> evidenceUrls}) async {
-    await _api.authDio.post('/orders/$orderId/disputes', data: {'disputeType': disputeType, 'description': description, 'evidenceUrls': evidenceUrls});
+  Future<void> createDispute(
+      {required String orderId,
+      required String disputeType,
+      required String description,
+      required List<String> evidenceUrls}) async {
+    await _api.authDio.post('/orders/$orderId/disputes', data: {
+      'disputeType': disputeType,
+      'description': description,
+      'evidenceUrls': evidenceUrls
+    });
   }
 }
 

@@ -1,5 +1,6 @@
 /// Canonical OrderStatus enum used across all features.
 /// Replaces duplicate definitions in customer_models.dart and store_admin_models.dart.
+library;
 
 enum OrderStatus {
   waitingDevice('waiting_device', 'Menunggu Perangkat'),
@@ -55,7 +56,8 @@ enum DisputeStatus {
   final String value;
   final String label;
 
-  static DisputeStatus fromJson(Object? value) => DisputeStatus.values.firstWhere(
+  static DisputeStatus fromJson(Object? value) =>
+      DisputeStatus.values.firstWhere(
         (item) => item.value == value,
         orElse: () => DisputeStatus.open,
       );

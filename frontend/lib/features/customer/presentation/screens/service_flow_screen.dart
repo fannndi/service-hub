@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
-import '../widgets/customer_widgets.dart';
 import 'service_flow_steps.dart';
 
 class ServiceFlowScreen extends ConsumerStatefulWidget {
@@ -70,8 +69,12 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         brand: _state.selectedBrand!,
         deviceModel: _state.selectedModel!,
         deliveryMethod: _state.delivery,
-        deliveryAddress: _state.delivery == 'courier_pickup' ? _state.address.text.trim() : null,
-        couponCode: _state.coupon.text.trim().isEmpty ? null : _state.coupon.text.trim(),
+        deliveryAddress: _state.delivery == 'courier_pickup'
+            ? _state.address.text.trim()
+            : null,
+        couponCode: _state.coupon.text.trim().isEmpty
+            ? null
+            : _state.coupon.text.trim(),
         items: [
           CreateOrderItemInput(
             serviceType: _state.serviceType,
@@ -83,7 +86,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       );
       final result = await ref.read(orderRepositoryProvider).createOrder(req);
       if (!mounted) return;
-      context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
+      context.go('/booking-success/${result.orderNumber}',
+          extra: result.isNewCustomer);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,10 +101,15 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
 
   void _nextStep() {
     if (_step >= 4) return;
-    if (_step == 0 && (_state.selectedBrand == null || _state.selectedModel == null)) return;
+    if (_step == 0 &&
+        (_state.selectedBrand == null || _state.selectedModel == null)) {
+      return;
+    }
     if (_step == 1 && _state.complaint.text.isEmpty) return;
     if (_step == 2 && _state.selectedStoreId == null) return;
-    if (_step == 3 && (_state.name.text.isEmpty || _state.phone.text.isEmpty)) return;
+    if (_step == 3 && (_state.name.text.isEmpty || _state.phone.text.isEmpty)) {
+      return;
+    }
 
     if (_step == 1) {
       setState(() => _state.loading = true);
@@ -143,19 +152,38 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                   return Expanded(
                     child: Column(children: [
                       Container(
-                        width: 28, height: 28,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: done ? theme.colorScheme.primary : active ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+                          color: done
+                              ? theme.colorScheme.primary
+                              : active
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.surfaceContainerHighest,
                         ),
                         child: Center(
                           child: done
-                              ? const Icon(Icons.check, size: 16, color: Colors.white)
-                              : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : theme.colorScheme.onSurfaceVariant)),
+                              ? const Icon(Icons.check,
+                                  size: 16, color: Colors.white)
+                              : Text('${i + 1}',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: active
+                                          ? Colors.white
+                                          : theme
+                                              .colorScheme.onSurfaceVariant)),
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(steps[i], style: TextStyle(fontSize: 10, color: active || done ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+                      Text(steps[i],
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: active || done
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant),
+                          textAlign: TextAlign.center),
                     ]),
                   );
                 }),
@@ -165,25 +193,25 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
             Expanded(
               child: IndexedStack(
                 index: _step,
-              children: [
-                Step1Widget(state: _state, onChanged: () => setState(() {})),
-                Step2Widget(state: _state, onChanged: () => setState(() {})),
-                Step3Widget(
-                  state: _state,
-                  onSelectStore: _selectStore,
-                  onSelectPart: (id, name, price) {
-                    setState(() {
-                      _state.selectedPartId = id;
-                      _state.selectedPartName = name;
-                      _state.selectedPartPrice = price;
-                      _state.estimateCost = price;
-                    });
-                  },
-                  onBack: _prevStep,
-                ),
-                Step4Widget(state: _state),
-                Step5Widget(state: _state),
-              ],
+                children: [
+                  Step1Widget(state: _state, onChanged: () => setState(() {})),
+                  Step2Widget(state: _state, onChanged: () => setState(() {})),
+                  Step3Widget(
+                    state: _state,
+                    onSelectStore: _selectStore,
+                    onSelectPart: (id, name, price) {
+                      setState(() {
+                        _state.selectedPartId = id;
+                        _state.selectedPartName = name;
+                        _state.selectedPartPrice = price;
+                        _state.estimateCost = price;
+                      });
+                    },
+                    onBack: _prevStep,
+                  ),
+                  Step4Widget(state: _state),
+                  Step5Widget(state: _state),
+                ],
               ),
             ),
             _buildBottomNav(theme),
@@ -194,29 +222,42 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   }
 
   Widget _buildBottomNav(ThemeData theme) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(children: [
-        if (_step > 0)
-          Expanded(child: OutlinedButton.icon(
-            onPressed: _state.loading ? null : _prevStep,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Kembali'),
-          )),
-        if (_step > 0) const SizedBox(width: 12),
-        if (_step < 4)
-          Expanded(child: FilledButton.icon(
-            onPressed: _state.loading ? null : _nextStep,
-            icon: const Icon(Icons.arrow_forward),
-            label: Text(_step == 0 ? 'Cari Toko' : _step == 3 ? 'Review' : 'Lanjut'),
-          ))
-        else
-          Expanded(child: FilledButton.icon(
-            onPressed: _state.loading ? null : _createBooking,
-            icon: _state.loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
-            label: Text(_state.loading ? 'Memproses...' : 'Booking'),
-          )),
-      ]),
-    ),
-  );
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(children: [
+            if (_step > 0)
+              Expanded(
+                  child: OutlinedButton.icon(
+                onPressed: _state.loading ? null : _prevStep,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Kembali'),
+              )),
+            if (_step > 0) const SizedBox(width: 12),
+            if (_step < 4)
+              Expanded(
+                  child: FilledButton.icon(
+                onPressed: _state.loading ? null : _nextStep,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(_step == 0
+                    ? 'Cari Toko'
+                    : _step == 3
+                        ? 'Review'
+                        : 'Lanjut'),
+              ))
+            else
+              Expanded(
+                  child: FilledButton.icon(
+                onPressed: _state.loading ? null : _createBooking,
+                icon: _state.loading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.check),
+                label: Text(_state.loading ? 'Memproses...' : 'Booking'),
+              )),
+          ]),
+        ),
+      );
 }

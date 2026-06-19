@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
-import '../../domain/user_session.dart';
-import '../../../../shared_widgets/error_state.dart';
 import '../widgets/customer_widgets.dart';
-import 'service_flow_steps.dart';
 
 class BookingFormScreen extends ConsumerStatefulWidget {
   const BookingFormScreen({super.key, required this.storeId});
@@ -19,8 +13,6 @@ class BookingFormScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<BookingFormScreen> createState() => _BookingFormScreenState();
 }
-
-
 
 class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   final _form = GlobalKey<FormState>();
@@ -98,9 +90,10 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       context.go('/booking-success/${result.orderNumber}',
           extra: result.isNewCustomer);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(parseApiError(error))));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -166,7 +159,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                   validator: _required),
               const SectionTitle('Kerusakan'),
               DropdownButtonFormField(
-                  value: _serviceType,
+                  initialValue: _serviceType,
                   decoration: const InputDecoration(
                       labelText: 'Jenis Servis', border: OutlineInputBorder()),
                   items: const [
@@ -233,7 +226,3 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   String? _required(String? value) =>
       value == null || value.trim().isEmpty ? 'Wajib diisi.' : null;
 }
-
-
-
-
