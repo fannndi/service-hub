@@ -77,7 +77,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
             serviceType: _state.serviceType,
             complaint: _state.complaint.text.trim(),
             sparepartId: _state.selectedPartId,
-            price: _state.estimateCost,
+            itemPrice: _state.estimateCost,
           ),
         ],
       );
@@ -165,13 +165,25 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
             Expanded(
               child: IndexedStack(
                 index: _step,
-                children: [
-                  Step1Widget(state: _state, onChanged: () => setState(() {})),
-                  Step2Widget(state: _state),
-                  Step3Widget(state: _state, onSelectStore: _selectStore, onBack: _prevStep),
-                  Step4Widget(state: _state),
-                  Step5Widget(state: _state),
-                ],
+              children: [
+                Step1Widget(state: _state, onChanged: () => setState(() {})),
+                Step2Widget(state: _state, onChanged: () => setState(() {})),
+                Step3Widget(
+                  state: _state,
+                  onSelectStore: _selectStore,
+                  onSelectPart: (id, name, price) {
+                    setState(() {
+                      _state.selectedPartId = id;
+                      _state.selectedPartName = name;
+                      _state.selectedPartPrice = price;
+                      _state.estimateCost = price;
+                    });
+                  },
+                  onBack: _prevStep,
+                ),
+                Step4Widget(state: _state),
+                Step5Widget(state: _state),
+              ],
               ),
             ),
             _buildBottomNav(theme),

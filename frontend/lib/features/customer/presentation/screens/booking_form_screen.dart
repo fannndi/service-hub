@@ -90,7 +90,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               serviceType: _serviceType,
               complaint: _complaint.text,
               sparepartId: _selectedPart?.id,
-              price: _estimate)
+              itemPrice: _estimate)
         ],
       );
       final result = await ref.read(orderRepositoryProvider).createOrder(req);

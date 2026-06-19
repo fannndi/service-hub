@@ -21,6 +21,8 @@ class FlowState {
   String delivery = 'walk_in';
   String? selectedStoreId;
   String? selectedPartId;
+  String? selectedPartName;
+  double selectedPartPrice = 0;
   double estimateCost = 0;
   bool loading = false;
   List<StoreMatchResult> matchedStores = const [];
@@ -34,7 +36,7 @@ class FlowState {
   }
 }
 
-// ─── Step 1: Device + Brand/Model + Service Type ───
+// ─── Step 1: Device + Brand/Model ───
 
 class Step1Widget extends ConsumerWidget {
   const Step1Widget({
@@ -54,9 +56,9 @@ class Step1Widget extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Pilih Jenis & Tipe Perangkat', style: theme.textTheme.titleLarge),
+        Text('Pilih Perangkat', style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('Pilih jenis smartphone lalu pilih brand dan tipe yang tersedia dari data sparepart toko.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text('Pilih brand dan tipe smartphone kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
         SegmentedButton<String>(
           segments: const [
@@ -103,12 +105,13 @@ class Step1Widget extends ConsumerWidget {
   }
 }
 
-// ─── Step 2: Complaint ───
+// ─── Step 2: Service Type + Complaint ───
 
 class Step2Widget extends StatelessWidget {
-  const Step2Widget({super.key, required this.state});
+  const Step2Widget({super.key, required this.state, required this.onChanged});
 
   final FlowState state;
+  final VoidCallback onChanged;
 
   static const labels = {
     'screen_replacement': 'Ganti Layar',
@@ -133,7 +136,9 @@ class Step2Widget extends StatelessWidget {
           children: labels.entries.map((e) => ChoiceChip(
             label: Text(e.value),
             selected: state.serviceType == e.key,
-            onSelected: (v) { if (v) state.serviceType = e.key; },
+            onSelected: (v) {
+              if (v) { state.serviceType = e.key; onChanged(); }
+            },
           )).toList(),
         ),
         const SizedBox(height: 24),
@@ -151,23 +156,31 @@ class Step2Widget extends StatelessWidget {
   }
 }
 
-// ─── Step 3: Store Selection ───
+// ─── Step 3: Store Selection + Sparepart Picker ───
 
-class Step3Widget extends StatelessWidget {
+class Step3Widget extends StatefulWidget {
   const Step3Widget({
     super.key,
     required this.state,
     required this.onSelectStore,
+    required this.onSelectPart,
     required this.onBack,
   });
 
   final FlowState state;
   final void Function(StoreMatchResult) onSelectStore;
+  final void Function(String partId, String partName, double price) onSelectPart;
   final VoidCallback onBack;
 
   @override
+  State<Step3Widget> createState() => _Step3WidgetState();
+}
+
+class _Step3WidgetState extends State<Step3Widget> {
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final state = widget.state;
 
     if (state.loading && state.matchedStores.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -184,7 +197,7 @@ class Step3Widget extends StatelessWidget {
           const SizedBox(height: 16),
           Text('Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
-          FilledButton.icon(onPressed: onBack, icon: const Icon(Icons.arrow_back), label: const Text('Kembali')),
+          FilledButton.icon(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), label: const Text('Kembali')),
         ],
       );
     }
@@ -195,6 +208,29 @@ class Step3Widget extends StatelessWidget {
         const SizedBox(height: 8),
         Text('${state.matchedStores.length} toko tersedia untuk perangkat kamu.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 16),
+
+        // Selected sparepart indicator
+        if (state.selectedPartId != null)
+          Card(
+            color: theme.colorScheme.primaryContainer,
+            child: ListTile(
+              leading: Icon(Icons.check_circle, color: theme.colorScheme.primary),
+              title: Text(state.selectedPartName ?? 'Sparepart dipilih', style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text('Harga: ${formatRupiah(state.selectedPartPrice)}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    state.selectedPartId = null;
+                    state.selectedPartName = null;
+                    state.selectedPartPrice = 0;
+                  });
+                },
+              ),
+            ),
+          ),
+
+        // Store cards
         ...state.matchedStores.map((store) {
           final selected = store.storeId == state.selectedStoreId;
           return Card(
@@ -206,7 +242,7 @@ class Step3Widget extends StatelessWidget {
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () => onSelectStore(store),
+              onTap: () => widget.onSelectStore(store),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -226,18 +262,57 @@ class Step3Widget extends StatelessWidget {
                   ]),
                   const SizedBox(height: 8),
                   Text('${store.totalCompleted} servis selesai', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.tertiary)),
-                  const SizedBox(height: 8),
-                  ...store.spareparts.map((sp) => Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(children: [
-                      const Icon(Icons.build, size: 14),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(sp.partName, style: theme.textTheme.bodyMedium)),
-                      Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                      const SizedBox(width: 12),
-                      Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    ]),
-                  )),
+
+                  // Spareparts — tappable
+                  if (store.spareparts.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text('Sparepart Tersedia', style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    ...store.spareparts.map((sp) {
+                      final isPartSelected = sp.id == state.selectedPartId;
+                      return InkWell(
+                        onTap: sp.status != 'available'
+                            ? null
+                            : () {
+                                setState(() {
+                                  state.selectedPartId = sp.id;
+                                  state.selectedPartName = sp.partName;
+                                  state.selectedPartPrice = sp.price;
+                                  // Set estimate cost to sparepart price
+                                  state.estimateCost = sp.price;
+                                });
+                              },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          margin: const EdgeInsets.symmetric(vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isPartSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(children: [
+                            Icon(
+                              isPartSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                              size: 16,
+                              color: isPartSelected ? theme.colorScheme.primary : Colors.grey,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(sp.partName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isPartSelected ? FontWeight.w600 : FontWeight.normal)),
+                                  Text(sp.status == 'available' ? 'Tersedia' : 'Preorder', style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
+                                ],
+                              ),
+                            ),
+                            Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          ]),
+                        ),
+                      );
+                    }),
+                  ],
+
                   const Divider(height: 16),
                   Row(children: [
                     const Icon(Icons.info_outline, size: 16),
@@ -348,6 +423,10 @@ class Step5Widget extends StatelessWidget {
               _ConfirmRow(label: 'Perangkat', value: '${state.deviceType.toUpperCase()} - ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'}'),
               const Divider(),
               _ConfirmRow(label: 'Layanan', value: typeLabels[state.serviceType]!),
+              if (state.selectedPartId != null) ...[
+                const Divider(),
+                _ConfirmRow(label: 'Sparepart', value: '${state.selectedPartName ?? '-'} — ${formatRupiah(state.selectedPartPrice)}'),
+              ],
               const Divider(),
               _ConfirmRow(label: 'Keluhan', value: state.complaint.text),
               const Divider(),

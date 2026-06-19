@@ -161,12 +161,17 @@ class CustomerOrder {
 }
 
 class CreateOrderItemInput {
-  const CreateOrderItemInput({required this.serviceType, required this.complaint, this.sparepartId, this.price = 0});
+  const CreateOrderItemInput({required this.serviceType, required this.complaint, this.sparepartId, this.itemPrice = 0});
   final String serviceType;
   final String complaint;
   final String? sparepartId;
-  final double price;
-  Map<String, dynamic> toJson() => {'serviceType': serviceType, 'complaint': complaint, if (sparepartId != null) 'sparepartId': sparepartId};
+  final double itemPrice;
+  Map<String, dynamic> toJson() => {
+    'serviceType': serviceType,
+    'complaint': complaint,
+    if (sparepartId != null) 'sparepartId': sparepartId,
+    'itemPrice': itemPrice,
+  };
 }
 
 class CreateOrderRequest {
