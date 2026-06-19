@@ -29,7 +29,7 @@ export class CreateOrderItemDto {
   complaint: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   sparepartId?: string;
 
   // Backward-compatible with older app builds. Server calculates trusted price.
