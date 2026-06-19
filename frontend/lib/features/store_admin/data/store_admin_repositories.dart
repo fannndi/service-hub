@@ -154,13 +154,28 @@ class StoreOperationsRepository {
     return TrackingEvent.fromJson(response.data ?? const {});
   }
 
-  Future<PageResult<Sparepart>> spareparts({String? query, String? status, int page = 1, int limit = 30}) async {
-    final response = await _dio.get('/store/spareparts', queryParameters: {'q': query, 'status': status, 'page': page, 'limit': limit}..removeWhere((_, value) => value == null || value == ''));
+  Future<PageResult<Sparepart>> spareparts({String? query, String? brand, String? deviceModel, String? partType, String? status, int page = 1, int limit = 30}) async {
+    final response = await _dio.get('/store/spareparts', queryParameters: {'q': query, 'brand': brand, 'deviceModel': deviceModel, 'partType': partType, 'status': status, 'page': page, 'limit': limit}..removeWhere((_, value) => value == null || value == ''));
     return _page(response.data, Sparepart.fromJson);
   }
 
   Future<Sparepart> saveSparepart(Map<String, Object?> payload, {String? id}) async {
     final response = id == null ? await _dio.post<Map<String, dynamic>>('/store/spareparts', data: payload) : await _dio.patch<Map<String, dynamic>>('/store/spareparts/$id', data: payload);
+    return Sparepart.fromJson(response.data ?? const {});
+  }
+
+  Future<List<String>> brands() async {
+    final response = await _dio.get('/store/spareparts/brands');
+    return (response.data as List?)?.cast<String>() ?? [];
+  }
+
+  Future<List<String>> deviceModels({String? brand}) async {
+    final response = await _dio.get('/store/spareparts/device-models', queryParameters: {if (brand != null) 'brand': brand});
+    return (response.data as List?)?.cast<String>() ?? [];
+  }
+
+  Future<Sparepart> adjustStock(String id, int delta) async {
+    final response = await _dio.patch<Map<String, dynamic>>('/store/spareparts/$id/stock', data: {'delta': delta});
     return Sparepart.fromJson(response.data ?? const {});
   }
 

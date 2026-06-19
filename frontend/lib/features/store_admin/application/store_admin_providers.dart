@@ -74,14 +74,35 @@ class InventoryController extends AsyncNotifier<PageResult<Sparepart>> {
   @override
   Future<PageResult<Sparepart>> build() {
     final query = ref.watch(inventoryQueryProvider);
-    return ref.watch(storeOperationsRepositoryProvider).spareparts(query: query.search, status: query.status, page: query.page);
+    return ref.watch(storeOperationsRepositoryProvider).spareparts(
+      query: query.search,
+      brand: query.brand,
+      deviceModel: query.deviceModel,
+      partType: query.partType,
+      page: query.page,
+    );
   }
 
   Future<void> save(Map<String, Object?> payload, {String? id}) async {
     await ref.read(storeOperationsRepositoryProvider).saveSparepart(payload, id: id);
     ref.invalidateSelf();
   }
+
+  Future<void> adjustStock(String id, int delta) async {
+    await ref.read(storeOperationsRepositoryProvider).adjustStock(id, delta);
+    ref.invalidateSelf();
+  }
 }
+
+final brandsProvider = FutureProvider.autoDispose<List<String>>((ref) {
+  ref.watch(inventoryProvider);
+  return ref.watch(storeOperationsRepositoryProvider).brands();
+});
+
+final deviceModelsProvider = FutureProvider.family.autoDispose<List<String>, String?>((ref, brand) {
+  ref.watch(inventoryProvider);
+  return ref.watch(storeOperationsRepositoryProvider).deviceModels(brand: brand);
+});
 
 class PaymentsController extends AsyncNotifier<PageResult<PaymentRecord>> {
   @override
@@ -110,12 +131,4 @@ class OrderQuery {
   final String? actionGroup;
   final int page;
   OrderQuery copyWith({String? search, String? status, String? actionGroup, int? page}) => OrderQuery(search: search ?? this.search, status: status, actionGroup: actionGroup ?? this.actionGroup, page: page ?? this.page);
-}
-
-class InventoryQuery {
-  const InventoryQuery({this.search, this.status, this.page = 1});
-  final String? search;
-  final String? status;
-  final int page;
-  InventoryQuery copyWith({String? search, String? status, int? page}) => InventoryQuery(search: search ?? this.search, status: status, page: page ?? this.page);
 }

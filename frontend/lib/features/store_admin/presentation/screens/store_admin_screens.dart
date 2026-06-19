@@ -340,22 +340,145 @@ class InventoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(inventoryProvider);
+    final query = ref.watch(inventoryQueryProvider);
+    final brands = ref.watch(brandsProvider);
+
     return StoreAdminScaffold(
-      title: 'Sparepart Management',
+      title: 'Inventori',
       selectedIndex: 2,
       actions: [IconButton(onPressed: () => context.go('/store/inventory/new'), icon: const Icon(Icons.add), tooltip: 'Tambah sparepart')],
       body: Column(children: [
-        QueryToolbar(hint: 'Cari sparepart', onSearch: (q) => ref.read(inventoryQueryProvider.notifier).state = ref.read(inventoryQueryProvider).copyWith(search: q)),
+        // Filter bar
+        SizedBox(
+          height: 48,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              // Search
+              SizedBox(
+                width: 200,
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Cari sparepart...',
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onChanged: (q) => ref.read(inventoryQueryProvider.notifier).state = query.copyWith(search: q.isEmpty ? null : q, page: 1),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Brand filter
+              brands.when(
+                data: (list) => DropdownButton<String>(
+                  value: query.brand,
+                  hint: const Text('Brand'),
+                  underline: const SizedBox(),
+                  isDense: true,
+                  items: [const DropdownMenuItem(value: null, child: Text('Semua Brand'))],
+                  onChanged: (v) => ref.read(inventoryQueryProvider.notifier).state = query.copyWith(brand: v, deviceModel: null, page: 1),
+                ),
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
+              ),
+              // PartType filter
+              DropdownButton<String>(
+                value: query.partType,
+                hint: const Text('Tipe'),
+                underline: const SizedBox(),
+                isDense: true,
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('Semua Tipe')),
+                  DropdownMenuItem(value: 'screen_replacement', child: Text('Layar')),
+                  DropdownMenuItem(value: 'battery_replacement', child: Text('Baterai')),
+                  DropdownMenuItem(value: 'charging_port', child: Text('Charging Port')),
+                  DropdownMenuItem(value: 'camera', child: Text('Kamera')),
+                  DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                ],
+                onChanged: (v) => ref.read(inventoryQueryProvider.notifier).state = query.copyWith(partType: v, page: 1),
+              ),
+            ],
+          ),
+        ),
+        // Table
         Expanded(
           child: data.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => ErrorPanel(message: err.toString(), onRetry: () => ref.invalidate(inventoryProvider)),
-            data: (page) => AdminDataTable<Sparepart>(
-              items: page.items,
-              columns: const [DataColumn(label: Text('Nama')), DataColumn(label: Text('Harga')), DataColumn(label: Text('Stok')), DataColumn(label: Text('Reserved')), DataColumn(label: Text('Alert'))],
-              cells: (s) => [DataCell(Text(s.name)), DataCell(Text(money(s.price))), DataCell(Text('${s.qty}')), DataCell(Text('${s.qtyReserved}')), DataCell(StatusPill(label: s.isLowStock ? 'Low Stock' : 'Aman', warning: s.isLowStock))],
-              onTap: (s) => context.go('/store/inventory/${s.id}', extra: s),
-            ),
+            data: (page) => page.items.isEmpty
+                ? const Center(child: Text('Belum ada sparepart'))
+                : ListView.builder(
+                    itemCount: page.items.length,
+                    itemBuilder: (context, index) {
+                      final s = page.items[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              // Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.partName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                    const SizedBox(height: 2),
+                                    Text('${s.brand} · ${s.deviceModel} · ${s.partTypeLabel}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(money(s.price), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                        const SizedBox(width: 12),
+                                        Text('Stok: ${s.availableStock}', style: TextStyle(color: s.isLowStock ? Colors.red : Colors.grey[700], fontSize: 12, fontWeight: s.isLowStock ? FontWeight.w700 : FontWeight.normal)),
+                                        if (s.qtyReserved > 0) Text(' (${s.qtyReserved} direservasi)', style: TextStyle(color: Colors.orange[700], fontSize: 11)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Quick stock adjustment
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                      onPressed: s.qty > 0
+                                          ? () => ref.read(inventoryProvider.notifier).adjustStock(s.id, -1)
+                                          : null,
+                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      padding: const EdgeInsets.all(2),
+                                    ),
+                                    Text('${s.qty}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                      onPressed: () => ref.read(inventoryProvider.notifier).adjustStock(s.id, 1),
+                                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                      padding: const EdgeInsets.all(2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Edit button
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () => context.go('/store/inventory/${s.id}', extra: s),
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                padding: const EdgeInsets.all(2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ),
       ]),
@@ -371,47 +494,184 @@ class SparepartFormScreen extends ConsumerStatefulWidget {
 }
 
 class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
-  late final name = TextEditingController(text: widget.item?.name);
-  late final description = TextEditingController(text: widget.item?.description);
-  late final price = TextEditingController(text: widget.item?.price.toString());
-  late final qty = TextEditingController(text: widget.item?.qty.toString());
+  String? _selectedBrand;
+  String? _selectedDeviceModel;
+  String _selectedPartType = 'screen_replacement';
+  late final _partName = TextEditingController(text: widget.item?.partName);
+  late final _price = TextEditingController(text: widget.item?.price.toString());
+  late final _qty = TextEditingController(text: widget.item?.qty.toString());
+  final _newBrandController = TextEditingController();
+  final _newModelController = TextEditingController();
   bool _loading = false;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(widget.item == null ? 'Create Sparepart' : 'Edit Sparepart')),
-        body: ListView(padding: const EdgeInsets.all(16), children: [
-          TextField(controller: name, decoration: const InputDecoration(labelText: 'Nama')),
-          TextField(controller: description, decoration: const InputDecoration(labelText: 'Deskripsi')),
-          TextField(controller: price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga')),
-          TextField(controller: qty, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stok')),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _loading ? null : () async {
-              if (name.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama wajib diisi.')));
-                return;
-              }
-              setState(() => _loading = true);
-              try {
-                await ref.read(inventoryProvider.notifier).save({
-                  'name': name.text,
-                  'description': description.text,
-                  'price': num.tryParse(price.text) ?? 0,
-                  'qty': int.tryParse(qty.text) ?? 0,
-                }, id: widget.item?.id);
-                if (context.mounted) context.go('/store/inventory');
-              } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
-              } finally {
-                if (mounted) setState(() => _loading = false);
+  void initState() {
+    super.initState();
+    _selectedBrand = widget.item?.brand;
+    _selectedDeviceModel = widget.item?.deviceModel;
+    if (widget.item != null) {
+      _selectedPartType = widget.item!.partType;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brands = ref.watch(brandsProvider);
+    final deviceModels = ref.watch(deviceModelsProvider(_selectedBrand));
+
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.item == null ? 'Tambah Sparepart' : 'Edit Sparepart')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        // Brand
+        _buildBrandField(brands),
+        const SizedBox(height: 12),
+        // Device Model
+        _buildModelField(deviceModels),
+        const SizedBox(height: 12),
+        // Part Type
+        DropdownButtonFormField<String>(
+          value: _selectedPartType,
+          decoration: const InputDecoration(labelText: 'Jenis Sparepart', border: OutlineInputBorder()),
+          items: const [
+            DropdownMenuItem(value: 'screen_replacement', child: Text('Layar')),
+            DropdownMenuItem(value: 'battery_replacement', child: Text('Baterai')),
+            DropdownMenuItem(value: 'charging_port', child: Text('Charging Port')),
+            DropdownMenuItem(value: 'camera', child: Text('Kamera')),
+            DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+          ],
+          onChanged: (v) => setState(() => _selectedPartType = v!),
+        ),
+        const SizedBox(height: 12),
+        // Part Name
+        TextField(controller: _partName, decoration: const InputDecoration(labelText: 'Nama Sparepart', hintText: 'LCD Samsung S24', border: OutlineInputBorder())),
+        const SizedBox(height: 12),
+        // Price
+        TextField(controller: _price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga', prefixText: 'Rp ', border: OutlineInputBorder())),
+        const SizedBox(height: 12),
+        // Qty (only for new, edit uses +/- on list)
+        if (widget.item == null)
+          TextField(controller: _qty, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stok Awal', border: OutlineInputBorder())),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: _loading ? null : _submit,
+          icon: _loading
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Icon(Icons.save_outlined),
+          label: Text(widget.item == null ? 'Tambah' : 'Simpan'),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildBrandField(List<String>? brands) {
+    final allBrands = [...?brands];
+    if (_selectedBrand != null && !allBrands.contains(_selectedBrand)) {
+      allBrands.insert(0, _selectedBrand!);
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: _selectedBrand,
+            decoration: const InputDecoration(labelText: 'Brand', border: OutlineInputBorder()),
+            items: allBrands.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+            onChanged: (v) {
+              setState(() {
+                _selectedBrand = v;
+                _selectedDeviceModel = null;
+              });
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          onPressed: () => _showAddDialog('Brand', _newBrandController, (val) {
+            setState(() => _selectedBrand = val);
+            ref.invalidate(brandsProvider);
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModelField(List<String>? models) {
+    final allModels = [...?models];
+    if (_selectedDeviceModel != null && !allModels.contains(_selectedDeviceModel)) {
+      allModels.insert(0, _selectedDeviceModel!);
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: _selectedDeviceModel,
+            decoration: const InputDecoration(labelText: 'Model Device', border: OutlineInputBorder()),
+            items: allModels.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+            onChanged: (v) => setState(() => _selectedDeviceModel = v),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          onPressed: _selectedBrand == null
+              ? null
+              : () => _showAddDialog('Model Device', _newModelController, (val) {
+                  setState(() => _selectedDeviceModel = val);
+                  ref.invalidate(deviceModelsProvider(_selectedBrand));
+                }),
+        ),
+      ],
+    );
+  }
+
+  void _showAddDialog(String title, TextEditingController controller, Function(String) onAdd) {
+    controller.clear();
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text('Tambah $title'),
+        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(hintText: 'Nama $title')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Batal')),
+          FilledButton(
+            onPressed: () {
+              final val = controller.text.trim();
+              if (val.isNotEmpty) {
+                onAdd(val);
+                Navigator.pop(c);
               }
             },
-            icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
-            label: const Text('Simpan'),
+            child: const Text('Tambah'),
           ),
-        ]),
-      );
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_selectedBrand == null || _selectedDeviceModel == null || _partName.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Brand, Model, dan Nama wajib diisi.')));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ref.read(inventoryProvider.notifier).save({
+        'brand': _selectedBrand!,
+        'deviceModel': _selectedDeviceModel!,
+        'partType': _selectedPartType,
+        'partName': _partName.text,
+        'price': num.tryParse(_price.text) ?? 0,
+        'qty': int.tryParse(_qty.text) ?? 0,
+      }, id: widget.item?.id);
+      if (context.mounted) context.go('/store/inventory');
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 }
 
 class PaymentsScreen extends ConsumerWidget {

@@ -19,8 +19,10 @@ void main() {
     test('calculates availableStock correctly', () {
       const sp = Sparepart(
         id: 'sp-1',
-        name: 'LCD',
-        description: 'LCD Samsung',
+        brand: 'Samsung',
+        deviceModel: 'Galaxy S24',
+        partType: 'screen_replacement',
+        partName: 'LCD Samsung',
         price: 500000,
         qty: 10,
         qtyReserved: 3,
@@ -32,8 +34,10 @@ void main() {
     test('isLowStock returns true when availableStock <= 2', () {
       const sp = Sparepart(
         id: 'sp-1',
-        name: 'LCD',
-        description: 'LCD Samsung',
+        brand: 'Samsung',
+        deviceModel: 'Galaxy S24',
+        partType: 'screen_replacement',
+        partName: 'LCD Samsung',
         price: 500000,
         qty: 5,
         qtyReserved: 4,
@@ -45,8 +49,10 @@ void main() {
     test('isLowStock returns false when availableStock > 2', () {
       const sp = Sparepart(
         id: 'sp-1',
-        name: 'LCD',
-        description: 'LCD Samsung',
+        brand: 'Samsung',
+        deviceModel: 'Galaxy S24',
+        partType: 'screen_replacement',
+        partName: 'LCD Samsung',
         price: 500000,
         qty: 10,
         qtyReserved: 3,

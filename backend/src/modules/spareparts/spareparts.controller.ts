@@ -5,7 +5,7 @@ import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
 import { FirstLoginGuard } from '../../common/guards/first-login.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { AuthenticatedUser } from '../../common/types/jwt-payload.type';
-import { CreateSparepartDto, UpdateSparepartDto } from './dto/sparepart.dto';
+import { CreateSparepartDto, UpdateSparepartDto, AdjustStockDto } from './dto/sparepart.dto';
 
 @ApiTags('Store Spareparts')
 @Controller('store/spareparts')
@@ -20,6 +20,20 @@ export class SparepartsController {
     @Query('partType') partType?: string,
   ) {
     return this.sparepartsService.findAvailable(storeId, brand, deviceModel, partType);
+  }
+
+  @Get('brands')
+  @UseGuards(StoreJwtAuthGuard)
+  @ApiBearerAuth()
+  async getBrands(@GetUser() user: AuthenticatedUser) {
+    return this.sparepartsService.getBrands(user.storeId!);
+  }
+
+  @Get('device-models')
+  @UseGuards(StoreJwtAuthGuard)
+  @ApiBearerAuth()
+  async getDeviceModels(@GetUser() user: AuthenticatedUser, @Query('brand') brand?: string) {
+    return this.sparepartsService.getDeviceModels(user.storeId!, brand ?? '');
   }
 
   @Post()
@@ -38,6 +52,17 @@ export class SparepartsController {
     @Body() dto: UpdateSparepartDto,
   ) {
     return this.sparepartsService.update(id, user.storeId!, dto);
+  }
+
+  @Patch(':id/stock')
+  @UseGuards(StoreJwtAuthGuard, FirstLoginGuard)
+  @ApiBearerAuth()
+  async adjustStock(
+    @Param('id') id: string,
+    @GetUser() user: AuthenticatedUser,
+    @Body() dto: AdjustStockDto,
+  ) {
+    return this.sparepartsService.adjustStock(id, user.storeId!, dto);
   }
 
   @Delete(':id')

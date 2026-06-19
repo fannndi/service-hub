@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StoreNotActiveException, NotFoundException } from '../../common/exceptions';
-import { CreateSparepartDto, UpdateSparepartDto } from './dto/sparepart.dto';
+import { CreateSparepartDto, UpdateSparepartDto, AdjustStockDto } from './dto/sparepart.dto';
 
 @Injectable()
 export class SparepartsService {
@@ -14,6 +14,28 @@ export class SparepartsService {
     if (partType) where.partType = partType;
 
     return this.prisma.sparePart.findMany({ where, orderBy: { createdAt: 'desc' } });
+  }
+
+  async getBrands(storeId: string) {
+    const result = await this.prisma.sparePart.findMany({
+      where: { storeId, status: { not: 'discontinued' } },
+      select: { brand: true },
+      distinct: ['brand'],
+      orderBy: { brand: 'asc' },
+    });
+    return result.map((r) => r.brand);
+  }
+
+  async getDeviceModels(storeId: string, brand: string) {
+    const where: Record<string, unknown> = { storeId, status: { not: 'discontinued' } };
+    if (brand) where.brand = brand;
+    const result = await this.prisma.sparePart.findMany({
+      where,
+      select: { deviceModel: true },
+      distinct: ['deviceModel'],
+      orderBy: { deviceModel: 'asc' },
+    });
+    return result.map((r) => r.deviceModel);
   }
 
   async create(storeId: string, dto: CreateSparepartDto) {
@@ -44,11 +66,32 @@ export class SparepartsService {
     return this.prisma.sparePart.update({
       where: { id },
       data: {
+        ...(dto.brand !== undefined && { brand: dto.brand }),
+        ...(dto.deviceModel !== undefined && { deviceModel: dto.deviceModel }),
+        ...(dto.partType !== undefined && { partType: dto.partType }),
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.qty !== undefined && { qty: dto.qty }),
         ...(dto.status !== undefined && { status: dto.status as 'available' | 'preorder' | 'discontinued' }),
         ...(dto.partName !== undefined && { partName: dto.partName }),
       },
+    });
+  }
+
+  async adjustStock(id: string, storeId: string, dto: AdjustStockDto) {
+    const sp = await this.prisma.sparePart.findFirst({ where: { id, storeId } });
+    if (!sp) throw new NotFoundException('Sparepart not found', 'Sparepart tidak ditemukan.');
+
+    const newQty = sp.qty + dto.delta;
+    if (newQty < 0) {
+      throw new NotFoundException('Insufficient stock', 'Stok tidak cukup untuk dikurangi.');
+    }
+    if (newQty < sp.qtyReserved) {
+      throw new NotFoundException('Stock below reserved', 'Stok tidak boleh kurang dari jumlah yang sedang direservasi.');
+    }
+
+    return this.prisma.sparePart.update({
+      where: { id },
+      data: { qty: newQty },
     });
   }
 
