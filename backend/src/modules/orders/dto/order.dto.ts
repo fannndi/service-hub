@@ -51,7 +51,8 @@ export class CreateOrderDto {
   @IsNotEmpty()
   deviceModel: string;
 
-  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
   storeId: string;
 
   @IsEnum(['walk_in', 'courier_pickup'])
