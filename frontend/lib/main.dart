@@ -121,6 +121,21 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
     try {
       setState(() => _status = 'Memeriksa koneksi...');
 
+      await EnvironmentService.init();
+
+      if (!mounted) return;
+
+      if (EnvironmentService.isMaintenance) {
+        setState(() => _status = 'Server tidak tersedia');
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (!mounted) return;
+        context.go('/maintenance', extra: {
+          'message': 'Tidak dapat terhubung ke server. Pastikan tunnel aktif.',
+          'isOffline': true,
+        });
+        return;
+      }
+
       final config = await ConfigService.fetch();
 
       if (!mounted) return;
