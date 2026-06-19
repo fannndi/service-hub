@@ -18,7 +18,19 @@ class SessionsScreen extends ConsumerStatefulWidget {
   ConsumerState<SessionsScreen> createState() => _SessionsScreenState();
 }
 class _SessionsScreenState extends ConsumerState<SessionsScreen> {
-  Future<List<UserSession>> _fetch() => ref.read(sessionRepositoryProvider).getSessions();
+  Future<List<UserSession>>? _sessionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionsFuture = ref.read(sessionRepositoryProvider).getSessions();
+  }
+
+  void _refresh() {
+    setState(() {
+      _sessionsFuture = ref.read(sessionRepositoryProvider).getSessions();
+    });
+  }
 
   Future<void> _revoke(String id) async {
     final confirm = await showDialog<bool>(
@@ -34,7 +46,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     );
     if (confirm == true) {
       await ref.read(sessionRepositoryProvider).revokeSession(id);
-      setState(() {});
+      _refresh();
     }
   }
 
@@ -52,7 +64,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     );
     if (confirm == true) {
       await ref.read(sessionRepositoryProvider).logoutAll();
-      setState(() {});
+      _refresh();
     }
   }
 
@@ -65,13 +77,13 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
         IconButton(icon: const Icon(Icons.logout), onPressed: _logoutAll, tooltip: 'Logout Semua'),
       ],
       child: FutureBuilder<List<UserSession>>(
-        future: _fetch(),
+        future: _sessionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return ErrorState(message: 'Gagal memuat sesi: ${snapshot.error}', onRetry: () => setState(() {}));
+            return ErrorState(message: 'Gagal memuat sesi: ${snapshot.error}', onRetry: _refresh);
           }
           final sessions = snapshot.data ?? [];
           if (sessions.isEmpty) {
@@ -88,7 +100,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                 leading: Icon(s.isActive ? Icons.phone_android : Icons.phone_android, color: s.isActive ? Colors.green : Colors.grey),
                 title: Text(deviceName, style: theme.textTheme.bodyLarge),
                 subtitle: Text(
-                  '${s.ipAddress ?? '-'} Ã¢â‚¬Â¢ ${_formatDate(s.lastActiveAt)}',
+                  '${s.ipAddress ?? '-'} \u2022 ${_formatDate(s.lastActiveAt)}',
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 trailing: s.isActive
@@ -108,6 +120,6 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     if (diff.inMinutes < 1) return 'baru saja';
     if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
     if (diff.inDays < 1) return '${diff.inHours}h lalu';
-    return '${diff.inDays}h lalu';
+    return '${diff.inDays}d lalu';
   }
 }

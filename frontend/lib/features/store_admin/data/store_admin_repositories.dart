@@ -72,9 +72,10 @@ class StoreAdminSessionStorage {
   Future<void> markPasswordChanged() => _storage.write(key: _isFirstLogin, value: 'false');
 
   Future<void> clear() async {
-    for (final key in [_accessToken, _refreshToken, _adminId, _adminName, _phoneNumber, _storeId, _storeName, _isFirstLogin]) {
-      await _storage.delete(key: key);
-    }
+    await Future.wait([
+      for (final key in [_accessToken, _refreshToken, _adminId, _adminName, _phoneNumber, _storeId, _storeName, _isFirstLogin])
+        _storage.delete(key: key),
+    ]);
   }
 }
 

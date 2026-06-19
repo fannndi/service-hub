@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import '../core/json_helpers.dart';
@@ -38,6 +40,8 @@ Dio createAuthDio({
     receiveTimeout: const Duration(seconds: 20),
   ));
 
+  Completer<void>? refreshCompleter;
+
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) async {
       final token = await readAccessToken();
@@ -49,12 +53,27 @@ Dio createAuthDio({
         handler.next(error);
         return;
       }
-      final refresh = await readRefreshToken();
-      if (refresh == null) {
-        handler.next(error);
+
+      if (refreshCompleter != null) {
+        await refreshCompleter!.future;
+        final newToken = await readAccessToken();
+        if (newToken != null) {
+          error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+          handler.resolve(await dio.fetch(error.requestOptions));
+        } else {
+          handler.next(error);
+        }
         return;
       }
+
+      refreshCompleter = Completer<void>();
+
       try {
+        final refresh = await readRefreshToken();
+        if (refresh == null) {
+          handler.next(error);
+          return;
+        }
         final publicDio = Dio(BaseOptions(baseUrl: baseUrl));
         final response = await publicDio.post(refreshEndpoint, data: {'refresh_token': refresh});
         final data = unwrap(response.data);
@@ -66,6 +85,9 @@ Dio createAuthDio({
       } catch (_) {
         await onClearSession();
         handler.next(error);
+      } finally {
+        refreshCompleter!.complete();
+        refreshCompleter = null;
       }
     },
   ));

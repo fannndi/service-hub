@@ -477,3 +477,20 @@ model PlatformAdmin {
 
   @@map("platform_admins")
 }
+
+// ─── STORE ADMIN SESSIONS ───
+
+model StoreAdminSession {
+  id           String   @id @default(uuid())
+  adminId      String   @map("admin_id")
+  tokenHash    String   @unique @map("token_hash") @db.VarChar(64)
+  deviceInfo   Json?    @map("device_info")
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  isActive     Boolean  @default(true) @map("is_active")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz
+  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([adminId, isActive])
+  @@map("store_admin_sessions")
+}

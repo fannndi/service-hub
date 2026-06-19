@@ -214,7 +214,11 @@ class UploadRepository {
     final uploadUrl = readString(data, 'uploadUrl', 'upload_url');
     final fileUrl = readString(data, 'fileUrl', 'file_url');
     final diskFile = File(file.path);
-    await Dio().put(
+    final uploadDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 60),
+    ));
+    await uploadDio.put(
       uploadUrl,
       data: diskFile.openRead(),
       options: Options(headers: {'Content-Type': mimeType, 'Content-Length': await diskFile.length()}),

@@ -77,7 +77,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
             return ListView(padding: const EdgeInsets.all(16), children: [
               Text('Garansi aktif s/d ${shortDate(data.warrantyExpiredAt)}'),
               DropdownButtonFormField(
-                  initialValue: _type,
+                  value: _type,
                   decoration: const InputDecoration(labelText: 'Jenis Masalah'),
                   items: const [
                     DropdownMenuItem(

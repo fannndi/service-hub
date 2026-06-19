@@ -86,7 +86,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
               'Sisa': rupiah(due)
             }),
             DropdownButtonFormField(
-                initialValue: _method,
+                value: _method,
                 decoration:
                     const InputDecoration(labelText: 'Metode Pembayaran'),
                 items: const [
@@ -98,7 +98,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                 ],
                 onChanged: (v) => setState(() => _method = v!)),
             DropdownButtonFormField(
-                initialValue: _type,
+                value: _type,
                 decoration:
                     const InputDecoration(labelText: 'Jenis Pembayaran'),
                 items: const [

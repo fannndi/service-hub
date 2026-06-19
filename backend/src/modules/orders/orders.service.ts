@@ -87,12 +87,11 @@ export class OrdersService {
     const order = await this.prisma.$transaction(async (tx) => {
       for (const item of dto.items) {
         if (!item.sparepartId) continue;
-        const sp = await tx.sparePart.findUniqueOrThrow({ where: { id: item.sparepartId } });
-        if (sp.qty - sp.qtyReserved <= 0) throw new StockUnavailableException();
-        await tx.sparePart.update({
-          where: { id: item.sparepartId },
-          data: { qtyReserved: { increment: 1 } },
-        });
+        const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+          `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0 RETURNING id`,
+          item.sparepartId,
+        );
+        if (result.length === 0) throw new StockUnavailableException();
       }
 
       const o = await tx.serviceOrder.create({
@@ -171,12 +170,11 @@ export class OrdersService {
       for (const item of order.items) {
         if (!item.sparepartId) continue;
         if (item.status === 'cancelled') continue;
-        const sp = await tx.sparePart.findUniqueOrThrow({ where: { id: item.sparepartId } });
-        if (sp.qty - sp.qtyReserved < 0) throw new StockUnavailableException();
-        await tx.sparePart.update({
-          where: { id: item.sparepartId },
-          data: { qty: { decrement: 1 }, qtyReserved: { decrement: 1 } },
-        });
+        const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+          `UPDATE spareparts SET qty = qty - 1, qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0 RETURNING id`,
+          item.sparepartId,
+        );
+        if (result.length === 0) throw new StockUnavailableException();
       }
       await tx.serviceOrder.update({
         where: { id: orderId },
@@ -257,10 +255,10 @@ export class OrdersService {
         });
         for (const item of items) {
           if (!item.sparepartId) continue;
-          await tx.sparePart.update({
-            where: { id: item.sparepartId },
-            data: { qty: { decrement: 1 }, qtyReserved: { decrement: 1 } },
-          });
+          await tx.$queryRawUnsafe(
+            `UPDATE spareparts SET qty = qty - 1, qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0`,
+            item.sparepartId,
+          );
         }
       }
 
@@ -342,29 +340,26 @@ export class OrdersService {
         if (diagItem.status === 'replaced' && diagItem.replacedSparepartId) {
           const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
           if (oldItem?.sparepartId) {
-            await tx.sparePart.update({
-              where: { id: oldItem.sparepartId },
-              data: { qtyReserved: { decrement: 1 } },
-            });
+            await tx.$queryRawUnsafe(
+              `UPDATE spareparts SET qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0`,
+              oldItem.sparepartId,
+            );
           }
-          const newSp = await tx.sparePart.findUniqueOrThrow({
-            where: { id: diagItem.replacedSparepartId },
-          });
-          if (newSp.qty - newSp.qtyReserved <= 0) throw new StockUnavailableException();
-          await tx.sparePart.update({
-            where: { id: diagItem.replacedSparepartId },
-            data: { qtyReserved: { increment: 1 } },
-          });
+          const result = await tx.$queryRawUnsafe<Array<{id: string}>>(
+            `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0 RETURNING id`,
+            diagItem.replacedSparepartId,
+          );
+          if (result.length === 0) throw new StockUnavailableException();
           updateData.sparepartId = diagItem.replacedSparepartId;
         }
 
         if (diagItem.status === 'cancelled') {
           const oldItem = order.items.find((i) => i.id === diagItem.orderItemId);
           if (oldItem?.sparepartId) {
-            await tx.sparePart.update({
-              where: { id: oldItem.sparepartId },
-              data: { qtyReserved: { decrement: 1 } },
-            });
+            await tx.$queryRawUnsafe(
+              `UPDATE spareparts SET qty_reserved = qty_reserved - 1 WHERE id = $1 AND qty_reserved > 0`,
+              oldItem.sparepartId,
+            );
           }
         }
 
@@ -555,18 +550,15 @@ export class OrdersService {
     createdAt: Date;
   }) {
     const isNewCustomer = user.credentialPlainEnc !== null && user.isCredentialSent === false;
-    const credential = isNewCustomer
-      ? {
-          phone: user.phoneNumber,
-          password: this.authService.getDecryptedCredential(user.credentialPlainEnc),
-          expiresAt: new Date(user.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-        }
-      : null;
 
     return {
       isNewCustomer: !!user.credentialPlainEnc,
       isCredentialSent: user.isCredentialSent,
-      credential,
+      phoneNumber: user.phoneNumber,
+      hasCredential: isNewCustomer,
+      expiresAt: isNewCustomer
+        ? new Date(user.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        : null,
     };
   }
 }

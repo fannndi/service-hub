@@ -1,6 +1,7 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
 import { StoreAuthService } from './store-auth.service';
 import { StoreLoginDto, StoreChangePasswordDto } from './dto/store-auth.dto';
 import { StoreJwtAuthGuard } from '../../common/guards/store-jwt-auth.guard';
@@ -15,8 +16,16 @@ export class StoreAuthController {
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: StoreLoginDto) {
-    return this.storeAuthService.login(dto.phoneNumber, dto.password);
+  async login(@Body() dto: StoreLoginDto, @Req() req: Request) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    return this.storeAuthService.login(dto.phoneNumber, dto.password, ip);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body('refresh_token') refreshToken: string, @Req() req: Request) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    return this.storeAuthService.refresh(refreshToken, ip);
   }
 
   @Post('change-password')
@@ -31,7 +40,7 @@ export class StoreAuthController {
   @UseGuards(StoreJwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  async logout(@GetUser() _user: AuthenticatedUser) {
-    return { message: 'Logout berhasil.' };
+  async logout(@GetUser() user: AuthenticatedUser, @Body('refresh_token') refreshToken: string) {
+    return this.storeAuthService.logout(user.id, refreshToken);
   }
 }

@@ -17,6 +17,15 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
   final phone = TextEditingController();
   final password = TextEditingController();
   bool obscure = true;
+
+  String _parseError(Object? error) {
+    final msg = error?.toString() ?? 'Terjadi kesalahan.';
+    if (msg.contains('InvalidCredentialsException') || msg.contains('INVALID_CREDENTIALS')) return 'Nomor HP atau password salah.';
+    if (msg.contains('StoreNotActiveException') || msg.contains('STORE_NOT_ACTIVE')) return 'Toko tidak aktif.';
+    if (msg.contains('AccountLockedException') || msg.contains('ACCOUNT_LOCKED')) return 'Akun terkunci sementara.';
+    return msg;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(storeAuthControllerProvider);
@@ -36,7 +45,7 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                 TextField(controller: password, obscureText: obscure, decoration: InputDecoration(labelText: 'Password', suffixIcon: IconButton(onPressed: () => setState(() => obscure = !obscure), icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined)))),
                 const SizedBox(height: 18),
                 FilledButton.icon(onPressed: auth.isLoading ? null : () => ref.read(storeAuthControllerProvider.notifier).login('08${phone.text.trim()}', password.text), icon: const Icon(Icons.login), label: const Text('Masuk')),
-                if (auth.hasError) Padding(padding: const EdgeInsets.only(top: 12), child: Text(auth.error.toString(), style: TextStyle(color: Theme.of(context).colorScheme.error))),
+                if (auth.hasError) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_parseError(auth.error), style: TextStyle(color: Theme.of(context).colorScheme.error))),
               ]),
             ),
           ),
@@ -440,7 +449,7 @@ class ReviewsScreen extends ConsumerWidget {
                       const Spacer(),
                       Text('${r.rating}/5', style: const TextStyle(color: Colors.amber)),
                     ]),
-                    if (r.comment != null && r.comment!.isNotEmpty) Text(r.comment!),
+                    if (r.comment.isNotEmpty) Text(r.comment),
                     Text(dateText(r.createdAt), style: Theme.of(context).textTheme.bodySmall),
                     if (r.response != null)
                       Padding(
@@ -684,7 +693,7 @@ class _CredentialCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(panel.hasCredential ? 'Pelanggan Baru - Kirim via WA' : 'Kredensial sudah terkirim atau expired', style: Theme.of(context).textTheme.titleMedium),
             Text('HP: ${panel.phoneNumber}'),
-            if (panel.password != null) Text('Password: ${panel.password}'),
+            if (panel.password != null) Text('Password: ${"*" * 8}'),
             if (panel.expiresAt != null) Text('Berlaku s/d: ${dateText(panel.expiresAt!)}'),
           ]),
         ),

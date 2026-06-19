@@ -1,5 +1,42 @@
 ﻿# Changelog
 
+## 2026-06-19 — Race Condition Fixes, Session Invalidation, Frontend Audit
+
+### Fixed (Security — HIGH)
+- **Race condition in `createOrder`** — Sparepart stock check-then-increment now atomic via `$queryRawUnsafe`. Prevents overselling under concurrent orders.
+- **Race condition in `approveOrder`** — Same atomic pattern for qty decrement. Prevents stock going negative.
+- **Race condition in `submitDiagnosis`** — Replacement sparepart stock check now atomic. Prevents overselling.
+- **Race condition in `updateStatus` (waiting_sparepart → repairing)** — Stock operations now atomic.
+- **Store admin session invalidation** — Store admin `changePassword` now invalidates all active sessions. New `StoreAdminSession` model tracks sessions.
+- **Store admin `logout`** — Was a no-op. Now invalidates session token properly.
+- **Store admin session-based `refresh`** — New `POST /store/auth/refresh` endpoint with session validation.
+- **Store admin login IP tracking** — Login now records client IP for audit trail.
+- **Credential panel plaintext leak** — `findStoreOrderById` no longer returns decrypted password. Masked in admin UI.
+- **Store admin login error messages** — Raw exception no longer displayed to user. Now shows user-friendly messages.
+
+### Fixed (Frontend)
+- **`DropdownButtonFormField.initialValue` → `value`** — `initialValue` doesn't exist on `DropdownButtonFormField`. Was causing runtime crash on payment upload and warranty claim screens.
+- **Token refresh race condition** — `createAuthDio` now uses `Completer` mutex. Concurrent 401s no longer generate duplicate refresh attempts.
+- **Maintenance screen wrong navigation** — `Navigator.pushReplacementNamed` → `context.go('/splash')`. Was using wrong navigation system (GoRouter vs Navigator).
+- **Upload no timeouts** — `Dio()` upload client now has 30s connect / 60s receive timeouts. Prevents hanging on large file uploads.
+- **Address dropdown init crash** — `AddressRepository.init()` wrapped in try-catch. Missing JSON assets no longer leave UI stuck on loading spinner.
+- **Sessions screen race condition** — `FutureBuilder` future now stored in field (not created in `build()`). Prevents stale fetch after revoke.
+- **Sessions screen date label** — `'${diff.inDays}h lalu'` → `'${diff.inDays}d lalu'`. Was showing wrong unit for day-old entries.
+- **Store admin session clear** — Sequential `_storage.delete()` → `Future.wait()` parallel. Faster logout.
+
+### Added
+- **`StoreAdminSession` Prisma model** — Tracks active store admin sessions with token hash.
+- **`POST /store/auth/refresh`** — New refresh endpoint for store admins with session validation.
+- **`Warranty order stock reservation** — Warranty order creation now increments `qtyReserved` atomically. Prevents oversell.
+- **Render.yaml — Added `REDIS_HOST` env var** — Was missing from config.
+
+### Changed
+- **`/store/auth/login`** — Now accepts `X-Forwarded-For` header. Records IP in session.
+- **`/store/auth/logout`** — Now requires `refresh_token` body. Invalidates the specific session.
+- **`store-admin-sessions` Prisma migration** — New table, index on `adminId` + `isActive`.
+
+---
+
 ## 2026-06-17 — Precision Audit, Security Fixes, 30 AC Integration Tests
 
 ### Fixed (Security)
@@ -8,30 +45,6 @@
 - **Store admin login bypass** — `store.isActive` now checked before credential verification. Deactivated stores cannot login.
 - **`submitDiagnosis` incomplete items** — Diagnosis now requires ALL order items to be covered. Prevents items from being silently skipped.
 - **Store admin login brute force** — Rate limiting added: 5 attempts per 60 seconds on `POST /v1/store/auth/login`.
-
-### Fixed (Frontend)
-- **Store admin token refresh** — `store_admin_repositories.dart` now uses `createAuthDio` instead of `createApiClient`. Store admins get automatic 401→refresh→retry.
-- **Platform admin token refresh** — `platform_admin_repositories.dart` now uses `createAuthDio`. Same improvement.
-- **Splash init admin redirect** — `_checkAuth()` now checks `adminAuthProvider` first. Platform admins are redirected to `/admin/dashboard` on app restart.
-- **`OrderStatus.parse` test error** — Fixed to use `OrderStatus.fromJson` (correct method name).
-
-### Added (Testing)
-- **PrismaMock** — In-memory Prisma substitute for service-layer testing. Supports all CRUD operations, transactions, and aggregations.
-- **TestFactory** — Seed data generators for stores, users, admins, spareparts, orders.
-- **3 security test suites** — `diagnosis-security.spec.ts` (IDOR + items coverage), `stock-guard.spec.ts` (qty guard), `login-security.spec.ts` (isActive + rate limit).
-- **4 integration test suites** — Cover all 30 ACs from Master PRD:
-  - `auth.integration.spec.ts` — AC-01 to AC-07
-  - `orders.integration.spec.ts` — AC-08 to AC-17
-  - `payments-reviews.integration.spec.ts` — AC-18 to AC-21
-  - `disputes-credentials-sla.integration.spec.ts` — AC-22 to AC-30
-- **152 backend tests** (up from 55) — 12 suites, all passing.
-- **2 TDD evidence reports** — `docs/testing/phase1-critical-fixes.tdd.md`, `docs/testing/phase2-integration-ac30.tdd.md`.
-- **Verification report** — `docs/testing/verification-report.md` (build, types, lint, tests, security, diff review).
-
-### Changed
-- **Backend test count** — 55 → 152 (3x increase).
-- **AC coverage** — 0/30 → 30/30 (100% of PRD acceptance criteria).
-- **TODO.md** — Full plan tracker with Phase 1-3 progress.
 
 ---
 

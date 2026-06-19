@@ -32,11 +32,15 @@ class AddressDropdownsState extends State<AddressDropdowns> {
   }
 
   Future<void> _init() async {
-    await AddressRepository.init();
-    setState(() {
-      _provinces = AddressRepository.provinces;
-      _loading = false;
-    });
+    try {
+      await AddressRepository.init();
+      setState(() {
+        _provinces = AddressRepository.provinces;
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
   }
 
   void _onProvinceChanged(Province? p) {

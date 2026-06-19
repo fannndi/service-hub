@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/config/config_service.dart';
 
 class MaintenanceScreen extends StatefulWidget {
@@ -39,7 +40,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
     try {
       final config = await ConfigService.fetch();
       if (!config.maintenanceMode && mounted) {
-        Navigator.of(context).pushReplacementNamed('/splash');
+        context.go('/splash');
       }
     } catch (_) {
       // Still offline or maintenance, keep showing

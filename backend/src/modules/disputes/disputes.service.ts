@@ -83,6 +83,15 @@ export class DisputesService {
 
       if (dto.decision === 'store_accepted') {
         const orderNumber = generateOrderNumber();
+        const warrantyOrderItems = dispute.order.items
+          .filter((i) => i.status === 'confirmed' || i.status === 'replaced')
+          .map((i) => ({
+            serviceType: i.serviceType,
+            complaint: 'Perbaikan ulang dalam garansi',
+            sparepartId: i.sparepartId,
+            itemPrice: 0,
+          }));
+
         const warrantyOrder = await tx.serviceOrder.create({
           data: {
             userId: dispute.order.userId,
@@ -99,18 +108,17 @@ export class DisputesService {
             parentOrderId: dispute.orderId,
             status: 'waiting_device',
             slaDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            items: {
-              create: dispute.order.items
-                .filter((i) => i.status === 'confirmed' || i.status === 'replaced')
-                .map((i) => ({
-                  serviceType: i.serviceType,
-                  complaint: 'Perbaikan ulang dalam garansi',
-                  sparepartId: i.sparepartId,
-                  itemPrice: 0,
-                })),
-            },
+            items: { create: warrantyOrderItems },
           },
         });
+
+        for (const item of warrantyOrderItems) {
+          if (!item.sparepartId) continue;
+          await tx.$queryRawUnsafe(
+            `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0`,
+            item.sparepartId,
+          );
+        }
         await tx.dispute.update({
           where: { id: disputeId },
           data: { warrantyOrderId: warrantyOrder.id },
