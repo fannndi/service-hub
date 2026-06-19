@@ -88,6 +88,8 @@ docker compose down -v
 | `prisma db push` gagal | Pastikan backend container running: `docker compose ps` |
 | Seed error | Hapus dulu: `docker compose down -v`, lalu `docker compose up -d --build`, push + seed ulang |
 | Docker lambat di Windows | Pastikan WSL2 backend di `C:\` bukan network drive. Cek Settings → Resources → WSL Integration |
+| Cloudflare tunnel DNS error | Fix DNS di WSL: `sudo sed -i 's|\#DNSStubListener=yes|DNSStubListener=no|' /etc/systemd/resolved.conf && echo "DNS=8.8.8.8 8.8.4.4" sudo tee -a /etc/systemd/resolved.conf && sudo systemctl restart systemd-resolved && sudo rm /etc/resolv.conf && echo "nameserver 8.8.8.8" sudo tee /etc/resolv.conf` |
+| Cloudflare tunnel stuck | Mungkin rate limit. Tunggu 30 detik, lalu jalankan ulang. Pastikan `systemd-resolved` DNS fix sudah diterapkan. |
 
 ---
 
