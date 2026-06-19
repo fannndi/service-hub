@@ -1,14 +1,103 @@
-﻿# Run Guide — ServisGadget (No Docker)
+﻿# Run Guide — ServisGadget
 
-## Prasyarat
-- Node.js 20+
-- Flutter 3.4+
-- Database Supabase (sudah aktif)
-- Android Studio + Emulator
+## 0. Local Docker (WSL) — Recommended
+
+### Prasyarat
+- WSL 2 + Ubuntu/Debian distro
+- Docker Desktop → Settings → Resources → WSL Integration: **enable distro kamu**
+- Cek: `docker compose version`
+
+### 1. Setup `.env` (root project)
+
+```bash
+# Kalau folder secrets/ sudah ada dari tim:
+./switch-env.sh local
+
+# Kalau belum ada, buat manual dari template:
+cp .env.example .env
+```
+
+Edit `.env`, isi minimal:
+
+```env
+DATABASE_URL=postgresql://servisgadget:servisgadget@localhost:5432/servisgadget
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_ACCESS_SECRET=<generate>
+JWT_REFRESH_SECRET=<generate>
+JWT_STORE_ACCESS_SECRET=<generate>
+JWT_STORE_REFRESH_SECRET=<generate>
+JWT_PLATFORM_ADMIN_SECRET=<generate>
+CREDENTIAL_ENCRYPTION_KEY=<generate>
+NODE_ENV=development
+PORT=3000
+```
+
+Generate secrets:
+```bash
+# JWT secret (64-byte hex = 128 char)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Credential key (32-byte hex = 64 char)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 2. Build & Start
+
+```bash
+docker compose up -d --build
+```
+
+Ini start 3 container: **PostgreSQL 16** (5432), **Redis 7** (6379), **Backend** (3000).
+
+### 3. Migrasi + Seed
+
+```bash
+docker compose exec backend npx prisma db push
+docker compose exec backend npx prisma db seed
+```
+
+### 4. Cek
+
+- Health: `curl http://localhost:3000/v1/health`
+- Swagger: `http://localhost:3000/docs`
+- Logs: `docker compose logs -f backend`
+
+### Rebuild (setelah edit kode backend)
+
+```bash
+docker compose up -d --build backend
+```
+
+### Stop
+
+```bash
+docker compose down
+```
+
+Hapus volume database (fresh start):
+```bash
+docker compose down -v
+```
+
+### Troubleshooting
+
+| Masalah | Solusi |
+|---------|--------|
+| Port 5432 sudah dipakai | `docker compose down`, stop PostgreSQL manual, lalu `docker compose up -d` |
+| `prisma db push` gagal | Pastikan backend container running: `docker compose ps` |
+| Seed error | Hapus dulu: `docker compose down -v`, lalu `docker compose up -d --build`, push + seed ulang |
+| Docker lambat di Windows | Pastikan WSL2 backend di `C:\` bukan network drive. Cek Settings → Resources → WSL Integration |
 
 ---
 
-## 1. Backend (NestJS)
+## 1. Backend (NestJS — Non-Docker / Supabase)
+
+> **Alternatif** kalau tidak pakai Docker. Butuh Supabase atau PostgreSQL external.
+
+### Prasyarat
+- Node.js 20+
+- Database Supabase (sudah aktif)
 
 ### Setup
 ```bash
