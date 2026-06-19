@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/store_admin_models.dart';
+import '../../../core/domain/order_status.dart' show PageResult;
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 final _date = DateFormat('dd MMM yyyy HH:mm', 'id_ID');
@@ -234,4 +236,58 @@ class OrderActionPanel extends StatelessWidget {
         'request_payment' => 'Tagih Bayar',
         _ => value.replaceAll('_', ' '),
       };
+}
+
+// ─── Shared Widgets (split from store_admin_screens.dart) ───
+
+class MetricGrid extends StatelessWidget {
+  const MetricGrid({super.key, required this.cards});
+  final List<Widget> cards;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
+        final columns = c.maxWidth >= 1100 ? 4 : c.maxWidth >= 700 ? 2 : 1;
+        return GridView.count(crossAxisCount: columns, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), childAspectRatio: 3.2, children: cards);
+      });
+}
+
+class PagedTableScreen<T> extends StatelessWidget {
+  const PagedTableScreen({super.key, required this.title, required this.selectedIndex, required this.value, required this.columns, required this.cells, this.onTap});
+  final String title;
+  final int selectedIndex;
+  final AsyncValue<PageResult<T>> value;
+  final List<DataColumn> columns;
+  final List<DataCell> Function(T item) cells;
+  final void Function(T item)? onTap;
+  @override
+  Widget build(BuildContext context) => StoreAdminScaffold(
+        title: title,
+        selectedIndex: selectedIndex,
+        body: value.when(loading: () => const Center(child: CircularProgressIndicator()), error: (e, _) => ErrorPanel(message: e.toString()), data: (page) => AdminDataTable<T>(items: page.items, columns: columns, cells: cells, onTap: onTap)),
+      );
+}
+
+class InfoCard extends StatelessWidget {
+  const InfoCard({super.key, required this.title, required this.rows});
+  final String title;
+  final Map<String, String> rows;
+  @override
+  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: Theme.of(context).textTheme.titleMedium), const SizedBox(height: 8), for (final row in rows.entries) Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [SizedBox(width: 120, child: Text(row.key)), Expanded(child: Text(row.value))]))])));
+}
+
+class CredentialCard extends StatelessWidget {
+  const CredentialCard({super.key, required this.panel});
+  final CredentialPanel panel;
+  @override
+  Widget build(BuildContext context) => Card(
+        color: panel.hasCredential ? Theme.of(context).colorScheme.tertiaryContainer : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(panel.hasCredential ? 'Pelanggan Baru - Kirim via WA' : 'Kredensial sudah terkirim atau expired', style: Theme.of(context).textTheme.titleMedium),
+            Text('HP: ${panel.phoneNumber}'),
+            if (panel.password != null) Text('Password: ${"*" * 8}'),
+            if (panel.expiresAt != null) Text('Berlaku s/d: ${dateText(panel.expiresAt!)}'),
+          ]),
+        ),
+      );
 }

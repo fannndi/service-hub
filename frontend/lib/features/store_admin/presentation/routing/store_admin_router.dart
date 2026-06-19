@@ -1,7 +1,22 @@
 import 'package:go_router/go_router.dart';
 
 import '../../domain/store_admin_models.dart';
-import '../screens/store_admin_screens.dart';
+import '../screens/store_login_screen.dart';
+import '../screens/store_change_password_screen.dart';
+import '../screens/dashboard_screen.dart';
+import '../screens/order_list_screen.dart';
+import '../screens/order_detail_screen.dart';
+import '../screens/diagnosis_screen.dart';
+import '../screens/tracking_screen.dart';
+import '../screens/inventory_screen.dart';
+import '../screens/sparepart_form_screen.dart';
+import '../screens/customers_screen.dart';
+import '../screens/payments_screen.dart';
+import '../screens/reviews_screen.dart';
+import '../screens/disputes_screen.dart';
+import '../screens/notifications_screen.dart';
+import '../screens/store_settings_screen.dart';
+import '../screens/analytics_screen.dart';
 
 final storeAdminRoutes = <RouteBase>[
   GoRoute(path: '/store-login', builder: (_, __) => const StoreLoginScreen()),
