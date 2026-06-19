@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../ui/theme/app_decorations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/store_admin_providers.dart';
 
 class StoreLoginScreen extends ConsumerStatefulWidget {
@@ -34,89 +37,110 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(storeAuthControllerProvider);
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                                color: scheme.primaryContainer
-                                    .withValues(alpha: .72),
-                                borderRadius: BorderRadius.circular(8)),
-                            child: Icon(Icons.storefront_outlined,
-                                color: scheme.onPrimaryContainer),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                Text('Portal Toko',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall),
-                                Text('Masuk sebagai admin operasional',
-                                    style: TextStyle(
-                                        color: scheme.onSurfaceVariant)),
-                              ])),
-                        ]),
-                        const SizedBox(height: 24),
-                        TextField(
+      body: GradientBackground(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: AppDecorations.iconBadge(
+                        scheme.secondary.withValues(alpha: 0.15),
+                      ),
+                      child: Icon(
+                        Icons.storefront_rounded,
+                        size: 32,
+                        color: scheme.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text('Portal Toko', style: theme.textTheme.headlineSmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Masuk sebagai admin operasional',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    ModernCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextField(
                             controller: phone,
                             keyboardType: TextInputType.phone,
                             decoration: const InputDecoration(
-                                labelText: 'Nomor HP',
-                                prefixIcon: Icon(Icons.phone_outlined),
-                                prefixText: '08')),
-                        const SizedBox(height: 12),
-                        TextField(
+                              labelText: 'Nomor HP',
+                              prefixIcon: Icon(Icons.phone_outlined),
+                              prefixText: '08',
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          TextField(
                             controller: password,
                             obscureText: obscure,
                             decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                    onPressed: () =>
-                                        setState(() => obscure = !obscure),
-                                    icon: Icon(obscure
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined)))),
-                        const SizedBox(height: 18),
-                        FilledButton.icon(
-                            onPressed: auth.isLoading
-                                ? null
-                                : () => ref
-                                    .read(storeAuthControllerProvider.notifier)
-                                    .login('08${phone.text.trim()}',
-                                        password.text),
-                            icon: auth.isLoading
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2.2))
-                                : const Icon(Icons.login),
-                            label: const Text('Masuk')),
-                        if (auth.hasError)
-                          Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Text(_parseError(auth.error),
-                                  style: TextStyle(color: scheme.error))),
-                      ]),
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                onPressed: () =>
+                                    setState(() => obscure = !obscure),
+                                icon: Icon(
+                                  obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          SizedBox(
+                            height: 50,
+                            child: FilledButton.icon(
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : () => ref
+                                      .read(
+                                          storeAuthControllerProvider.notifier)
+                                      .login(
+                                        '08${phone.text.trim()}',
+                                        password.text,
+                                      ),
+                              icon: auth.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.login_rounded),
+                              label: const Text('Masuk'),
+                            ),
+                          ),
+                          if (auth.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: AppSpacing.md),
+                              child: Text(
+                                _parseError(auth.error),
+                                style: TextStyle(color: scheme.error),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

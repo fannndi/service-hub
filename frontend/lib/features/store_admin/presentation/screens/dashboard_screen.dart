@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
+import '../../../../ui/theme/app_decorations.dart';
+import '../../../../ui/theme/app_spacing.dart';
 import '../widgets/store_admin_widgets.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -26,38 +28,41 @@ class DashboardScreen extends ConsumerWidget {
         error: (err, _) => ErrorPanel(
             message: err.toString(),
             onRetry: () => ref.invalidate(dashboardSummaryProvider)),
-        data: (data) => ListView(padding: const EdgeInsets.all(16), children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant
-                      .withValues(alpha: .75)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(children: [
-                Expanded(
+        data: (data) => ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            Container(
+              decoration: AppDecorations.heroBanner(context),
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Row(
+                children: [
+                  Expanded(
                     child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Text('Halo, ${data.adminName}',
-                          style: Theme.of(context).textTheme.headlineSmall),
-                      const SizedBox(height: 6),
-                      Text(data.storeName,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Halo, ${data.adminName}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(color: Colors.white),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          data.storeName,
                           style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant)),
-                    ])),
-                StatusPill(
-                    label: 'Rating ${data.ratingAvg.toStringAsFixed(1)}'),
-              ]),
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  StatusPill(
+                    label: 'Rating ${data.ratingAvg.toStringAsFixed(1)}',
+                  ),
+                ],
+              ),
             ),
-          ),
           const SizedBox(height: 16),
           MetricGrid(cards: [
             MetricCard(

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../ui/theme/app_decorations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../domain/store_admin_models.dart';
 
 final _currency =
@@ -42,30 +45,34 @@ class StoreAdminScaffold extends StatelessWidget {
       drawer: wide
           ? null
           : Drawer(
-              child: SafeArea(child: _NavList(selectedIndex: selectedIndex))),
-      body: Row(
-        children: [
-          if (wide)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                border: Border(
-                    right: BorderSide(
-                        color: scheme.outlineVariant.withValues(alpha: .7))),
-              ),
-              child: NavigationRail(
+              child: SafeArea(child: _NavList(selectedIndex: selectedIndex)),
+            ),
+      body: GradientBackground(
+        child: Row(
+          children: [
+            if (wide)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  boxShadow: AppShadows.card(scheme.shadow),
+                ),
+                child: NavigationRail(
                   extended: MediaQuery.sizeOf(context).width >= 1200,
                   selectedIndex: selectedIndex,
                   destinations: [
                     for (final item in destinations)
                       NavigationRailDestination(
-                          icon: Icon(item.$2), label: Text(item.$1))
+                        icon: Icon(item.$2),
+                        label: Text(item.$1),
+                      )
                   ],
                   onDestinationSelected: (index) =>
-                      context.go(destinations[index].$3)),
-            ),
-          Expanded(child: body),
-        ],
+                      context.go(destinations[index].$3),
+                ),
+              ),
+            Expanded(child: body),
+          ],
+        ),
       ),
       bottomNavigationBar: wide
           ? null
@@ -88,22 +95,54 @@ class _NavList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('ServisGadget Admin',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Text(
+              'ServisGadget Admin',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text('Operasional toko'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            child: Text(
+              'Operasional toko',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
           for (var i = 0; i < StoreAdminScaffold.destinations.length; i++)
-            ListTile(
-              selected: i == selectedIndex,
-              leading: Icon(StoreAdminScaffold.destinations[i].$2),
-              title: Text(StoreAdminScaffold.destinations[i].$1),
-              onTap: () => context.go(StoreAdminScaffold.destinations[i].$3),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 2,
+              ),
+              child: ListTile(
+                selected: i == selectedIndex,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                selectedTileColor: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.5),
+                leading: Icon(StoreAdminScaffold.destinations[i].$2),
+                title: Text(StoreAdminScaffold.destinations[i].$1),
+                onTap: () =>
+                    context.go(StoreAdminScaffold.destinations[i].$3),
+              ),
             ),
         ],
       );
@@ -176,51 +215,58 @@ class MetricCard extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer
-                      .withValues(alpha: .7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon,
-                    size: 22,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+  Widget build(BuildContext context) => ModernCard(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                    Text(title,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant)),
-                    Text(value,
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    if (subtitle != null)
-                      Text(subtitle!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant))
-                  ])),
-            ]),
-          ),
+              child: Icon(
+                icon,
+                size: 22,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       );
 }
@@ -230,27 +276,26 @@ class StatusPill extends StatelessWidget {
   final String label;
   final bool warning;
   @override
-  Widget build(BuildContext context) => DecoratedBox(
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-            color: warning
-                ? Colors.orange.withValues(alpha: .14)
-                : Theme.of(context)
-                    .colorScheme
-                    .primaryContainer
-                    .withValues(alpha: .72),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outlineVariant
-                    .withValues(alpha: .7))),
-        child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(fontWeight: FontWeight.w800))),
+          color: warning
+              ? const Color(0xFFF59E0B).withValues(alpha: 0.14)
+              : Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: warning
+                    ? const Color(0xFFB45309)
+                    : Theme.of(context).colorScheme.primary,
+              ),
+        ),
       );
 }
 

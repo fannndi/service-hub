@@ -1,19 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTypography {
-  static const String fontFamily = 'Roboto';
+  static String get fontFamily => GoogleFonts.plusJakartaSans().fontFamily!;
 
-  static const TextStyle heading1 =
-      TextStyle(fontSize: 28, fontWeight: FontWeight.w800);
-  static const TextStyle heading2 =
-      TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
-  static const TextStyle heading3 =
-      TextStyle(fontSize: 18, fontWeight: FontWeight.w600);
-  static const TextStyle body = TextStyle(fontSize: 14);
-  static const TextStyle bodySmall = TextStyle(fontSize: 12);
-  static const TextStyle caption = TextStyle(fontSize: 11);
-  static const TextStyle button =
-      TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
-  static const TextStyle overline =
-      TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5);
+  static TextStyle get heading1 => GoogleFonts.plusJakartaSans(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+      );
+
+  static TextStyle get heading2 => GoogleFonts.plusJakartaSans(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
+      );
+
+  static TextStyle get heading3 => GoogleFonts.plusJakartaSans(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      );
+
+  static TextStyle get body => GoogleFonts.plusJakartaSans(fontSize: 14);
+
+  static TextStyle get bodySmall => GoogleFonts.plusJakartaSans(fontSize: 12);
+
+  static TextStyle get caption => GoogleFonts.plusJakartaSans(fontSize: 11);
+
+  static TextStyle get button => GoogleFonts.plusJakartaSans(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.2,
+      );
+
+  static TextStyle get overline => GoogleFonts.plusJakartaSans(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+      );
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/theme/app_spacing.dart';
+
 class StatusBadge extends StatelessWidget {
   const StatusBadge({super.key, required this.label, this.isDanger = false});
 
@@ -8,16 +10,21 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDanger ? Colors.red : Theme.of(context).colorScheme.primary;
-    return DecoratedBox(
+    final scheme = Theme.of(context).colorScheme;
+    final color = isDanger ? scheme.error : scheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: .12),
-          borderRadius: BorderRadius.circular(999)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(label,
-            style: TextStyle(
-                color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }

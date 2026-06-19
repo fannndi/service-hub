@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'ui/theme/app_theme.dart';
+import 'ui/theme/app_decorations.dart';
+import 'ui/theme/app_spacing.dart';
+import 'ui/widgets/modern_card.dart';
 import 'core/app_config.dart';
 import 'core/config/config_service.dart';
 import 'features/customer/presentation/routing/customer_router.dart';
@@ -231,53 +234,65 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
-      body: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: scheme.outlineVariant.withValues(alpha: .7)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 30),
+      body: GradientBackground(
+        child: Center(
+          child: ModernCard(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 40,
+              vertical: 36,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  width: 96,
-                  errorBuilder: (_, __, ___) => Icon(Icons.handyman_outlined,
-                      size: 58, color: scheme.primary),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: AppDecorations.iconBadge(
+                    scheme.primaryContainer,
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 48,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.handyman_rounded,
+                      size: 40,
+                      color: scheme.primary,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.lg),
                 Text(
                   'ServisGadget',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: theme.textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   _status,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: _status.contains('✓')
                         ? scheme.primary
                         : _status.contains('tidak ditemukan') ||
                                 _status.contains('perbaikan')
                             ? scheme.tertiary
                             : scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSpacing.lg),
                 if (!_status.contains('✓') &&
                     !_status.contains('tidak ditemukan') &&
                     !_status.contains('perbaikan'))
-                  const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.4)),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: scheme.primary,
+                    ),
+                  ),
               ],
             ),
           ),
