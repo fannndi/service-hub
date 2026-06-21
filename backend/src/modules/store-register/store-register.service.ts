@@ -1,12 +1,18 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/exceptions';
+import { encryptCredential } from '../../common/utils';
 import { RegisterStoreDto } from './dto/register-store.dto';
+import { AppConfig } from '../../config/configuration';
 
 @Injectable()
 export class StoreRegisterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService<AppConfig>,
+  ) {}
 
   async register(dto: RegisterStoreDto) {
     const existing = await this.prisma.storeAdmin.findFirst({
@@ -22,6 +28,8 @@ export class StoreRegisterService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+    const credentialPlainEnc = encryptionKey ? encryptCredential(dto.password, encryptionKey) : null;
 
     const result = await this.prisma.$transaction(async (tx) => {
       const store = await tx.store.create({
@@ -44,6 +52,7 @@ export class StoreRegisterService {
           fullName: dto.applicantName,
           phoneNumber: dto.applicantPhone,
           passwordHash,
+          credentialPlainEnc,
           isFirstLogin: true,
         },
       });

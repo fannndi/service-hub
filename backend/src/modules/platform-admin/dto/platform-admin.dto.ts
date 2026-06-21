@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, MinLength, IsEnum } from 'class-validator';
 
 export class AdminLoginDto {
   @IsString()
@@ -46,6 +46,58 @@ export class CreateStoreDto {
 
   @IsBoolean()
   handlesIos: boolean;
+
+  @IsOptional()
+  operationalHours?: Record<string, string>;
+}
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string | null;
+
+  @IsOptional()
+  @IsEnum(['active', 'suspended', 'deleted'])
+  accountStatus?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isFirstLogin?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isCredentialSent?: boolean;
+}
+
+export class UpdateStoreDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  storeName?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @IsOptional()
   operationalHours?: Record<string, string>;

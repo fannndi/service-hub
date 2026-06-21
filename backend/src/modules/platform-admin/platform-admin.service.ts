@@ -4,8 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/exceptions';
-import { normalizePhone, decryptCredential } from '../../common/utils';
-import { CreateStoreDto } from './dto/platform-admin.dto';
+import { normalizePhone, encryptCredential, decryptCredential } from '../../common/utils';
+import { CreateStoreDto, UpdateUserDto, UpdateStoreDto } from './dto/platform-admin.dto';
 import { JwtPayload } from '../../common/types/jwt-payload.type';
 import { AppConfig } from '../../config/configuration';
 
@@ -68,6 +68,8 @@ export class PlatformAdminService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+    const credentialPlainEnc = encryptionKey ? encryptCredential(dto.password, encryptionKey) : null;
 
     const config: StoreConfig = {
       service_fee: {
@@ -111,6 +113,7 @@ export class PlatformAdminService {
           fullName: dto.adminName,
           phoneNumber: normalizePhone(dto.adminPhone),
           passwordHash,
+          credentialPlainEnc,
           isFirstLogin: false,
         },
       });
@@ -155,12 +158,29 @@ export class PlatformAdminService {
     });
   }
 
+  async updateStore(id: string, dto: UpdateStoreDto) {
+    const store = await this.prisma.store.findUnique({ where: { id } });
+    if (!store) {
+      throw new AppException('NOT_FOUND', 'Store not found', 'Toko tidak ditemukan.', HttpStatus.NOT_FOUND);
+    }
+    const data: any = {};
+    if (dto.storeName !== undefined) data.storeName = dto.storeName;
+    if (dto.address !== undefined) data.address = dto.address;
+    if (dto.phoneNumber !== undefined) data.phoneNumber = normalizePhone(dto.phoneNumber);
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.operationalHours !== undefined) data.operationalHours = dto.operationalHours;
+    await this.prisma.store.update({ where: { id }, data });
+    return { message: 'Toko berhasil diupdate.' };
+  }
+
   async listUsers() {
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
     const users = await this.prisma.user.findMany({
       select: {
         id: true,
         fullName: true,
         phoneNumber: true,
+        address: true,
         accountStatus: true,
         isFirstLogin: true,
         isCredentialSent: true,
@@ -171,7 +191,13 @@ export class PlatformAdminService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return users.map(u => ({ ...u, hasPassword: !!u.credentialPlainEnc, credentialPlainEnc: undefined }));
+    return users.map(u => {
+      let pw: string | null = null;
+      if (u.credentialPlainEnc && encryptionKey) {
+        try { pw = decryptCredential(u.credentialPlainEnc, encryptionKey); } catch { /* ignore */ }
+      }
+      return { ...u, plainPassword: pw, credentialPlainEnc: undefined };
+    });
   }
 
   async getUser(id: string) {
@@ -201,6 +227,22 @@ export class PlatformAdminService {
     return { ...user, plainPassword, credentialPlainEnc: undefined };
   }
 
+  async updateUser(id: string, dto: UpdateUserDto) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new AppException('NOT_FOUND', 'User not found', 'Pelanggan tidak ditemukan.', HttpStatus.NOT_FOUND);
+    }
+    const data: any = {};
+    if (dto.fullName !== undefined) data.fullName = dto.fullName;
+    if (dto.phoneNumber !== undefined) data.phoneNumber = normalizePhone(dto.phoneNumber);
+    if (dto.address !== undefined) data.address = dto.address;
+    if (dto.accountStatus !== undefined) data.accountStatus = dto.accountStatus;
+    if (dto.isFirstLogin !== undefined) data.isFirstLogin = dto.isFirstLogin;
+    if (dto.isCredentialSent !== undefined) data.isCredentialSent = dto.isCredentialSent;
+    await this.prisma.user.update({ where: { id }, data });
+    return { message: 'Pelanggan berhasil diupdate.' };
+  }
+
   async changeUserPassword(id: string, newPassword: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -220,18 +262,27 @@ export class PlatformAdminService {
   }
 
   async listStoreAdmins() {
-    return this.prisma.storeAdmin.findMany({
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+    const admins = await this.prisma.storeAdmin.findMany({
       select: {
         id: true,
         fullName: true,
         phoneNumber: true,
         isActive: true,
         isFirstLogin: true,
+        credentialPlainEnc: true,
         lastLoginAt: true,
         createdAt: true,
         store: { select: { id: true, storeName: true } },
       },
       orderBy: { createdAt: 'desc' },
+    });
+    return admins.map(a => {
+      let pw: string | null = null;
+      if (a.credentialPlainEnc && encryptionKey) {
+        try { pw = decryptCredential(a.credentialPlainEnc, encryptionKey); } catch { /* ignore */ }
+      }
+      return { ...a, plainPassword: pw, credentialPlainEnc: undefined };
     });
   }
 
@@ -243,7 +294,7 @@ export class PlatformAdminService {
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await this.prisma.storeAdmin.update({
       where: { id },
-      data: { passwordHash, isFirstLogin: false },
+      data: { passwordHash, isFirstLogin: false, credentialPlainEnc: null },
     });
     return { message: 'Password admin berhasil diubah.' };
   }

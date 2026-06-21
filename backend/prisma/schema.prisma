@@ -159,16 +159,17 @@ model User {
 // ─── STORE ADMINS ───
 
 model StoreAdmin {
-  id           String    @id @default(uuid())
-  storeId      String    @map("store_id")
-  fullName     String    @map("full_name") @db.VarChar(150)
-  phoneNumber  String    @map("phone_number") @db.VarChar(20)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  isActive     Boolean   @default(true) @map("is_active")
-  isFirstLogin Boolean   @default(false) @map("is_first_login")
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  store        Store     @relation(fields: [storeId], references: [id])
+  id                 String    @id @default(uuid())
+  storeId            String    @map("store_id")
+  fullName           String    @map("full_name") @db.VarChar(150)
+  phoneNumber        String    @map("phone_number") @db.VarChar(20)
+  passwordHash       String    @map("password_hash") @db.VarChar(255)
+  isActive           Boolean   @default(true) @map("is_active")
+  isFirstLogin       Boolean   @default(false) @map("is_first_login")
+  credentialPlainEnc String?   @map("credential_plain_enc") @db.Text
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  store              Store     @relation(fields: [storeId], references: [id])
 
   @@unique([storeId, phoneNumber])
   @@map("store_admins")

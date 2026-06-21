@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PlatformAdminService } from './platform-admin.service';
-import { AdminLoginDto, CreateStoreDto, ChangePasswordDto } from './dto/platform-admin.dto';
+import { AdminLoginDto, CreateStoreDto, ChangePasswordDto, UpdateUserDto, UpdateStoreDto } from './dto/platform-admin.dto';
 import { PlatformAdminGuard } from './platform-admin.guard';
 
 @ApiTags('Platform Admin')
@@ -30,6 +30,13 @@ export class PlatformAdminController {
     return this.platformAdminService.listStores();
   }
 
+  @Patch('stores/:id')
+  @UseGuards(PlatformAdminGuard)
+  @ApiBearerAuth()
+  async updateStore(@Param('id') id: string, @Body() dto: UpdateStoreDto) {
+    return this.platformAdminService.updateStore(id, dto);
+  }
+
   @Get('users')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
@@ -42,6 +49,13 @@ export class PlatformAdminController {
   @ApiBearerAuth()
   async getUser(@Param('id') id: string) {
     return this.platformAdminService.getUser(id);
+  }
+
+  @Patch('users/:id')
+  @UseGuards(PlatformAdminGuard)
+  @ApiBearerAuth()
+  async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.platformAdminService.updateUser(id, dto);
   }
 
   @Patch('users/:id/password')
