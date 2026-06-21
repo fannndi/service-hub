@@ -1,1 +1,1 @@
-https://tech-travis-focal-www.trycloudflare.com/v1
+https://secondary-bird-cancelled-witness.trycloudflare.com/v1
