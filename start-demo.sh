@@ -66,10 +66,7 @@ echo ""
 echo "[5/6] Updating tunel.txt..."
 echo "${TUNNEL_URL}/v1" > tunel.txt
 cat tunel.txt
-git add tunel.txt
-git commit -m "tunnel: $(echo $TUNNEL_URL | grep -oP '[a-z0-9-]+\.trycloudflare')"
-git push origin main
-echo "  Pushed to GitHub"
+echo "  tunel.txt updated (not committed)"
 
 # Step 6: Summary
 echo ""

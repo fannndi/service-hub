@@ -21,6 +21,7 @@ import '../screens/profile_screen.dart';
 import '../screens/sessions_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/coupons_screen.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
