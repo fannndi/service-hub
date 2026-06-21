@@ -27,7 +27,7 @@ export class SlaMonitorJob {
           store: { select: { phoneNumber: true, storeName: true, id: true } },
           user: { select: { phoneNumber: true, fullName: true } },
         },
-      }).catch(e => {
+      }).catch(() => {
         this.logger.debug('SLA Monitor skipped: table probably not ready yet');
         return [];
       });
@@ -83,7 +83,7 @@ export class SlaMonitorJob {
           store: { select: { phoneNumber: true, storeName: true } },
           user: { select: { phoneNumber: true, fullName: true } },
         },
-      }).catch(e => []);
+      }).catch(() => []);
 
       for (const order of toCancel) {
         await this.prisma.$transaction(async (tx) => {

@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppException } from '../../common/exceptions';
-import { normalizePhone } from '../../common/utils';
+import { normalizePhone, decryptCredential } from '../../common/utils';
 import { CreateStoreDto } from './dto/platform-admin.dto';
 import { JwtPayload } from '../../common/types/jwt-payload.type';
 import { AppConfig } from '../../config/configuration';
@@ -153,5 +153,98 @@ export class PlatformAdminService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async listUsers() {
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        accountStatus: true,
+        isFirstLogin: true,
+        isCredentialSent: true,
+        credentialPlainEnc: true,
+        createdAt: true,
+        lastLoginAt: true,
+        passwordChangedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return users.map(u => ({ ...u, hasPassword: !!u.credentialPlainEnc, credentialPlainEnc: undefined }));
+  }
+
+  async getUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        accountStatus: true,
+        address: true,
+        isFirstLogin: true,
+        isCredentialSent: true,
+        credentialPlainEnc: true,
+        createdAt: true,
+        lastLoginAt: true,
+        passwordChangedAt: true,
+      },
+    });
+    if (!user) {
+      throw new AppException('NOT_FOUND', 'User not found', 'Pelanggan tidak ditemukan.', HttpStatus.NOT_FOUND);
+    }
+    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
+    const plainPassword = user.credentialPlainEnc && encryptionKey
+      ? decryptCredential(user.credentialPlainEnc, encryptionKey)
+      : null;
+    return { ...user, plainPassword, credentialPlainEnc: undefined };
+  }
+
+  async changeUserPassword(id: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new AppException('NOT_FOUND', 'User not found', 'Pelanggan tidak ditemukan.', HttpStatus.NOT_FOUND);
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        passwordHash,
+        isFirstLogin: false,
+        passwordChangedAt: new Date(),
+        credentialPlainEnc: null,
+      },
+    });
+    return { message: 'Password berhasil diubah.' };
+  }
+
+  async listStoreAdmins() {
+    return this.prisma.storeAdmin.findMany({
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        isActive: true,
+        isFirstLogin: true,
+        lastLoginAt: true,
+        createdAt: true,
+        store: { select: { id: true, storeName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async changeStoreAdminPassword(id: string, newPassword: string) {
+    const admin = await this.prisma.storeAdmin.findUnique({ where: { id } });
+    if (!admin) {
+      throw new AppException('NOT_FOUND', 'Admin not found', 'Admin toko tidak ditemukan.', HttpStatus.NOT_FOUND);
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.storeAdmin.update({
+      where: { id },
+      data: { passwordHash, isFirstLogin: false },
+    });
+    return { message: 'Password admin berhasil diubah.' };
   }
 }

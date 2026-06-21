@@ -10,6 +10,12 @@ export class AdminLoginDto {
   password: string;
 }
 
+export class ChangePasswordDto {
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}
+
 export class CreateStoreDto {
   @IsString()
   @IsNotEmpty()
