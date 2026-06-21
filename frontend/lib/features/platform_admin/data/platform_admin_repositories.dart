@@ -118,6 +118,73 @@ class AdminRepository {
     });
   }
 
+  Future<void> updateStore({
+    required String storeId,
+    String? storeName,
+    String? address,
+    String? phoneNumber,
+    bool? isActive,
+  }) async {
+    final data = <String, dynamic>{};
+    if (storeName != null) data['storeName'] = storeName;
+    if (address != null) data['address'] = address;
+    if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+    if (isActive != null) data['isActive'] = isActive;
+    await _api.dio.patch('/platform/stores/$storeId', data: data);
+  }
+
+  Future<List<UserListItem>> listUsers() async {
+    final response = await _api.dio.get('/platform/users');
+    final data = response.data;
+    final list = data is Map ? (data['data'] ?? data['items'] ?? []) : data;
+    if (list is List) {
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(UserListItem.fromJson)
+          .toList();
+    }
+    return [];
+  }
+
+  Future<void> updateUser({
+    required String userId,
+    String? fullName,
+    String? phoneNumber,
+    String? address,
+    String? accountStatus,
+  }) async {
+    final data = <String, dynamic>{};
+    if (fullName != null) data['fullName'] = fullName;
+    if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+    if (address != null) data['address'] = address;
+    if (accountStatus != null) data['accountStatus'] = accountStatus;
+    await _api.dio.patch('/platform/users/$userId', data: data);
+  }
+
+  Future<void> changeUserPassword(String userId, String newPassword) async {
+    await _api.dio.patch('/platform/users/$userId/password',
+        data: {'newPassword': newPassword});
+  }
+
+  Future<List<StoreAdminListItem>> listStoreAdmins() async {
+    final response = await _api.dio.get('/platform/store-admins');
+    final data = response.data;
+    final list = data is Map ? (data['data'] ?? data['items'] ?? []) : data;
+    if (list is List) {
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(StoreAdminListItem.fromJson)
+          .toList();
+    }
+    return [];
+  }
+
+  Future<void> changeStoreAdminPassword(
+      String adminId, String newPassword) async {
+    await _api.dio.patch('/platform/store-admins/$adminId/password',
+        data: {'newPassword': newPassword});
+  }
+
   Future<void> logout() async {
     await _session.clear();
   }

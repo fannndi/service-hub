@@ -48,3 +48,12 @@ final adminAuthProvider =
 final storeListProvider = FutureProvider<List<StoreListItem>>((ref) {
   return ref.watch(adminRepositoryProvider).listStores();
 });
+
+final userListProvider = FutureProvider<List<UserListItem>>((ref) {
+  return ref.watch(adminRepositoryProvider).listUsers();
+});
+
+final storeAdminListProvider =
+    FutureProvider<List<StoreAdminListItem>>((ref) {
+  return ref.watch(adminRepositoryProvider).listStoreAdmins();
+});
