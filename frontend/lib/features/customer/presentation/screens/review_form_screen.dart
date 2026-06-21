@@ -65,7 +65,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
               minLines: 4,
               maxLines: 6,
               decoration: const InputDecoration(
-                  labelText: 'Komentar', border: OutlineInputBorder())),
+                  labelText: 'Komentar')),
           FilledButton(
               onPressed: _loading ? null : _submit,
               child: Text(_loading ? 'Mengirim...' : 'Kirim Ulasan')),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../widgets/store_admin_widgets.dart';
+import '../../../../ui/theme/app_theme.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
@@ -32,14 +33,12 @@ class InventoryScreen extends ConsumerWidget {
               SizedBox(
                 width: 200,
                 child: TextField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Cari sparepart...',
-                    prefixIcon: const Icon(Icons.search, size: 18),
+                    prefixIcon: Icon(Icons.search, size: 18),
                     isDense: true,
                     contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   ),
                   onChanged: (q) =>
                       ref.read(inventoryQueryProvider.notifier).state =
@@ -48,40 +47,56 @@ class InventoryScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               brands.when(
-                data: (list) => DropdownButton<String>(
-                  value: query.brand,
-                  hint: const Text('Brand'),
-                  underline: const SizedBox(),
-                  isDense: true,
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('Semua Brand'))
-                  ],
-                  onChanged: (v) =>
-                      ref.read(inventoryQueryProvider.notifier).state =
-                          query.copyWith(brand: v, deviceModel: null, page: 1),
+                data: (list) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButton<String>(
+                    value: query.brand,
+                    hint: const Text('Brand', style: TextStyle(fontSize: 13)),
+                    underline: const SizedBox(),
+                    isDense: true,
+                    icon: const Icon(Icons.expand_more, size: 18),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('Semua Brand'))
+                    ],
+                    onChanged: (v) =>
+                        ref.read(inventoryQueryProvider.notifier).state =
+                            query.copyWith(brand: v, deviceModel: null, page: 1),
+                  ),
                 ),
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
               ),
-              DropdownButton<String>(
-                value: query.partType,
-                hint: const Text('Tipe'),
-                underline: const SizedBox(),
-                isDense: true,
-                items: const [
-                  DropdownMenuItem(value: null, child: Text('Semua Tipe')),
-                  DropdownMenuItem(
-                      value: 'screen_replacement', child: Text('Layar')),
-                  DropdownMenuItem(
-                      value: 'battery_replacement', child: Text('Baterai')),
-                  DropdownMenuItem(
-                      value: 'charging_port', child: Text('Charging Port')),
-                  DropdownMenuItem(value: 'camera', child: Text('Kamera')),
-                  DropdownMenuItem(value: 'other', child: Text('Lainnya')),
-                ],
-                onChanged: (v) => ref
-                    .read(inventoryQueryProvider.notifier)
-                    .state = query.copyWith(partType: v, page: 1),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: query.partType,
+                  hint: const Text('Tipe', style: TextStyle(fontSize: 13)),
+                  underline: const SizedBox(),
+                  isDense: true,
+                  icon: const Icon(Icons.expand_more, size: 18),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Semua Tipe')),
+                    DropdownMenuItem(
+                        value: 'screen_replacement', child: Text('Layar')),
+                    DropdownMenuItem(
+                        value: 'battery_replacement', child: Text('Baterai')),
+                    DropdownMenuItem(
+                        value: 'charging_port', child: Text('Charging Port')),
+                    DropdownMenuItem(value: 'camera', child: Text('Kamera')),
+                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                  ],
+                  onChanged: (v) => ref
+                      .read(inventoryQueryProvider.notifier)
+                      .state = query.copyWith(partType: v, page: 1),
+                ),
               ),
             ],
           ),

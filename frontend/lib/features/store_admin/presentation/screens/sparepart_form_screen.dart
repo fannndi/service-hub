@@ -51,7 +51,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         DropdownButtonFormField<String>(
           initialValue: _selectedPartType,
           decoration: const InputDecoration(
-              labelText: 'Jenis Sparepart', border: OutlineInputBorder()),
+              labelText: 'Jenis Sparepart'),
           items: const [
             DropdownMenuItem(value: 'screen_replacement', child: Text('Layar')),
             DropdownMenuItem(
@@ -84,7 +84,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
               controller: _qty,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: 'Stok Awal', border: OutlineInputBorder())),
+                  labelText: 'Stok Awal')),
         const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: _loading ? null : _submit,
@@ -111,7 +111,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         child: DropdownButtonFormField<String>(
           initialValue: _selectedBrand,
           decoration: const InputDecoration(
-              labelText: 'Brand', border: OutlineInputBorder()),
+              labelText: 'Brand'),
           items: allBrands
               .map((b) => DropdownMenuItem(value: b, child: Text(b)))
               .toList(),
@@ -142,7 +142,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         child: DropdownButtonFormField<String>(
           initialValue: _selectedDeviceModel,
           decoration: const InputDecoration(
-              labelText: 'Model Device', border: OutlineInputBorder()),
+              labelText: 'Model Device'),
           items: allModels
               .map((m) => DropdownMenuItem(value: m, child: Text(m)))
               .toList(),

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../application/platform_admin_providers.dart';
 import '../../../../core/widgets/address_dropdowns.dart';
 import '../../domain/platform_admin_models.dart';
+import '../../../../ui/theme/app_theme.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -40,17 +42,31 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
-              margin: const EdgeInsets.all(16),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('Admin Platform',
-                      style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 24),
+        body: GradientBackground(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Card(
+                margin: const EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.admin_panel_settings,
+                          size: 40, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Admin Platform',
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 4),
+                    Text('Kelola toko dan pelanggan',
+                        style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 24),
                   TextField(
                     controller: _username,
                     decoration: const InputDecoration(
@@ -89,7 +105,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
             ),
           ),
         ),
-      );
+      ),
+    );
 
   @override
   void dispose() {
@@ -237,7 +254,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Toko berhasil dibuat!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Toko berhasil dibuat!'), backgroundColor: AppColors.success),
         );
       }
     } catch (e) {
@@ -255,7 +272,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
     } else { msg = e.toString(); }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        SnackBar(content: Text(msg), backgroundColor: AppColors.error),
       );
     }
   }
@@ -423,23 +440,23 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                           Expanded(child: Text(store.storeName, style: theme.textTheme.titleSmall)),
                           IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editStore(store)),
                         ]),
-                        Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-                        Text(store.phoneNumber, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                        Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+                        Text(store.phoneNumber, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
                         Row(children: [
-                          Chip(label: Text('Android', style: TextStyle(fontSize: 11, color: android ? Colors.green : Colors.red)),
-                            backgroundColor: android ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1)),
+                          Chip(label: Text('Android', style: TextStyle(fontSize: 11, color: android ? AppColors.success : AppColors.error)),
+                            backgroundColor: android ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1)),
                           const SizedBox(width: 4),
-                          Chip(label: Text('iOS', style: TextStyle(fontSize: 11, color: ios ? Colors.green : Colors.red)),
-                            backgroundColor: ios ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1)),
+                          Chip(label: Text('iOS', style: TextStyle(fontSize: 11, color: ios ? AppColors.success : AppColors.error)),
+                            backgroundColor: ios ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1)),
                           const Spacer(),
-                          Row(children: [const Icon(Icons.star, size: 14, color: Colors.amber), const SizedBox(width: 2),
+                          Row(children: [const Icon(Icons.star, size: 14, color: AppColors.warning), const SizedBox(width: 2),
                             Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodySmall)]),
                         ]),
                         if (store.admins.isNotEmpty)
                           Padding(padding: const EdgeInsets.only(top: 4),
                             child: Text('Admin: ${store.admins.map((a) => a['fullName']).join(', ')}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey))),
+                              style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary))),
                       ]),
                     ),
                   );
@@ -505,7 +522,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pelanggan diupdate.'), backgroundColor: Colors.green),
+                  const SnackBar(content: Text('Pelanggan diupdate.'), backgroundColor: AppColors.success),
                 );
               }
             } catch (e) {
@@ -515,7 +532,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                 msg = m?.group(1) ?? 'Cek isi form.';
               } else { msg = e.toString(); }
               if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
               }
             }
           }, child: const Text('Simpan')),
@@ -550,23 +567,23 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                           Expanded(child: Text(u.fullName, style: theme.textTheme.titleSmall)),
                           IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editUser(u)),
                         ]),
-                        Row(children: [const Icon(Icons.phone, size: 14, color: Colors.grey), const SizedBox(width: 4),
+                        Row(children: [const Icon(Icons.phone, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4),
                           Text(u.phoneNumber, style: theme.textTheme.bodySmall)]),
                         if (u.plainPassword != null)
-                          Row(children: [const Icon(Icons.key, size: 14, color: Colors.orange), const SizedBox(width: 4),
-                            Text('Password: ${u.plainPassword}', style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange, fontWeight: FontWeight.w600))]),
+                          Row(children: [const Icon(Icons.key, size: 14, color: AppColors.warning), const SizedBox(width: 4),
+                            Text('Password: ${u.plainPassword}', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.warning, fontWeight: FontWeight.w600))]),
                         if (u.address != null && u.address!.isNotEmpty)
-                          Text(u.address!, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                          Text(u.address!, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
                         Row(children: [
                           _badge(u.accountStatus),
                           const SizedBox(width: 8),
                           if (isNew)
-                            _badge('BARU', Colors.blue),
+                            _badge('BARU', AppColors.primary),
                           if (u.isFirstLogin)
-                            _badge('first login', Colors.purple),
+                            _badge('first login', AppColors.accent),
                         ]),
-                        Text('Bergabung: ${u.createdAt.substring(0, 10)}', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 11)),
+                        Text('Bergabung: ${u.createdAt.substring(0, 10)}', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontSize: 11)),
                       ]),
                     ),
                   );
@@ -578,7 +595,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
 
   Widget _badge(String text, [Color? color]) {
     final c = color ??
-        (text == 'active' ? Colors.green : text == 'suspended' ? Colors.red : Colors.grey);
+        (text == 'active' ? AppColors.success : text == 'suspended' ? AppColors.error : AppColors.textSecondary);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: c.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/customer_models.dart';
@@ -22,6 +23,7 @@ import '../screens/sessions_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/coupons_screen.dart';
+import '../screens/security_screen.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
@@ -77,4 +79,30 @@ final customerRoutes = <RouteBase>[
   GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
   GoRoute(
       path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+  GoRoute(
+      path: '/notifications/:id',
+      builder: (_, state) => _NotificationDetail(
+          notification: state.extra as NotificationItem)),
+  GoRoute(path: '/coupons', builder: (_, __) => const CouponsScreen()),
+  GoRoute(path: '/security', builder: (_, __) => const SecurityScreen()),
+  GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationsScreen()),
 ];
+
+class _NotificationDetail extends StatelessWidget {
+  const _NotificationDetail({required this.notification});
+  final NotificationItem notification;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text(notification.title)),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(notification.message),
+            const SizedBox(height: 12),
+            Text(notification.createdAt.toLocal().toString().substring(0, 16),
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      );
+}

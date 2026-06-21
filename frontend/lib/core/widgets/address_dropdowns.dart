@@ -165,7 +165,6 @@ class AddressDropdownsState extends State<AddressDropdowns> {
           decoration: const InputDecoration(
             labelText: 'Detail Alamat',
             hintText: 'Nama jalan, RT/RW, nomor rumah, dll.',
-            border: OutlineInputBorder(),
           ),
           maxLines: 2,
         ),
@@ -184,7 +183,6 @@ class AddressDropdownsState extends State<AddressDropdowns> {
       initialValue: value,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
       ),
       isExpanded: true,
       items: items.map((item) {

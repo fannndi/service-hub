@@ -92,8 +92,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
                   minLines: 4,
                   maxLines: 7,
                   decoration: const InputDecoration(
-                      labelText: 'Deskripsi Masalah',
-                      border: OutlineInputBorder())),
+                      labelText: 'Deskripsi Masalah')),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                   onPressed: _files.length >= 5

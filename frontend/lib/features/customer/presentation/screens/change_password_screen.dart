@@ -58,7 +58,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   controller: _old,
                   obscureText: true,
                   decoration: const InputDecoration(
-                      labelText: 'Password Lama', border: OutlineInputBorder()),
+                      labelText: 'Password Lama'),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Wajib diisi.' : null),
               const SizedBox(height: 12),
@@ -66,7 +66,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   controller: _next,
                   obscureText: true,
                   decoration: const InputDecoration(
-                      labelText: 'Password Baru', border: OutlineInputBorder()),
+                      labelText: 'Password Baru'),
                   validator: (v) {
                     if (v == null || v.length < 8) return 'Minimal 8 karakter.';
                     if (v == _old.text) {

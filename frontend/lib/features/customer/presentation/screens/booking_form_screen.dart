@@ -125,14 +125,14 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               TextFormField(
                   controller: _name,
                   decoration: const InputDecoration(
-                      labelText: 'Nama Lengkap', border: OutlineInputBorder()),
+                      labelText: 'Nama Lengkap'),
                   validator: _required),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _phone,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                      labelText: 'Nomor HP', border: OutlineInputBorder()),
+                      labelText: 'Nomor HP'),
                   validator: _required),
               const SectionTitle('Info Perangkat'),
               SegmentedButton(
@@ -149,19 +149,19 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               TextFormField(
                   controller: _brand,
                   decoration: const InputDecoration(
-                      labelText: 'Brand', border: OutlineInputBorder()),
+                      labelText: 'Brand'),
                   validator: _required),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _model,
                   decoration: const InputDecoration(
-                      labelText: 'Model Device', border: OutlineInputBorder()),
+                      labelText: 'Model Device'),
                   validator: _required),
               const SectionTitle('Kerusakan'),
               DropdownButtonFormField(
                   initialValue: _serviceType,
                   decoration: const InputDecoration(
-                      labelText: 'Jenis Servis', border: OutlineInputBorder()),
+                      labelText: 'Jenis Servis'),
                   items: const [
                     DropdownMenuItem(
                         value: 'screen_replacement', child: Text('Layar')),

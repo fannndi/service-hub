@@ -75,7 +75,7 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
               minLines: 3,
               maxLines: 5,
               decoration: const InputDecoration(
-                  labelText: 'Catatan resolusi', border: OutlineInputBorder())),
+                  labelText: 'Catatan resolusi')),
           const SizedBox(height: 16),
           Wrap(spacing: 8, children: [
             FilledButton.icon(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
+import '../../../ui/theme/app_theme.dart' show AppColors;
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -54,7 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         TextFormField(
             controller: _name,
             decoration: const InputDecoration(
-                labelText: 'Nama Lengkap', border: OutlineInputBorder()),
+                labelText: 'Nama Lengkap'),
             onChanged: (_) => setState(() => _dirty = true)),
         const SizedBox(height: 12),
         TextFormField(
@@ -69,7 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             minLines: 2,
             maxLines: 4,
             decoration: const InputDecoration(
-                labelText: 'Alamat', border: OutlineInputBorder()),
+                labelText: 'Alamat'),
             onChanged: (_) => setState(() => _dirty = true)),
         if (_dirty)
           FilledButton(
@@ -98,8 +99,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            textColor: Colors.red,
-            iconColor: Colors.red,
+            textColor: AppColors.error,
+            iconColor: AppColors.error,
             onTap: () async {
               await ref.read(customerAuthProvider.notifier).logout();
               if (context.mounted) context.go('/login');
