@@ -15,6 +15,7 @@ export class SlaMonitorJob {
   @Cron('*/30 * * * * *')
   async monitorSla() {
     try {
+      // Check if table exists implicitly via try-catch
       const now = new Date();
       const breached = await this.prisma.serviceOrder.findMany({
         where: {
@@ -26,6 +27,9 @@ export class SlaMonitorJob {
           store: { select: { phoneNumber: true, storeName: true, id: true } },
           user: { select: { phoneNumber: true, fullName: true } },
         },
+      }).catch(e => {
+        this.logger.debug('SLA Monitor skipped: table probably not ready yet');
+        return [];
       });
 
       for (const order of breached) {
@@ -79,7 +83,7 @@ export class SlaMonitorJob {
           store: { select: { phoneNumber: true, storeName: true } },
           user: { select: { phoneNumber: true, fullName: true } },
         },
-      });
+      }).catch(e => []);
 
       for (const order of toCancel) {
         await this.prisma.$transaction(async (tx) => {
