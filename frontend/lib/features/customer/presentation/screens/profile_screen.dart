@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
-import '../../../ui/theme/app_theme.dart' show AppColors;
+import '../../../../ui/theme/app_theme.dart' show AppColors;
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
