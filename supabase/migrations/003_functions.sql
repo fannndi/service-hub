@@ -1,4 +1,5 @@
 -- 003_functions.sql — POSTGRESQL FUNCTIONS + AUTH TRIGGER
+-- All table references prefixed with public. (SET search_path TO '')
 
 -- ─── ORDER NUMBER GENERATOR ───
 CREATE OR REPLACE FUNCTION generate_order_number()
@@ -30,10 +31,10 @@ DECLARE
   v_available INT;
 BEGIN
   SELECT qty - qty_reserved INTO v_available
-  FROM spareparts WHERE id = p_sparepart_id FOR UPDATE;
+  FROM public.spareparts WHERE id = p_sparepart_id FOR UPDATE;
 
   IF v_available >= p_qty THEN
-    UPDATE spareparts
+    UPDATE public.spareparts
     SET qty_reserved = qty_reserved + p_qty,
         updated_at = now()
     WHERE id = p_sparepart_id;
@@ -51,7 +52,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  UPDATE spareparts
+  UPDATE public.spareparts
   SET qty = qty - 1,
       qty_reserved = qty_reserved - 1,
       updated_at = now()
@@ -69,7 +70,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  UPDATE spareparts
+  UPDATE public.spareparts
   SET qty_reserved = GREATEST(qty_reserved - 1, 0),
       updated_at = now()
   WHERE id = p_sparepart_id;
@@ -86,14 +87,12 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  -- Release old
-  UPDATE spareparts
+  UPDATE public.spareparts
   SET qty_reserved = GREATEST(qty_reserved - 1, 0),
       updated_at = now()
   WHERE id = p_old_id;
 
-  -- Reserve new
-  UPDATE spareparts
+  UPDATE public.spareparts
   SET qty_reserved = qty_reserved + 1,
       updated_at = now()
   WHERE id = p_new_id AND (qty - qty_reserved) > 0;
@@ -121,7 +120,7 @@ BEGIN
   FROM (
     SELECT s.brand,
            jsonb_agg(DISTINCT s.device_model ORDER BY s.device_model) AS models
-    FROM spareparts s
+    FROM public.spareparts s
     WHERE s.status = 'available'
     GROUP BY s.brand
   ) sub;
@@ -143,15 +142,15 @@ BEGIN
   SELECT jsonb_build_object(
     'store_name', st.store_name,
     'rating_avg', st.rating_avg::text,
-    'active_orders', (SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND status NOT IN ('completed', 'cancelled')),
-    'pending_payments', (SELECT count(*) FROM payments p JOIN service_orders o ON p.order_id = o.id WHERE o.store_id = p_store_id AND p.status = 'pending'),
-    'active_disputes', (SELECT count(*) FROM disputes WHERE store_id = p_store_id AND status NOT IN ('resolved', 'closed')),
-    'completed_this_month', (SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= date_trunc('month', now())),
+    'active_orders', (SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND status NOT IN ('completed', 'cancelled')),
+    'pending_payments', (SELECT count(*) FROM public.payments p JOIN public.service_orders o ON p.order_id = o.id WHERE o.store_id = p_store_id AND p.status = 'pending'),
+    'active_disputes', (SELECT count(*) FROM public.disputes WHERE store_id = p_store_id AND status NOT IN ('resolved', 'closed')),
+    'completed_this_month', (SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= date_trunc('month', now())),
     'total_completed', st.total_completed,
-    'total_customers', (SELECT count(DISTINCT user_id) FROM service_orders WHERE store_id = p_store_id),
-    'revenue_this_month', (SELECT COALESCE(sum(final_price), 0) FROM service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= date_trunc('month', now()))
+    'total_customers', (SELECT count(DISTINCT user_id) FROM public.service_orders WHERE store_id = p_store_id),
+    'revenue_this_month', (SELECT COALESCE(sum(final_price), 0) FROM public.service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= date_trunc('month', now()))
   ) INTO result
-  FROM stores st WHERE st.id = p_store_id;
+  FROM public.stores st WHERE st.id = p_store_id;
 
   RETURN result;
 END;
@@ -168,11 +167,11 @@ DECLARE
   result JSONB;
 BEGIN
   SELECT jsonb_build_object(
-    'total_orders', (SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND created_at >= now() - (p_days || ' days')::interval),
-    'completed', (SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND status = 'completed' AND created_at >= now() - (p_days || ' days')::interval),
-    'cancelled', (SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND status = 'cancelled' AND created_at >= now() - (p_days || ' days')::interval),
-    'revenue', (SELECT COALESCE(sum(final_price), 0) FROM service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= now() - (p_days || ' days')::interval),
-    'avg_rating', (SELECT round(avg(rating)::numeric, 2) FROM reviews WHERE store_id = p_store_id AND created_at >= now() - (p_days || ' days')::interval)
+    'total_orders', (SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND created_at >= now() - (p_days || ' days')::interval),
+    'completed', (SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND status = 'completed' AND created_at >= now() - (p_days || ' days')::interval),
+    'cancelled', (SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND status = 'cancelled' AND created_at >= now() - (p_days || ' days')::interval),
+    'revenue', (SELECT COALESCE(sum(final_price), 0) FROM public.service_orders WHERE store_id = p_store_id AND status = 'completed' AND completed_at >= now() - (p_days || ' days')::interval),
+    'avg_rating', (SELECT round(avg(rating)::numeric, 2) FROM public.reviews WHERE store_id = p_store_id AND created_at >= now() - (p_days || ' days')::interval)
   ) INTO result;
 
   RETURN result;
@@ -187,13 +186,13 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  UPDATE stores
+  UPDATE public.stores
   SET rating_avg = COALESCE(
-    (SELECT round(avg(rating)::numeric, 2) FROM reviews WHERE store_id = p_store_id),
+    (SELECT round(avg(rating)::numeric, 2) FROM public.reviews WHERE store_id = p_store_id),
     0
   ),
   total_completed = (
-    SELECT count(*) FROM service_orders WHERE store_id = p_store_id AND status = 'completed'
+    SELECT count(*) FROM public.service_orders WHERE store_id = p_store_id AND status = 'completed'
   ),
   updated_at = now()
   WHERE id = p_store_id;
@@ -213,19 +212,19 @@ DECLARE
 BEGIN
   -- Mark SLA warnings for newly breached orders
   FOR v_order IN
-    SELECT id, store_id FROM service_orders
+    SELECT id, store_id FROM public.service_orders
     WHERE sla_deadline < now()
       AND sla_warned_at IS NULL
       AND status NOT IN ('completed', 'cancelled')
     LIMIT 100
   LOOP
-    UPDATE service_orders
+    UPDATE public.service_orders
     SET sla_warned_at = now(),
         sla_breach_count = sla_breach_count + 1,
         updated_at = now()
     WHERE id = v_order.id;
 
-    INSERT INTO service_tracking (order_id, status, note, created_by_type, created_by_id)
+    INSERT INTO public.service_tracking (order_id, status, note, created_by_type, created_by_id)
     VALUES (v_order.id, 'cancelled', 'SLA breach: auto-warning', 'system', 'sla-monitor');
 
     v_count := v_count + 1;
@@ -234,8 +233,8 @@ BEGIN
   -- Auto-cancel orders breached >24h
   FOR v_order IN
     SELECT so.id, so.store_id, oi.id AS item_id, oi.sparepart_id
-    FROM service_orders so
-    LEFT JOIN order_items oi ON oi.order_id = so.id
+    FROM public.service_orders so
+    LEFT JOIN public.order_items oi ON oi.order_id = so.id
     WHERE so.sla_deadline < now() - interval '24 hours'
       AND so.sla_warned_at IS NOT NULL
       AND so.status NOT IN ('completed', 'cancelled')
@@ -246,17 +245,17 @@ BEGIN
       PERFORM release_stock(v_order.sparepart_id);
     END IF;
 
-    UPDATE service_orders
+    UPDATE public.service_orders
     SET status = 'cancelled',
         cancelled_at = now(),
         updated_at = now()
     WHERE id = v_order.id;
 
-    UPDATE stores
+    UPDATE public.stores
     SET penalty_points = penalty_points + 1
     WHERE id = v_order.store_id;
 
-    INSERT INTO service_tracking (order_id, status, note, created_by_type, created_by_id)
+    INSERT INTO public.service_tracking (order_id, status, note, created_by_type, created_by_id)
     VALUES (v_order.id, 'cancelled', 'Auto-cancelled: SLA breach >24h', 'system', 'sla-monitor');
 
     v_count := v_count + 1;
@@ -281,7 +280,7 @@ BEGIN
   v_store_id := (NEW.raw_user_meta_data ->> 'store_id')::UUID;
 
   IF v_role = 'customer' THEN
-    INSERT INTO users (id, full_name, phone_number, password_hash)
+    INSERT INTO public.users (id, full_name, phone_number, password_hash)
     VALUES (
       NEW.id,
       COALESCE(NEW.raw_user_meta_data ->> 'full_name', 'Pelanggan'),
@@ -289,7 +288,7 @@ BEGIN
       'supabase-managed'
     );
   ELSIF v_role = 'store_admin' THEN
-    INSERT INTO store_admins (id, store_id, full_name, phone_number, password_hash)
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash)
     VALUES (
       NEW.id,
       v_store_id,
