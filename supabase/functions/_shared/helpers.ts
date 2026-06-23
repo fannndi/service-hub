@@ -1,5 +1,3 @@
-import { corsHeaders } from './cors.ts';
-
 export const VALID_TRANSITIONS: Record<string, string[]> = {
   waiting_device: ['device_received', 'cancelled'],
   device_received: ['diagnosing', 'cancelled'],
@@ -23,13 +21,13 @@ export function assertValidTransition(from: string, to: string): void {
 
 export function ok(data: unknown): Response {
   return new Response(JSON.stringify({ success: true, data }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
 export function fail(code: string, message: string, status = 400): Response {
   return new Response(JSON.stringify({ success: false, error: { code, message } }), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   });
 }

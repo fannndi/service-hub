@@ -1,33 +1,3 @@
 [project]
 ref = "eboplbemgtvmviwhdlfa"
 port = 54321
-
-[auth]
-enabled = true
-
-[analytics]
-enabled = false
-
-[functions]
-enabled = false
-
-[storage]
-enabled = true
-
-[realtime]
-enabled = false
-
-[edge_functions]
-enabled = true
-
-[db.migrations]
-enabled = true
-
-[studio]
-enabled = true
-
-[inbucket]
-enabled = false
-
-[email]
-enabled = false
