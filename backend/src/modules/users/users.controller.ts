@@ -1,7 +1,7 @@
 import { Controller, Get, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { OrdersService } from '../orders/orders.service';
+import { OrderQueryService } from '../orders/order-query.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { FirstLoginGuard } from '../../common/guards/first-login.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
@@ -15,7 +15,7 @@ import { UpdateProfileDto } from './dto/user.dto';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly ordersService: OrdersService,
+    private readonly orderQueryService: OrderQueryService,
   ) {}
 
   @Get()
@@ -40,12 +40,12 @@ export class UsersController {
 
   @Get('orders')
   async getMyOrders(@GetUser() user: AuthenticatedUser) {
-    return this.ordersService.findMyOrders(user.id);
+    return this.orderQueryService.findMyOrders(user.id);
   }
 
   @Get('orders/:id/progress')
   async getOrderProgress(@GetUser() user: AuthenticatedUser, @Param('id') orderId: string) {
-    return this.ordersService.getOrderProgress(user.id, orderId);
+    return this.orderQueryService.getOrderProgress(user.id, orderId);
   }
 
   @Get('notifications')

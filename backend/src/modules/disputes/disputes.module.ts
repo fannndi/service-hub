@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DisputesService } from './disputes.service';
-import { DisputesController, StoreDisputesController } from './disputes.controller';
+import { DisputesController } from './disputes.controller';
+import { StoreDisputesController } from './store-disputes.controller';
 
 @Module({
   controllers: [DisputesController, StoreDisputesController],

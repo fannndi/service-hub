@@ -1,18 +1,26 @@
 import { Controller, Post, Get, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { PlatformAdminService } from './platform-admin.service';
+import { PlatformAuthService } from './platform-auth.service';
+import { PlatformStoreService } from './platform-store.service';
+import { PlatformUserService } from './platform-user.service';
+import { PlatformAdminMgmtService } from './platform-admin-mgmt.service';
 import { AdminLoginDto, CreateStoreDto, ChangePasswordDto, UpdateUserDto, UpdateStoreDto } from './dto/platform-admin.dto';
 import { PlatformAdminGuard } from './platform-admin.guard';
 
 @ApiTags('Platform Admin')
 @Controller('platform')
 export class PlatformAdminController {
-  constructor(private readonly platformAdminService: PlatformAdminService) {}
+  constructor(
+    private readonly platformAuthService: PlatformAuthService,
+    private readonly platformStoreService: PlatformStoreService,
+    private readonly platformUserService: PlatformUserService,
+    private readonly platformAdminMgmtService: PlatformAdminMgmtService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: AdminLoginDto) {
-    return this.platformAdminService.login(dto.username, dto.password);
+    return this.platformAuthService.login(dto.username, dto.password);
   }
 
   @Post('stores')
@@ -20,42 +28,42 @@ export class PlatformAdminController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   async createStore(@Body() dto: CreateStoreDto) {
-    return this.platformAdminService.createStore(dto);
+    return this.platformStoreService.createStore(dto);
   }
 
   @Get('stores')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async listStores() {
-    return this.platformAdminService.listStores();
+    return this.platformStoreService.listStores();
   }
 
   @Patch('stores/:id')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async updateStore(@Param('id') id: string, @Body() dto: UpdateStoreDto) {
-    return this.platformAdminService.updateStore(id, dto);
+    return this.platformStoreService.updateStore(id, dto);
   }
 
   @Get('users')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async listUsers() {
-    return this.platformAdminService.listUsers();
+    return this.platformUserService.listUsers();
   }
 
   @Get('users/:id')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async getUser(@Param('id') id: string) {
-    return this.platformAdminService.getUser(id);
+    return this.platformUserService.getUser(id);
   }
 
   @Patch('users/:id')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.platformAdminService.updateUser(id, dto);
+    return this.platformUserService.updateUser(id, dto);
   }
 
   @Patch('users/:id/password')
@@ -63,14 +71,14 @@ export class PlatformAdminController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async changeUserPassword(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
-    return this.platformAdminService.changeUserPassword(id, dto.newPassword);
+    return this.platformUserService.changeUserPassword(id, dto.newPassword);
   }
 
   @Get('store-admins')
   @UseGuards(PlatformAdminGuard)
   @ApiBearerAuth()
   async listStoreAdmins() {
-    return this.platformAdminService.listStoreAdmins();
+    return this.platformAdminMgmtService.listStoreAdmins();
   }
 
   @Patch('store-admins/:id/password')
@@ -78,6 +86,6 @@ export class PlatformAdminController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async changeStoreAdminPassword(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
-    return this.platformAdminService.changeStoreAdminPassword(id, dto.newPassword);
+    return this.platformAdminMgmtService.changeStoreAdminPassword(id, dto.newPassword);
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/store_admin_providers.dart';
+import '../../application/order_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
 
@@ -21,19 +21,19 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   void initState() {
     super.initState();
     _trackingFuture =
-        ref.read(storeOperationsRepositoryProvider).getTracking(widget.orderId);
+        ref.read(storeOrderRepositoryProvider).getTracking(widget.orderId);
   }
 
   void _refresh() {
     setState(() {
       _trackingFuture =
-          ref.read(storeOperationsRepositoryProvider).getTracking(widget.orderId);
+          ref.read(storeOrderRepositoryProvider).getTracking(widget.orderId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = ref.watch(storeOperationsRepositoryProvider);
+    final repo = ref.watch(storeOrderRepositoryProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Tracking Timeline')),
       body: FutureBuilder<List<dynamic>>(

@@ -8,10 +8,11 @@
 
 | Layer | Tech |
 |-------|------|
-| Backend | Supabase (PostgreSQL + Auth + Edge Functions) |
+| Backend | NestJS 10+ (TypeScript) + Prisma ORM + Supabase (PostgreSQL + Auth + Edge Functions) |
 | Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14, Supabase Flutter |
 | Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) |
 | Storage | Supabase Storage |
+| Infra | Docker Compose (Postgres + Redis + Backend) |
 
 ---
 
@@ -64,34 +65,82 @@ flutter build apk --release \
 
 ```
 service-hub/
-├── supabase/
-│   ├── migrations/              SQL schema + RLS + functions
-│   │   ├── 001_init.sql         14 tables, 13 enums, indexes
-│   │   ├── 002_rls.sql          50 RLS policies
-│   │   ├── 003_functions.sql    Atomic stock, SLA, auth triggers
-│   │   └── 004_seed.sql         Platform admin seed
-│   ├── functions/               Edge Functions (Deno)
-│   │   ├── orders/              Order state machine
-│   │   ├── payments/            Payment confirmation
-│   │   ├── disputes/            Warranty orders
-│   │   └── admin/               Create store + SLA cron
-│   └── config.toml              Supabase CLI config
+├── backend/                     NestJS API server
+│   ├── prisma/                  Prisma schema & migrations
+│   ├── src/
+│   │   ├── main.ts              Bootstrap (Swagger, CORS, validation)
+│   │   ├── app.module.ts        Root module
+│   │   ├── config/              App configuration (JWT, SLA, storage)
+│   │   └── common/              Shared infrastructure
+│   │       ├── prisma/          PrismaClient wrapper
+│   │       ├── exceptions/      23 exception classes (1 per file)
+│   │       ├── guards/          JWT auth guards
+│   │       ├── filters/         Global exception filter
+│   │       ├── interceptors/    Response wrapper
+│   │       ├── decorators/      @GetUser() param decorator
+│   │       ├── types/           JWT payload types
+│   │       ├── logger/          Pino logger module
+│   │       ├── utils/           Phone, password, encryption, nanoid
+│   │       ├── health.controller.ts
+│   │       └── config.controller.ts
+│   └── modules/                 Feature modules (1 class = 1 file)
+│       ├── auth/                4 files (auth, credential services)
+│       ├── users/               3 files
+│       ├── stores/              6 files (discovery, dashboard, profile)
+│       ├── store-auth/          4 files
+│       ├── store-register/      3 files
+│       ├── orders/              12 files (creation, diagnosis, status, query, tracking)
+│       ├── payments/            4 files (customer + store controllers)
+│       ├── disputes/            4 files (customer + store controllers)
+│       ├── reviews/             3 files
+│       ├── spareparts/          3 files
+│       ├── uploads/             3 files
+│       ├── notifications/       3 files
+│       ├── platform-admin/      7 files (auth, store, user, mgmt services)
+│       ├── redis/               2 files
+│       └── jobs/                3 files (SLA monitor, credential cleaner)
 │
 ├── frontend/                    Flutter mobile app
 │   └── lib/
-│       ├── core/                SupabaseService, Config
-│       ├── ui/                  Theme, widgets (Material 3)
-│       └── features/
-│           ├── customer/        24 screens
-│           ├── store_admin/     17 screens
-│           └── platform_admin/  2 screens
+│       ├── main.dart            App entry, GoRouter, splash
+│       ├── core/                SupabaseService, Config, JSON helpers
+│       ├── ui/                  Theme (Material 3), design system widgets
+│       ├── shared_widgets/      Cross-feature reusable widgets
+│       └── features/            Domain-driven feature modules
+│           ├── customer/
+│           │   ├── application/ 10 provider files (1 per concern)
+│           │   ├── data/        9 repository files (1 per domain)
+│           │   ├── domain/      15 model files (1 per class)
+│           │   └── presentation/
+│           │       ├── routing/ 1 router
+│           │       ├── screens/ 22 screen files (1 per screen)
+│           │       └── widgets/ 11 widget files (1 per widget)
+│           ├── store_admin/
+│           │   ├── application/ 11 provider files
+│           │   ├── data/        10 repository files
+│           │   ├── domain/      14 model files
+│           │   └── presentation/
+│           │       ├── routing/ 1 router
+│           │       ├── screens/ 16 screen files
+│           │       └── widgets/ 15 widget files
+│           └── platform_admin/
+│               ├── application/ 3 provider files
+│               ├── data/        4 repository files
+│               ├── domain/      6 model files
+│               └── presentation/
+│                   ├── routing/ 1 router
+│                   └── screens/ 2 screen files
+│
+├── supabase/                    Supabase SQL + Edge Functions
+│   ├── migrations/              SQL schema, RLS, functions, seed
+│   └── functions/               Edge Functions (orders, payments, disputes, admin, cron-sla)
 │
 ├── scripts/                     Deployment helpers
-│   ├── deploy.sh                One-command deploy guide
-│   └── push-sql.js              SQL push via Management API
-│
-└── docs/                        Documentation
+├── docker-compose.yml           Postgres + Redis + Backend
+└── docs/                        PRD, architecture, changelog
 ```
+
+**Modularity principle:** 1 class = 1 file. Every controller, service, DTO, repository, provider, model, and widget gets its own file. Barrel files re-export for backward-compatible imports.
 
 ---
 

@@ -1,29 +1,22 @@
 {
-  "timestamp": "2026-06-23T12:34:13+0000",
-  "input": "session start",
-  "turn": 37,
+  "timestamp": "2026-06-23T16:26:28+0000",
+  "input": "project switch",
+  "turn": 0,
   "project_code": "002",
   "project": "service-hub",
-  "intent": "review",
-  "domain": "web",
-  "stack": [
-    "python"
-  ],
+  "intent": "ask",
+  "domain": "general",
+  "stack": [],
   "complexity": "low",
-  "confidence": 0.95,
-  "source": "structured",
+  "confidence": 0.6,
+  "source": "",
   "needs_planning": false,
   "model_primary": "Free",
   "model_heavy": "Free",
-  "chain": [
-    "coding-standards",
-    "security-review",
-    "verification-loop"
-  ],
-  "chain_summary": "coding-standards → security-review → verification-loop",
+  "chain": [],
+  "chain_summary": "",
   "blocked": [],
   "work_mode": "build",
   "profile": "eco",
-  "task_warning": null,
-  "degraded": "Domain 'web' tidak ditemukan, fallback ke 'review' umum"
+  "task_warning": null
 }

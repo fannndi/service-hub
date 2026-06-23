@@ -11,15 +11,10 @@ import {
   PasswordSameAsOldException,
   TokenInvalidException,
 } from '../../common/exceptions';
-import { generatePassword, normalizePhone, encryptCredential, decryptCredential } from '../../common/utils';
+import { normalizePhone } from '../../common/utils';
 import { JwtPayload } from '../../common/types/jwt-payload.type';
 import { AppConfig } from '../../config/configuration';
-
-interface AutoCreateAccountResult {
-  user: { id: string; phoneNumber: string; fullName: string; isFirstLogin: boolean };
-  isNew: boolean;
-  rawPass?: string;
-}
+import { CredentialService } from './credential.service';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +22,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService<AppConfig>,
+    private credentialService: CredentialService,
   ) {}
 
   async login(rawPhone: string, password: string, ip: string) {
@@ -54,8 +50,8 @@ export class AuthService {
       data: { loginAttemptCount: 0, lockedUntil: null, lastLoginAt: new Date() },
     });
 
-    const tokens = this.generateCustomerTokens(user.id, user.isFirstLogin);
-    await this.createUserSession(user.id, tokens.refreshToken, ip);
+    const tokens = this.credentialService.generateCustomerTokens(user.id, user.isFirstLogin);
+    await this.credentialService.createUserSession(user.id, tokens.refreshToken, ip);
     return {
       ...tokens,
       isFirstLogin: user.isFirstLogin,
@@ -112,8 +108,8 @@ export class AuthService {
     await this.prisma.userSession.update({ where: { id: session.id }, data: { isActive: false } });
 
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: payload.sub } });
-    const tokens = this.generateCustomerTokens(user.id, user.isFirstLogin);
-    await this.createUserSession(user.id, tokens.refreshToken, ip);
+    const tokens = this.credentialService.generateCustomerTokens(user.id, user.isFirstLogin);
+    await this.credentialService.createUserSession(user.id, tokens.refreshToken, ip);
     return tokens;
   }
 
@@ -129,66 +125,6 @@ export class AuthService {
     await this.prisma.userSession.updateMany({
       where: { userId, isActive: true },
       data: { isActive: false },
-    });
-  }
-
-  async autoCreateAccount(fullName: string, rawPhone: string): Promise<AutoCreateAccountResult> {
-    const phone = normalizePhone(rawPhone);
-    const existing = await this.prisma.user.findUnique({ where: { phoneNumber: phone } });
-    if (existing) return { user: existing, isNew: false };
-
-    const rawPass = generatePassword(fullName, phone);
-    const passwordHash = await bcrypt.hash(rawPass, 12);
-    const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
-    if (!encryptionKey) throw new Error('CREDENTIAL_ENCRYPTION_KEY not configured');
-    const credentialPlainEnc = encryptCredential(rawPass, encryptionKey);
-    const user = await this.prisma.user.create({
-      data: {
-        fullName,
-        phoneNumber: phone,
-        passwordHash,
-        credentialPlainEnc,
-        isFirstLogin: true,
-        isCredentialSent: false,
-      },
-    });
-    return { user, isNew: true, rawPass };
-  }
-
-  getDecryptedCredential(enc: string | null): string | null {
-    if (!enc) return null;
-    try {
-      const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
-      if (!encryptionKey) return null;
-      return decryptCredential(enc, encryptionKey);
-    } catch {
-      return null;
-    }
-  }
-
-  private generateCustomerTokens(userId: string, isFirstLogin: boolean) {
-    const payload: JwtPayload = { sub: userId, role: 'customer', isFirstLogin };
-    return {
-      accessToken: this.jwt.sign(payload, {
-        secret: this.config.get('jwt.accessSecret', { infer: true }),
-        expiresIn: this.config.get('jwt.accessExpiresIn', { infer: true }) ?? '1h',
-      }),
-      refreshToken: this.jwt.sign(payload, {
-        secret: this.config.get('jwt.refreshSecret', { infer: true }),
-        expiresIn: this.config.get('jwt.refreshExpiresIn', { infer: true }) ?? '30d',
-      }),
-    };
-  }
-
-  private async createUserSession(userId: string, refreshToken: string, ip: string) {
-    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
-    await this.prisma.userSession.create({
-      data: {
-        userId,
-        tokenHash,
-        ipAddress: ip,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
     });
   }
 }

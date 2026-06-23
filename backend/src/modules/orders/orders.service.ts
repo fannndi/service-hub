@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { AuthService } from '../auth/auth.service';
+import { CredentialService } from '../auth/credential.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   DeliveryAddressRequiredException,
@@ -21,13 +21,13 @@ import {
   CreateOrderDto,
   SubmitDiagnosisDto,
   UpdateOrderStatusDto,
-} from './dto/order.dto';
+} from './dto';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
-    private authService: AuthService,
+    private credentialService: CredentialService,
     private notif: NotificationsService,
   ) {}
 
@@ -85,7 +85,7 @@ export class OrdersService {
       couponId = coupon.id;
     }
 
-    const { user, isNew, rawPass } = await this.authService.autoCreateAccount(
+    const { user, isNew, rawPass } = await this.credentialService.autoCreateAccount(
       dto.customerName,
       dto.phoneNumber,
     );
