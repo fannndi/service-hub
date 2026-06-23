@@ -203,7 +203,7 @@ class InventoryScreen extends ConsumerWidget {
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined, size: 20),
                                 onPressed: () => context
-                                    .go('/store/inventory/${s.id}', extra: s),
+                                    .push('/store/inventory/${s.id}', extra: s),
                                 constraints: const BoxConstraints(
                                     minWidth: 32, minHeight: 32),
                                 padding: const EdgeInsets.all(2),

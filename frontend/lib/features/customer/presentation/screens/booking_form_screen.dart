@@ -45,19 +45,61 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
   Future<void> _selectPart(List<SparePart> parts) async {
     final part = await showModalBottomSheet<SparePart>(
       context: context,
-      builder: (context) => ListView(
-        padding: const EdgeInsets.all(16),
-        children: parts
-            .map((part) => ListTile(
-                  enabled: part.availableQty > 0,
-                  title: Text(part.partName),
-                  subtitle: Text('${part.availableQty} tersedia'),
-                  trailing: Text(rupiah(part.price)),
-                  onTap: part.availableQty <= 0
-                      ? null
-                      : () => Navigator.pop(context, part),
-                ))
-            .toList(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (_, controller) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Row(
+                children: [
+                  Text('Pilih Sparepart', style: Theme.of(context).textTheme.titleMedium),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                itemCount: parts.length,
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (_, i) {
+                  final p = parts[i];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      enabled: p.availableQty > 0,
+                      title: Text(p.partName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text('${p.availableQty} tersedia'),
+                      trailing: Text(rupiah(p.price), style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
+                      onTap: p.availableQty <= 0 ? null : () => Navigator.pop(context, p),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
     if (part != null) setState(() => _selectedPart = part);
@@ -149,19 +191,22 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               TextFormField(
                   controller: _brand,
                   decoration: const InputDecoration(
-                      labelText: 'Brand'),
+                      labelText: 'Brand',
+                      prefixIcon: Icon(Icons.branding_watermark_outlined)),
                   validator: _required),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _model,
                   decoration: const InputDecoration(
-                      labelText: 'Model Device'),
+                      labelText: 'Model Device',
+                      prefixIcon: Icon(Icons.phone_android_outlined)),
                   validator: _required),
               const SectionTitle('Kerusakan'),
-              DropdownButtonFormField(
+              DropdownButtonFormField<String>(
                   initialValue: _serviceType,
                   decoration: const InputDecoration(
-                      labelText: 'Jenis Servis'),
+                      labelText: 'Jenis Servis',
+                      prefixIcon: Icon(Icons.build_outlined)),
                   items: const [
                     DropdownMenuItem(
                         value: 'screen_replacement', child: Text('Layar')),
@@ -172,7 +217,8 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                     DropdownMenuItem(value: 'camera', child: Text('Kamera')),
                     DropdownMenuItem(value: 'other', child: Text('Lainnya')),
                   ],
-                  onChanged: (v) => setState(() => _serviceType = v!)),
+                  onChanged: (v) => setState(() => _serviceType = v!),
+                  borderRadius: const BorderRadius.all(Radius.circular(14))),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _complaint,

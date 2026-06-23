@@ -22,11 +22,13 @@ class StoreAdminScaffold extends StatelessWidget {
       required this.title,
       required this.selectedIndex,
       required this.body,
-      this.actions});
+      this.actions,
+      this.showBackButton = false});
   final String title;
   final int selectedIndex;
   final Widget body;
   final List<Widget>? actions;
+  final bool showBackButton;
 
   static const destinations = [
     ('Dashboard', Icons.dashboard_outlined, '/store/dashboard'),
@@ -41,7 +43,17 @@ class StoreAdminScaffold extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar: AppBar(
+        title: Text(title),
+        actions: actions,
+        leading: showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        leadingWidth: showBackButton ? 56 : null,
+      ),
       drawer: wide
           ? null
           : Drawer(
@@ -54,7 +66,7 @@ class StoreAdminScaffold extends StatelessWidget {
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: scheme.surface,
-                  boxShadow: AppShadows.card(scheme.shadow),
+                  boxShadow: AppShadows.card(context),
                 ),
                 child: NavigationRail(
                   extended: MediaQuery.sizeOf(context).width >= 1200,

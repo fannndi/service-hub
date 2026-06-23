@@ -15,7 +15,7 @@ class OrderDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Detail Order'), actions: [
         IconButton(
-            onPressed: () => context.go('/store/orders/$orderId/tracking'),
+            onPressed: () => context.push('/store/orders/$orderId/tracking'),
             icon: const Icon(Icons.timeline),
             tooltip: 'Tracking')
       ]),
@@ -65,7 +65,7 @@ class OrderDetailScreen extends ConsumerWidget {
           OrderActionPanel(
               order: o,
               onAction: (action) => action == 'submit_diagnosis'
-                  ? context.go('/store/orders/$orderId/diagnosis')
+                  ? context.push('/store/orders/$orderId/diagnosis')
                   : ref
                       .read(storeOrdersProvider.notifier)
                       .runAction(orderId, action)),

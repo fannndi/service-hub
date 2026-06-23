@@ -53,7 +53,7 @@ class OrderListScreen extends ConsumerWidget {
                 DataCell(Text(
                     o.slaDeadline == null ? '-' : dateText(o.slaDeadline!)))
               ],
-              onTap: (o) => context.go('/store/orders/${o.id}'),
+              onTap: (o) => context.push('/store/orders/${o.id}'),
             ),
           ),
         ),

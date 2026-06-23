@@ -51,7 +51,8 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         DropdownButtonFormField<String>(
           initialValue: _selectedPartType,
           decoration: const InputDecoration(
-              labelText: 'Jenis Sparepart'),
+              labelText: 'Jenis Sparepart',
+              prefixIcon: Icon(Icons.build_outlined)),
           items: const [
             DropdownMenuItem(value: 'screen_replacement', child: Text('Layar')),
             DropdownMenuItem(
@@ -111,7 +112,8 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         child: DropdownButtonFormField<String>(
           initialValue: _selectedBrand,
           decoration: const InputDecoration(
-              labelText: 'Brand'),
+              labelText: 'Brand',
+              prefixIcon: Icon(Icons.branding_watermark_outlined)),
           items: allBrands
               .map((b) => DropdownMenuItem(value: b, child: Text(b)))
               .toList(),
@@ -142,7 +144,8 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         child: DropdownButtonFormField<String>(
           initialValue: _selectedDeviceModel,
           decoration: const InputDecoration(
-              labelText: 'Model Device'),
+              labelText: 'Model Device',
+              prefixIcon: Icon(Icons.phone_android_outlined)),
           items: allModels
               .map((m) => DropdownMenuItem(value: m, child: Text(m)))
               .toList(),
@@ -208,7 +211,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         'qty': int.tryParse(_qty.text) ?? 0,
       }, id: widget.item?.id);
       if (!mounted) return;
-      context.go('/store/inventory');
+      context.pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)

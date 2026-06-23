@@ -26,7 +26,7 @@ class DisputesScreen extends ConsumerWidget {
           DataCell(Text(d.type)),
           DataCell(Text(d.status.label))
         ],
-        onTap: (d) => context.go('/store/disputes/${d.id}', extra: d),
+        onTap: (d) => context.push('/store/disputes/${d.id}', extra: d),
       );
 }
 
@@ -53,7 +53,7 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
       await ref
           .read(disputesProvider.notifier)
           .resolve(widget.dispute.id, accept, reason.text);
-      if (mounted) context.go('/store/disputes');
+      if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)

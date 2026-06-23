@@ -7,6 +7,7 @@ import '../../../../core/widgets/address_dropdowns.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../ui/theme/app_theme.dart';
 import '../../../../ui/widgets/modern_card.dart';
+import '../../../../ui/widgets/servis_snackbar.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -31,9 +32,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       context.go('/admin/dashboard');
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Username atau password salah.')),
-        );
+        showServisSnackbar(context, 'Username atau password salah.', type: SnackbarType.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -253,9 +252,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
         _addressKey.currentState?.clear();
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Toko berhasil dibuat!'), backgroundColor: AppColors.success),
-        );
+        showServisSnackbar(context, 'Toko berhasil dibuat!', type: SnackbarType.success);
       }
     } catch (e) {
       _showError(e);
@@ -271,9 +268,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
       msg = m?.group(1) ?? 'Cek isi form.';
     } else { msg = e.toString(); }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: AppColors.error),
-      );
+      showServisSnackbar(context, msg, type: SnackbarType.error);
     }
   }
 
@@ -498,6 +493,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
               decoration: const InputDecoration(labelText: 'Status', isDense: true),
               items: const [DropdownMenuItem(value: 'active', child: Text('Active')), DropdownMenuItem(value: 'suspended', child: Text('Suspended')), DropdownMenuItem(value: 'deleted', child: Text('Deleted'))],
               onChanged: (v) => status = v ?? 'active',
+              borderRadius: const BorderRadius.all(Radius.circular(14)),
             ),
             const Divider(),
             TextField(controller: pwCtrl, decoration: const InputDecoration(labelText: 'Password Baru (kosongkan jika tidak diubah)', isDense: true), obscureText: true),
@@ -519,20 +515,18 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                 await repo.changeUserPassword(user.id, pwCtrl.text);
               }
               ref.invalidate(userListProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pelanggan diupdate.'), backgroundColor: AppColors.success),
-                );
+              if (mounted) {
+                showServisSnackbar(context, 'Pelanggan diupdate.', type: SnackbarType.success);
               }
+              if (ctx.mounted) Navigator.pop(ctx);
             } catch (e) {
               String msg = 'Gagal.';
               if (e.toString().contains('DioException')) {
                 final m = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(e.toString());
                 msg = m?.group(1) ?? 'Cek isi form.';
               } else { msg = e.toString(); }
-              if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+              if (mounted) {
+                showServisSnackbar(context, msg, type: SnackbarType.error);
               }
             }
           }, child: const Text('Simpan')),

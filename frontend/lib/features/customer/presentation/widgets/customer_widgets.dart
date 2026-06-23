@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
+import '../../../../ui/widgets/shimmer_widget.dart';
 import '../../domain/customer_models.dart';
 
 final rupiahFormatter =
@@ -21,12 +22,14 @@ class CustomerScaffold extends StatelessWidget {
     required this.child,
     this.actions,
     this.floatingActionButton,
+    this.showBackButton = true,
   });
 
   final String title;
   final Widget child;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +37,20 @@ class CustomerScaffold extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: actions,
+        leading: showBackButton
+            ? Builder(
+                builder: (ctx) {
+                  if (Navigator.of(ctx).canPop()) {
+                    return IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              )
+            : null,
+        leadingWidth: showBackButton ? 56 : null,
       ),
       body: GradientBackground(child: child),
       floatingActionButton: floatingActionButton,
@@ -49,7 +66,10 @@ class AsyncPage<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) => value.when(
         data: builder,
-        loading: () => const SkeletonList(),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: ShimmerWidget(count: 3),
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
@@ -469,23 +489,8 @@ class SkeletonList extends StatelessWidget {
   final int count;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListView.builder(
-      itemCount: count,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.xs,
-        ),
-        child: Container(
-          height: 96,
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
+        child: ShimmerWidget(count: count),
+      );
 }

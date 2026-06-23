@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/customer_providers.dart';
 import '../../domain/user_session.dart';
+import '../../../../ui/widgets/servis_dialog.dart';
 import '../../../../shared_widgets/error_state.dart';
 import '../widgets/customer_widgets.dart';
 
@@ -28,45 +29,28 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
   }
 
   Future<void> _revoke(String id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Revoke Sesi'),
-        content: const Text('Sesi ini akan diakhiri. Lanjutkan?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: const Text('Batal')),
-          TextButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: const Text('Revoke')),
-        ],
-      ),
+    final confirm = await showServisConfirmDialog(
+      context,
+      title: 'Revoke Sesi',
+      message: 'Sesi ini akan diakhiri. Lanjutkan?',
+      confirmLabel: 'Revoke',
+      isDestructive: true,
     );
-    if (confirm == true) {
+    if (confirm) {
       await ref.read(sessionRepositoryProvider).revokeSession(id);
       _refresh();
     }
   }
 
   Future<void> _logoutAll() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Logout Semua'),
-        content: const Text(
-            'Semua sesi akan diakhiri kecuali sesi saat ini. Lanjutkan?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(c, false),
-              child: const Text('Batal')),
-          TextButton(
-              onPressed: () => Navigator.pop(c, true),
-              child: const Text('Logout All')),
-        ],
-      ),
+    final confirm = await showServisConfirmDialog(
+      context,
+      title: 'Logout Semua',
+      message: 'Semua sesi akan diakhiri kecuali sesi saat ini. Lanjutkan?',
+      confirmLabel: 'Logout Semua',
+      isDestructive: true,
     );
-    if (confirm == true) {
+    if (confirm) {
       await ref.read(sessionRepositoryProvider).logoutAll();
       _refresh();
     }
