@@ -31,11 +31,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
           ),
           const SizedBox(height: 8),
           Card(
-            child: FutureBuilder<List<UserSession>>(
+            child: FutureBuilder<List<dynamic>>(
               future: ref.read(sessionRepositoryProvider).getSessions(),
               builder: (context, snapshot) {
-                final active =
-                    snapshot.data?.where((s) => s.isActive).length ?? 0;
+                final sessions = (snapshot.data ?? [])
+                    .map((j) => UserSession.fromJson(j as Map<String, dynamic>))
+                    .toList();
+                final active = sessions.where((s) => s.isActive).length;
                 return ListTile(
                   leading: const Icon(Icons.devices),
                   title: const Text('Perangkat Aktif'),

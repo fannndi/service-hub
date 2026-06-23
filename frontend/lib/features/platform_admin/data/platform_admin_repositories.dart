@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/platform_admin_models.dart';
-import '../../core/supabase_service.dart';
-import '../../core/supabase_config.dart';
+import '../../../core/supabase_service.dart';
+import '../../../core/supabase_config.dart';
 
 final sb = SupabaseService.instance;
 
@@ -61,7 +61,7 @@ class AdminRepository {
   }
 
   Future<void> changeUserPassword(String userId, String newPassword) async {
-    await sb.client.auth.admin.updateUserById(userId, attributes: UserAttributes(password: newPassword));
+    await sb.client.auth.admin.updateUserById(userId, attributes: AdminUserAttributes(password: newPassword));
   }
 
   Future<List<dynamic>> getStoreAdmins() async {
@@ -70,6 +70,6 @@ class AdminRepository {
   }
 
   Future<void> changeAdminPassword(String adminId, String newPassword) async {
-    await sb.client.auth.admin.updateUserById(adminId, attributes: UserAttributes(password: newPassword));
+    await sb.client.auth.admin.updateUserById(adminId, attributes: AdminUserAttributes(password: newPassword));
   }
 }

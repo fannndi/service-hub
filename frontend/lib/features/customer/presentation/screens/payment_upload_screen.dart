@@ -40,10 +40,10 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
           : await ref.read(uploadRepositoryProvider).uploadFile(
               _file!, 'payments', (p) => setState(() => _progress = p));
       await ref.read(paymentRepositoryProvider).createPayment(
-          orderId: order.id,
-          amount: amount,
-          method: _method,
-          type: _type,
+          order.id,
+          amount: amount.toInt(),
+          paymentMethod: _method,
+          paymentType: _type,
           proofUrl: proofUrl);
       ref.invalidate(orderDetailProvider(order.id));
       if (mounted) {

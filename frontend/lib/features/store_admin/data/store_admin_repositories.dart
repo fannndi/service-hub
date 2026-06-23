@@ -1,8 +1,6 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../domain/store_admin_models.dart';
-import '../../core/supabase_service.dart';
-import '../../core/supabase_config.dart';
+import '../../../core/supabase_service.dart';
+import '../../../core/supabase_config.dart';
 
 final sb = SupabaseService.instance;
 
@@ -12,8 +10,8 @@ class StoreAuthRepository {
     final response = await sb.signIn(email, password);
     final meta = response.user?.userMetadata ?? {};
     return StoreAdminSession(
-      id: response.user!.id,
-      fullName: meta['full_name'] as String? ?? 'Admin',
+      adminId: response.user!.id,
+      adminName: meta['full_name'] as String? ?? 'Admin',
       phoneNumber: phone,
       storeId: meta['store_id'] as String? ?? '',
       storeName: '',
@@ -27,8 +25,8 @@ class StoreAuthRepository {
     if (!sb.isLoggedIn || sb.role != 'store_admin') return null;
     final meta = sb.user?.userMetadata ?? {};
     return StoreAdminSession(
-      id: sb.user!.id,
-      fullName: meta['full_name'] as String? ?? 'Admin',
+      adminId: sb.user!.id,
+      adminName: meta['full_name'] as String? ?? 'Admin',
       phoneNumber: '',
       storeId: meta['store_id'] as String? ?? '',
       storeName: '',
@@ -47,10 +45,10 @@ class StoreOperationsRepository {
 
   Future<Map<String, dynamic>> getOrders({String? status, String? q, int page = 1, String? actionGroup}) async {
     var query = sb.from('service_orders').select('*, items:order_items(*), user:users(full_name, phone_number)')
-      .eq('store_id', storeId).order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
+      .eq('store_id', storeId);
     if (status != null) query = query.eq('status', status);
     if (q != null) query = query.or('order_number.ilike.%$q%,user.full_name.ilike.%$q%,device_model.ilike.%$q%');
-    final items = await query;
+    final items = await query.order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
     return {'items': items, 'total': items.length};
   }
 
@@ -136,9 +134,9 @@ class StoreOperationsRepository {
 
   Future<Map<String, dynamic>> getPayments({String? status, int page = 1}) async {
     var query = sb.from('payments').select('*, orders:service_orders!inner(order_number, store_id)')
-      .eq('orders.store_id', storeId).order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
+      .eq('orders.store_id', storeId);
     if (status != null) query = query.eq('status', status);
-    final items = await query;
+    final items = await query.order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
     return {'items': items, 'total': items.length};
   }
 
@@ -156,9 +154,9 @@ class StoreOperationsRepository {
 
   Future<Map<String, dynamic>> getDisputes({String? status, int page = 1}) async {
     var query = sb.from('disputes').select('*, users(full_name, phone_number)')
-      .eq('store_id', storeId).order('created_at', ascending: false);
+      .eq('store_id', storeId);
     if (status != null) query = query.eq('status', status);
-    final items = await query;
+    final items = await query.order('created_at', ascending: false);
     return {'items': items, 'total': (items as List).length};
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/supabase_service.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

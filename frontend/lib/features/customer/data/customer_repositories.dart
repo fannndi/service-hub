@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 import '../domain/customer_models.dart';
 import '../../../core/supabase_service.dart';
@@ -68,16 +68,23 @@ class OrderRepository {
       'coupon_code': req.couponCode,
     });
     final data = result as Map<String, dynamic>;
-    return CreateOrderResult(orderNumber: data['order_number'] as String, isNewCustomer: false);
+    return CreateOrderResult(
+      id: data['order_id'] as String? ?? '',
+      orderNumber: data['order_number'] as String? ?? '',
+      status: OrderStatus.fromJson(data['status']),
+      totalEstimasi: (data['total_estimasi'] as num? ?? 0).toDouble(),
+      isNewCustomer: data['is_new_customer'] as bool? ?? false,
+      message: data['message'] as String? ?? '',
+    );
   }
 
   Future<List<CustomerOrder>> getOrders({String? status, int page = 1}) async {
     var q = sb.from('service_orders').select('*, items:order_items(*)')
-      .eq('user_id', sb.user!.id)
+      .eq('user_id', sb.user!.id);
+    if (status != null && status != 'all') q = q.eq('status', status);
+    final data = await q
       .order('created_at', ascending: false)
       .range((page - 1) * 20, page * 20 - 1);
-    if (status != null && status != 'all') q = q.eq('status', status);
-    final data = await q;
     return data.map((json) => CustomerOrder.fromJson(json)).toList();
   }
 
@@ -205,8 +212,16 @@ class SessionRepository {
 class UploadRepository {
   Future<String> getPresignedUrl(String fileName, String mimeType, String folder) async {
     final path = '$folder/${sb.user!.id}/${DateTime.now().millisecondsSinceEpoch}_$fileName';
-    await sb.client.storage.from('uploads').upload(path, Stream.value([]));
+    await sb.client.storage.from('uploads').createSignedUploadUrl(path);
     final url = sb.client.storage.from('uploads').getPublicUrl(path);
     return url;
+  }
+
+  Future<String> uploadFile(dynamic file, String folder, void Function(double)? onProgress) async {
+    final path = '$folder/${sb.user!.id}/${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+    onProgress?.call(0);
+    await sb.client.storage.from('uploads').upload(path, File(file.path as String));
+    onProgress?.call(1);
+    return sb.client.storage.from('uploads').getPublicUrl(path);
   }
 }

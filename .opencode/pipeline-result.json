@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-06-23T12:34:13+0000",
+  "input": "session start",
+  "turn": 37,
+  "project_code": "002",
+  "project": "service-hub",
+  "intent": "review",
+  "domain": "web",
+  "stack": [
+    "python"
+  ],
+  "complexity": "low",
+  "confidence": 0.95,
+  "source": "structured",
+  "needs_planning": false,
+  "model_primary": "Free",
+  "model_heavy": "Free",
+  "chain": [
+    "coding-standards",
+    "security-review",
+    "verification-loop"
+  ],
+  "chain_summary": "coding-standards → security-review → verification-loop",
+  "blocked": [],
+  "work_mode": "build",
+  "profile": "eco",
+  "task_warning": null,
+  "degraded": "Domain 'web' tidak ditemukan, fallback ke 'review' umum"
+}

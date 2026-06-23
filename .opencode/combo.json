@@ -1,0 +1,52 @@
+[
+  {
+    "name": "0",
+    "combo": {
+      "combo": "Free"
+    },
+    "models": [
+      "oc/deepseek-v4-flash-free",
+      "oc/mimo-v2.5-free",
+      "mmf/mimo-auto"
+    ]
+  },
+  {
+    "name": "1",
+    "combo": {
+      "combo": "Emergency"
+    },
+    "models": [
+      "big-pickle",
+      "north-mini-code-free"
+    ]
+  },
+  {
+    "name": "2",
+    "combo": {
+      "combo": "Gemini"
+    },
+    "models": [
+      "gemini/gemma-4-31b-it"
+    ]
+  },
+  {
+    "name": "3",
+    "combo": {
+      "combo": "Deepseek-API"
+    },
+    "models": [
+      "ds/deepseek-v4-flash",
+      "ds/deepseek-v4-pro"
+    ]
+  },
+  {
+    "name": "4",
+    "combo": {
+      "combo": "Deepseek-GO"
+    },
+    "models": [
+      "ocg/deepseek-v4-flash",
+      "ocg/deepseek-v4-pro"
+    ]
+  }
+]

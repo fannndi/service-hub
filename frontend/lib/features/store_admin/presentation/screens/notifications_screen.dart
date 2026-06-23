@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/store_admin_providers.dart';
+import '../../domain/store_admin_notification_models.dart';
 import '../widgets/store_admin_widgets.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -14,16 +15,22 @@ class NotificationsScreen extends ConsumerWidget {
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
-        data: (page) => ListView(children: [
-          for (final item in page.items)
-            ListTile(
-              leading: Icon(item.isRead
-                  ? Icons.mark_email_read_outlined
-                  : Icons.notifications_active_outlined),
-              title: Text(item.title),
-              subtitle: Text('${item.message}\n${dateText(item.createdAt)}'),
-            ),
-        ]),
+        data: (page) {
+          final items = page
+              .whereType<Map<String, dynamic>>()
+              .map(NotificationItem.fromJson)
+              .toList();
+          return ListView(children: [
+            for (final item in items)
+              ListTile(
+                leading: Icon(item.isRead
+                    ? Icons.mark_email_read_outlined
+                    : Icons.notifications_active_outlined),
+                title: Text(item.title),
+                subtitle: Text('${item.message}\n${dateText(item.createdAt)}'),
+              ),
+          ]);
+        },
       ),
     );
   }

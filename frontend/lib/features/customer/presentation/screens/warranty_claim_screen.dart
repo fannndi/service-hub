@@ -36,7 +36,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
             .uploadFile(file, 'evidence', null));
       }
       await ref.read(disputeRepositoryProvider).createDispute(
-          orderId: widget.orderId,
+          widget.orderId,
           disputeType: _type,
           description: _description.text,
           evidenceUrls: urls);

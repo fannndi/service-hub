@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/store_admin_providers.dart';
-import '../../data/store_admin_repositories.dart';
 import '../widgets/store_admin_widgets.dart';
 
 class StoreSettingsScreen extends ConsumerStatefulWidget {
@@ -60,7 +59,7 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
                         try {
                           await ref
                               .read(storeOperationsRepositoryProvider)
-                              .updateStoreProfile({
+                              .updateProfile({
                             'storeName': storeName.text,
                             'address': address.text,
                             'phoneNumber': phoneNumber.text,

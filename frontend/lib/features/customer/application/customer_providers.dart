@@ -49,8 +49,7 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
 final homeSummaryProvider = FutureProvider.autoDispose<HomeSummary>((ref) async {
   final sb = SupabaseService.instance;
   final userId = sb.user!.id;
-  final orders = await sb.from('service_orders').select('status').eq('user_id', userId);
-  final coupons = await sb.from('coupons').select('count').eq('user_id', userId).eq('is_used', false);
+  final orders = await sb.from('service_orders').select('*').eq('user_id', userId);
   final activeOrders = (orders as List).where((o) => !['completed', 'cancelled'].contains(o['status'])).length;
   return HomeSummary(activeOrders: activeOrders, activeCoupons: 0, activeWarranties: 0);
 });

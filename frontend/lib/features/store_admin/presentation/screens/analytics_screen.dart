@@ -16,35 +16,52 @@ class AnalyticsScreen extends ConsumerWidget {
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
-        data: (data) => ListView(padding: const EdgeInsets.all(16), children: [
-          MetricGrid(cards: [
-            MetricCard(
-                title: 'Revenue',
-                value: money(data.revenueMonth),
-                icon: Icons.payments_outlined),
-            MetricCard(
-                title: 'Orders',
-                value: '${data.activeOrders + data.pendingOrders}',
-                icon: Icons.receipt_long_outlined),
-            MetricCard(
-                title: 'Completion',
-                value: '${data.completionRate.toStringAsFixed(1)}%',
-                icon: Icons.task_alt_outlined),
-            MetricCard(
-                title: 'Rating',
-                value: data.ratingAvg.toStringAsFixed(1),
-                icon: Icons.star_outline),
-          ]),
-          SimpleBarChart(
-              title: 'Order Trends',
-              items: data.ordersTrend
-                  .map((e) => CategoryMetric(e.label, e.value))
-                  .toList()),
-          SimpleBarChart(
-              title: 'Popular Services', items: data.serviceCategories),
-          SimpleBarChart(
-              title: 'Sparepart Usage', items: data.sparepartConsumption),
-        ]),
+        data: (data) {
+          final revenueMonth = (data['revenueMonth'] as num?)?.toDouble() ?? 0;
+          final activeOrders = data['activeOrders'] as int? ?? 0;
+          final pendingOrders = data['pendingOrders'] as int? ?? 0;
+          final completionRate = (data['completionRate'] as num?)?.toDouble() ?? 0;
+          final ratingAvg = (data['ratingAvg'] as num?)?.toDouble() ?? 0;
+          final ordersTrend = ((data['ordersTrend'] as List?) ?? [])
+              .whereType<Map<String, dynamic>>()
+              .map(CategoryMetric.fromJson)
+              .toList();
+          final serviceCategories = ((data['serviceCategories'] as List?) ?? [])
+              .whereType<Map<String, dynamic>>()
+              .map(CategoryMetric.fromJson)
+              .toList();
+          final sparepartConsumption =
+              ((data['sparepartConsumption'] as List?) ?? [])
+                  .whereType<Map<String, dynamic>>()
+                  .map(CategoryMetric.fromJson)
+                  .toList();
+          return ListView(padding: const EdgeInsets.all(16), children: [
+            MetricGrid(cards: [
+              MetricCard(
+                  title: 'Revenue',
+                  value: money(revenueMonth),
+                  icon: Icons.payments_outlined),
+              MetricCard(
+                  title: 'Orders',
+                  value: '${activeOrders + pendingOrders}',
+                  icon: Icons.receipt_long_outlined),
+              MetricCard(
+                  title: 'Completion',
+                  value: '${completionRate.toStringAsFixed(1)}%',
+                  icon: Icons.task_alt_outlined),
+              MetricCard(
+                  title: 'Rating',
+                  value: ratingAvg.toStringAsFixed(1),
+                  icon: Icons.star_outline),
+            ]),
+            SimpleBarChart(
+                title: 'Order Trends', items: ordersTrend),
+            SimpleBarChart(
+                title: 'Popular Services', items: serviceCategories),
+            SimpleBarChart(
+                title: 'Sparepart Usage', items: sparepartConsumption),
+          ]);
+        },
       ),
     );
   }

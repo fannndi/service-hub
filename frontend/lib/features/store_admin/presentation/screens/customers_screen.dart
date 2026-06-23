@@ -15,21 +15,27 @@ class CustomersScreen extends ConsumerWidget {
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
-        data: (page) => AdminDataTable<CustomerProfile>(
-          items: page.items,
-          columns: const [
-            DataColumn(label: Text('Nama')),
-            DataColumn(label: Text('HP')),
-            DataColumn(label: Text('Order')),
-            DataColumn(label: Text('Total Spend'))
-          ],
-          cells: (c) => [
-            DataCell(Text(c.name)),
-            DataCell(Text(c.phone)),
-            DataCell(Text('${c.totalOrders}')),
-            DataCell(Text(money(c.totalSpent)))
-          ],
-        ),
+        data: (items) {
+          final profiles = items
+              .whereType<Map<String, dynamic>>()
+              .map(CustomerProfile.fromJson)
+              .toList();
+          return AdminDataTable<CustomerProfile>(
+            items: profiles,
+            columns: const [
+              DataColumn(label: Text('Nama')),
+              DataColumn(label: Text('HP')),
+              DataColumn(label: Text('Order')),
+              DataColumn(label: Text('Total Spend'))
+            ],
+            cells: (c) => [
+              DataCell(Text(c.name)),
+              DataCell(Text(c.phone)),
+              DataCell(Text('${c.totalOrders}')),
+              DataCell(Text(money(c.totalSpent)))
+            ],
+          );
+        },
       ),
     );
   }

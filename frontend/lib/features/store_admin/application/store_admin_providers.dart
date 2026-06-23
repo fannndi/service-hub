@@ -68,7 +68,7 @@ class StoreOrdersController extends AsyncNotifier<PageResult<StoreOrder>> {
     final repo = ref.read(storeOperationsRepositoryProvider);
     final query = ref.read(orderQueryProvider);
     final result = await repo.getOrders(status: query.status, q: query.search, page: query.page);
-    return PageResult(items: (result['items'] as List).map((j) => StoreOrder.fromJson(j)).toList(), total: result['total'] as int, page: query.page);
+    return PageResult(items: (result['items'] as List).map((j) => StoreOrder.fromJson(j)).toList(), total: result['total'] as int, page: query.page, limit: 20);
   }
 
   Future<void> runAction(String orderId, String action) async {
@@ -114,7 +114,7 @@ class InventoryController extends AsyncNotifier<PageResult<Sparepart>> {
     final repo = ref.read(storeOperationsRepositoryProvider);
     final query = ref.read(inventoryQueryProvider);
     final result = await repo.getSpareparts(search: query.search, brand: query.brand, deviceModel: query.deviceModel, partType: query.partType, page: query.page);
-    return PageResult(items: (result['items'] as List).map((j) => Sparepart.fromJson(j)).toList(), total: result['total'] as int, page: query.page);
+    return PageResult(items: (result['items'] as List).map((j) => Sparepart.fromJson(j)).toList(), total: result['total'] as int, page: query.page, limit: 20);
   }
 
   Future<void> save(Map<String, dynamic> data, {String? id}) async {
@@ -147,7 +147,7 @@ class PaymentsController extends AsyncNotifier<PageResult<PaymentRecord>> {
   Future<PageResult<PaymentRecord>> build() async {
     final repo = ref.read(storeOperationsRepositoryProvider);
     final result = await repo.getPayments();
-    return PageResult(items: (result['items'] as List).map((j) => PaymentRecord.fromJson(j)).toList(), total: result['total'] as int, page: 1);
+    return PageResult(items: (result['items'] as List).map((j) => PaymentRecord.fromJson(j)).toList(), total: result['total'] as int, page: 1, limit: 20);
   }
 
   Future<void> confirm(String orderId, String paymentId) async {
@@ -164,7 +164,7 @@ class DisputesController extends AsyncNotifier<PageResult<DisputeCase>> {
   Future<PageResult<DisputeCase>> build() async {
     final repo = ref.read(storeOperationsRepositoryProvider);
     final result = await repo.getDisputes();
-    return PageResult(items: (result['items'] as List).map((j) => DisputeCase.fromJson(j)).toList(), total: result['total'] as int, page: 1);
+    return PageResult(items: (result['items'] as List).map((j) => DisputeCase.fromJson(j)).toList(), total: result['total'] as int, page: 1, limit: 20);
   }
 
   Future<void> resolve(String disputeId, bool accept, String reason) async {

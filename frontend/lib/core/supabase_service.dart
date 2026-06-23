@@ -14,8 +14,6 @@ class SupabaseService {
     );
   }
 
-  // ── Auth ──
-
   User? get user => client.auth.currentUser;
   String? get role => user?.userMetadata?['role'] as String?;
   String? get storeId => user?.userMetadata?['store_id'] as String?;
@@ -35,11 +33,12 @@ class SupabaseService {
     await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
-  // ── Database ──
+  // Read + Filter: SupabaseQueryBuilder.select() returns PostgrestFilterBuilder with .eq/.neq/.gt/.lt etc
+  SupabaseQueryBuilder from(String table) => client.from(table);
 
-  PostgrestQueryBuilder from(String table) => client.from(table);
-
-  // ── Edge Functions ──
+  Future<dynamic> rpc(String function, {Map<String, dynamic>? params}) async {
+    return client.rpc(function, params: params);
+  }
 
   Future<dynamic> invoke(String name, {Object? body}) async {
     return client.functions.invoke(name, body: body);

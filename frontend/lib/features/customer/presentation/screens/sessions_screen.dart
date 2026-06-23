@@ -14,7 +14,7 @@ class SessionsScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionsScreenState extends ConsumerState<SessionsScreen> {
-  Future<List<UserSession>>? _sessionsFuture;
+  Future<List<dynamic>>? _sessionsFuture;
 
   @override
   void initState() {
@@ -67,7 +67,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
             onPressed: _logoutAll,
             tooltip: 'Logout Semua'),
       ],
-      child: FutureBuilder<List<UserSession>>(
+      child: FutureBuilder<List<dynamic>>(
         future: _sessionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -78,10 +78,13 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                 message: 'Gagal memuat sesi: ${snapshot.error}',
                 onRetry: _refresh);
           }
-          final sessions = snapshot.data ?? [];
-          if (sessions.isEmpty) {
+          final raw = snapshot.data ?? [];
+          if (raw.isEmpty) {
             return const EmptyMessage('Tidak ada sesi aktif');
           }
+          final sessions = raw
+              .map((j) => UserSession.fromJson(j as Map<String, dynamic>))
+              .toList();
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: sessions.length,
