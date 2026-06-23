@@ -3,7 +3,7 @@ ref = "eboplbemgtvmviwhdlfa"
 port = 54321
 
 [auth]
-enabled = false
+enabled = true
 
 [analytics]
 enabled = false
@@ -12,19 +12,19 @@ enabled = false
 enabled = false
 
 [storage]
-enabled = false
+enabled = true
 
 [realtime]
 enabled = false
 
 [edge_functions]
-enabled = false
+enabled = true
 
 [db.migrations]
-enabled = false
+enabled = true
 
 [studio]
-enabled = false
+enabled = true
 
 [inbucket]
 enabled = false

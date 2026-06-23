@@ -1,364 +1,212 @@
-import 'dart:io';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:image_picker/image_picker.dart';
-
-import '../../../core/app_config.dart';
-import '../../../core/json_helpers.dart';
-import '../../../network/api_client.dart';
-import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
-import '../domain/user_session.dart';
+import '../../../core/supabase_service.dart';
+import '../../../core/supabase_config.dart';
 
-String normalizePhone(String value) {
-  final digits = value.replaceAll(RegExp(r'\D'), '');
-  if (digits.startsWith('62')) return '0${digits.substring(2)}';
-  if (digits.startsWith('0')) return digits;
-  return '0$digits';
-}
+final sb = SupabaseService.instance;
 
 String parseApiError(Object error) {
-  if (error is DioException) {
-    final data = error.response?.data;
-    if (data is Map<String, dynamic>) {
-      final errorBody = data['error'];
-      if (errorBody is Map<String, dynamic>) {
-        final details = _validationDetails(errorBody['details']);
-        if (details != null) return details;
-        final userMessage = errorBody['user_message'];
-        if (userMessage is String && userMessage.isNotEmpty) return userMessage;
-        return _codeToMessage(errorBody['code'] as String?);
-      }
-    }
-  }
-  return 'Terjadi kesalahan. Coba lagi nanti.';
-}
-
-String? _validationDetails(Object? details) {
-  if (details is String && details.isNotEmpty) return details;
-  if (details is List && details.isNotEmpty) {
-    return details.take(3).map((item) => item.toString()).join('\n');
-  }
-  return null;
-}
-
-String _codeToMessage(String? code) => switch (code) {
-      'INVALID_CREDENTIALS' => 'Nomor HP atau password salah.',
-      'ACCOUNT_LOCKED' => 'Akun terkunci sementara.',
-      'ACCOUNT_SUSPENDED' => 'Akun dinonaktifkan. Hubungi support.',
-      'PASSWORD_SAME_AS_OLD' =>
-        'Password baru tidak boleh sama dengan yang lama.',
-      'STOCK_UNAVAILABLE' => 'Stok sparepart habis, pilih sparepart lain.',
-      'STORE_NOT_ACTIVE' => 'Toko tidak aktif.',
-      'PROOF_REQUIRED' => 'Bukti pembayaran wajib diunggah.',
-      'DUPLICATE_REVIEW' => 'Kamu sudah memberikan ulasan.',
-      'WARRANTY_EXPIRED' => 'Masa garansi sudah berakhir.',
-      'DISPUTE_ALREADY_ACTIVE' => 'Sudah ada klaim aktif.',
-      _ => 'Terjadi kesalahan. Coba lagi nanti.',
-    };
-
-class CustomerSessionStorage {
-  const CustomerSessionStorage(this._storage);
-  static const _accessKey = 'customer_access_token';
-  static const _refreshKey = 'customer_refresh_token';
-  static const _cachedProfileKey = 'customer_cached_profile';
-  static const _cachedSettingsKey = 'customer_notifications_enabled';
-  final FlutterSecureStorage _storage;
-
-  Future<String?> readAccessToken() => _storage.read(key: _accessKey);
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshKey);
-
-  Future<void> saveTokens(String accessToken, String refreshToken) async {
-    await _storage.write(key: _accessKey, value: accessToken);
-    await _storage.write(key: _refreshKey, value: refreshToken);
-  }
-
-  Future<void> cacheProfile(CustomerUser user) => _storage.write(
-      key: _cachedProfileKey,
-      value: '${user.fullName}|${user.phoneNumber}|${user.address ?? ''}');
-  Future<String?> readCachedProfile() => _storage.read(key: _cachedProfileKey);
-  Future<void> saveNotificationPreference(bool enabled) =>
-      _storage.write(key: _cachedSettingsKey, value: enabled ? '1' : '0');
-  Future<bool> readNotificationPreference() async =>
-      (await _storage.read(key: _cachedSettingsKey)) != '0';
-
-  Future<void> clearAll() async {
-    await _storage.delete(key: _accessKey);
-    await _storage.delete(key: _refreshKey);
-  }
-}
-
-class CustomerApiClient {
-  CustomerApiClient(AppConfig config, CustomerSessionStorage session)
-      : publicDio = createApiClient(config.apiBaseUrl),
-        authDio = createAuthDio(
-          baseUrl: config.apiBaseUrl,
-          readAccessToken: session.readAccessToken,
-          readRefreshToken: session.readRefreshToken,
-          onSaveTokens: session.saveTokens,
-          onClearSession: session.clearAll,
-        );
-
-  final Dio publicDio;
-  final Dio authDio;
-}
-
-class CustomerAuthRepository {
-  CustomerAuthRepository(this._api, this._session);
-  final CustomerApiClient _api;
-  final CustomerSessionStorage _session;
-
-  Future<LoginResult> login(String phone, String password) async {
-    final response = await _api.publicDio.post('/auth/login',
-        data: {'phone_number': normalizePhone(phone), 'password': password});
-    final result = LoginResult.fromJson(unwrap(response.data));
-    await _session.saveTokens(result.accessToken, result.refreshToken);
-    await _session.cacheProfile(result.user);
-    return result;
-  }
-
-  Future<CustomerUser> getMe() async {
-    final response = await _api.authDio.get('/me');
-    final user = CustomerUser.fromJson(unwrap(response.data));
-    await _session.cacheProfile(user);
-    return user;
-  }
-
-  Future<HomeSummary> getSummary() async {
-    final response = await _api.authDio.get('/me/summary');
-    return HomeSummary.fromJson(unwrap(response.data));
-  }
-
-  Future<void> changePassword(String oldPassword, String newPassword) async {
-    await _api.authDio.post('/auth/change-password',
-        data: {'old_password': oldPassword, 'new_password': newPassword});
-  }
-
-  Future<CustomerUser> updateProfile(
-      {required String fullName, String? address, String? avatarUrl}) async {
-    final response = await _api.authDio.patch('/me', data: {
-      'full_name': fullName,
-      'address': address,
-      if (avatarUrl != null) 'avatar_url': avatarUrl
-    });
-    final user = CustomerUser.fromJson(unwrap(response.data));
-    await _session.cacheProfile(user);
-    return user;
-  }
-
-  Future<void> logout() async {
-    final refresh = await _session.readRefreshToken();
-    if (refresh != null) {
-      try {
-        await _api.authDio
-            .post('/auth/logout', data: {'refresh_token': refresh});
-      } catch (_) {}
-    }
-    await _session.clearAll();
-  }
+  final msg = error.toString();
+  if (msg.contains('STOCK_UNAVAILABLE')) return 'Stok sparepart tidak tersedia.';
+  if (msg.contains('COUPON_INVALID')) return 'Kupon tidak valid.';
+  if (msg.contains('ORDER_NOT_FOUND')) return 'Pesanan tidak ditemukan.';
+  if (msg.contains('STORE_NOT_ACTIVE')) return 'Toko tidak aktif.';
+  return 'Terjadi kesalahan. Coba lagi.';
 }
 
 class StoreDiscoveryRepository {
-  StoreDiscoveryRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<List<ServiceStore>> getStores(
-      {String? brand, String? deviceModel, int page = 1}) async {
-    final response = await _api.publicDio.get('/stores', queryParameters: {
-      'page': page,
-      'limit': 20,
-      if (brand != null && brand != 'All') 'brand': brand,
-      if (deviceModel != null && deviceModel.isNotEmpty)
-        'deviceModel': deviceModel
-    });
-    return unwrapList(response.data).map(ServiceStore.fromJson).toList();
+  Future<List<ServiceStore>> getStores({String? brand, String? model}) async {
+    var q = sb.from('stores').select('*').eq('is_active', true);
+    if (brand != null && brand != 'All') q = q.eq('brand', brand);
+    if (model != null && model.isNotEmpty) q = q.ilike('device_model', '%$model%');
+    final data = await q.order('created_at', ascending: false).limit(20);
+    return data.map((json) => ServiceStore.fromJson(json)).toList();
   }
 
   Future<List<DeviceModelGroup>> getDeviceModels() async {
-    final response = await _api.publicDio.get('/stores/device-models');
-    return unwrapList(response.data).map(DeviceModelGroup.fromJson).toList();
+    final data = await sb.client.rpc('get_device_models');
+    return (data as List).map((json) => DeviceModelGroup.fromJson(json)).toList();
   }
 
-  Future<ServiceStore> getStore(String id) async {
-    final response = await _api.authDio.get('/stores/$id');
-    return ServiceStore.fromJson(unwrap(response.data));
+  Future<List<StoreMatchResult>> matchStores({required String brand, required String deviceModel, required String partType}) async {
+    final data = await sb.from('stores').select('''
+      id, store_name, address, phone_number, rating_avg,
+      spareparts!inner(brand, device_model, part_type, part_name, price, qty, qty_reserved)
+    ''').eq('is_active', true).eq('spareparts.brand', brand).eq('spareparts.device_model', deviceModel).eq('spareparts.part_type', partType);
+    return data.map((json) => StoreMatchResult.fromJson(json)).toList();
+  }
+
+  Future<ServiceStore> getDetail(String storeId) async {
+    final data = await sb.from('stores').select('*, reviews(*, users(full_name))').eq('id', storeId).single();
+    return ServiceStore.fromJson(data);
   }
 
   Future<List<SparePart>> getSpareparts(String storeId) async {
-    final response = await _api.authDio.get('/stores/$storeId/spareparts');
-    return unwrapList(response.data).map(SparePart.fromJson).toList();
-  }
-
-  Future<List<StoreMatchResult>> matchStores({
-    required String brand,
-    required String deviceModel,
-    String? partType,
-  }) async {
-    final response =
-        await _api.publicDio.get('/stores/match', queryParameters: {
-      'brand': brand,
-      'deviceModel': deviceModel,
-      if (partType != null) 'partType': partType,
-    });
-    return unwrapList(response.data).map(StoreMatchResult.fromJson).toList();
+    final data = await sb.from('spareparts').select('*').eq('store_id', storeId).eq('status', 'available');
+    return data.map((json) => SparePart.fromJson(json)).toList();
   }
 }
 
 class OrderRepository {
-  OrderRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<CreateOrderResult> createOrder(CreateOrderRequest request) async {
-    final response =
-        await _api.publicDio.post('/orders', data: request.toJson());
-    return CreateOrderResult.fromJson(unwrap(response.data));
-  }
-
-  Future<List<CustomerOrder>> getMyOrders(
-      {String? status, int page = 1, int limit = 20}) async {
-    final response = await _api.authDio.get('/me/orders', queryParameters: {
-      'page': page,
-      'limit': limit,
-      if (status != null) 'status': status
+  Future<CreateOrderResult> createOrder(CreateOrderRequest req) async {
+    final result = await sb.invoke('orders', body: {
+      'store_id': req.storeId,
+      'device_type': req.deviceType,
+      'brand': req.brand,
+      'device_model': req.deviceModel,
+      'delivery_method': req.deliveryMethod,
+      'delivery_address': req.deliveryAddress,
+      'customer_name': req.fullName,
+      'phone_number': req.phoneNumber,
+      'items': req.items.map((i) => {
+        'service_type': i.serviceType,
+        'complaint': i.complaint,
+        'sparepart_id': i.sparepartId,
+        'item_price': i.itemPrice,
+      }).toList(),
+      'coupon_code': req.couponCode,
     });
-    return unwrapList(response.data).map(CustomerOrder.fromJson).toList();
+    final data = result as Map<String, dynamic>;
+    return CreateOrderResult(orderNumber: data['order_number'] as String, isNewCustomer: false);
   }
 
-  Future<CustomerOrder> getOrderDetail(String orderId) async {
-    final response = await _api.authDio.get('/orders/$orderId');
-    return CustomerOrder.fromJson(unwrap(response.data));
+  Future<List<CustomerOrder>> getOrders({String? status, int page = 1}) async {
+    var q = sb.from('service_orders').select('*, items:order_items(*)')
+      .eq('user_id', sb.user!.id)
+      .order('created_at', ascending: false)
+      .range((page - 1) * 20, page * 20 - 1);
+    if (status != null && status != 'all') q = q.eq('status', status);
+    final data = await q;
+    return data.map((json) => CustomerOrder.fromJson(json)).toList();
   }
 
-  Future<CustomerOrder> getOrderProgress(String orderId) async {
-    final response = await _api.authDio.get('/me/orders/$orderId/progress');
-    return CustomerOrder.fromJson(unwrap(response.data));
+  Future<CustomerOrder> getDetail(String orderId) async {
+    final data = await sb.from('service_orders').select('*, items:order_items(*, sparepart:spareparts(*)), tracking:service_tracking(*), payments(*), store:stores(store_name, address, phone_number)')
+      .eq('id', orderId).eq('user_id', sb.user!.id).single();
+    return CustomerOrder.fromJson(data);
   }
 
-  Future<void> approveOrder(String orderId) =>
-      _api.authDio.post('/orders/$orderId/approve').then((_) {});
-  Future<void> rejectOrder(String orderId) =>
-      _api.authDio.post('/orders/$orderId/reject').then((_) {});
+  Future<Map<String, dynamic>> getProgress(String orderId) async {
+    final data = await sb.from('service_tracking').select('*').eq('order_id', orderId).order('created_at', ascending: false);
+    return {'entries': data};
+  }
+
+  Future<void> approve(String orderId) async {
+    await sb.invoke('orders', body: {'order_id': orderId, 'action': 'approve'});
+  }
+
+  Future<void> reject(String orderId) async {
+    await sb.invoke('orders', body: {'order_id': orderId, 'action': 'reject'});
+  }
+
+  Future<dynamic> approveOrder(String orderId) => approve(orderId);
+  Future<dynamic> rejectOrder(String orderId) => reject(orderId);
 }
 
-class UploadRepository {
-  UploadRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<String> uploadFile(XFile file, String folder,
-      void Function(double progress)? onProgress) async {
-    final mimeType = _guessMime(file.name);
-    final presign = await _api.authDio.post('/uploads/presign',
-        data: {'fileName': file.name, 'mimeType': mimeType, 'folder': folder});
-    final data = unwrap(presign.data);
-    final uploadUrl = readString(data, 'uploadUrl', 'upload_url');
-    final fileUrl = readString(data, 'fileUrl', 'file_url');
-    final diskFile = File(file.path);
-    final uploadDio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
-    ));
-    await uploadDio.put(
-      uploadUrl,
-      data: diskFile.openRead(),
-      options: Options(headers: {
-        'Content-Type': mimeType,
-        'Content-Length': await diskFile.length()
-      }),
-      onSendProgress: (sent, total) {
-        if (total > 0) onProgress?.call(sent / total);
-      },
+class CustomerAuthRepository {
+  Future<CustomerUser> login(String phone, String password) async {
+    final email = SupabaseConfig.buildCustomerEmail(phone);
+    final response = await sb.signIn(email, password);
+    final meta = response.user?.userMetadata ?? {};
+    return CustomerUser(
+      id: response.user!.id,
+      fullName: meta['full_name'] as String? ?? 'Pelanggan',
+      phoneNumber: phone,
+      isFirstLogin: meta['is_first_login'] as bool? ?? true,
     );
-    return fileUrl;
   }
 
-  String _guessMime(String name) {
-    final lower = name.toLowerCase();
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
+  Future<void> logout() => sb.signOut();
+
+  Future<void> changePassword(String oldPw, String newPw) => sb.updatePassword(newPw);
+
+  Future<CustomerUser?> restoreSession() async {
+    if (!sb.isLoggedIn) return null;
+    final meta = sb.user?.userMetadata ?? {};
+    return CustomerUser(
+      id: sb.user!.id,
+      fullName: meta['full_name'] as String? ?? 'Pelanggan',
+      phoneNumber: meta['phone'] as String? ?? '',
+      isFirstLogin: meta['is_first_login'] as bool? ?? true,
+    );
+  }
+
+  Future<void> updateProfile({String? fullName, String? address}) async {
+    final updates = <String, dynamic>{};
+    if (fullName != null) updates['full_name'] = fullName;
+    if (address != null) updates['address'] = address;
+    if (updates.isNotEmpty) {
+      await sb.from('users').update(updates).eq('id', sb.user!.id);
+    }
   }
 }
 
 class PaymentRepository {
-  PaymentRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<void> createPayment(
-      {required String orderId,
-      required double amount,
-      required String method,
-      required String type,
-      String? proofUrl}) async {
-    await _api.authDio.post('/orders/$orderId/payments', data: {
+  Future<void> createPayment(String orderId, {required int amount, required String paymentMethod, required String paymentType, String? proofUrl}) async {
+    await sb.from('payments').insert({
+      'order_id': orderId,
+      'user_id': sb.user!.id,
       'amount': amount,
-      'paymentMethod': method,
-      'paymentType': type,
-      if (proofUrl != null) 'proofUrl': proofUrl
+      'payment_method': paymentMethod,
+      'payment_type': paymentType,
+      'proof_url': proofUrl,
     });
   }
 }
 
 class ReviewRepository {
-  ReviewRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<ReviewResult> createReview(
-      {required String orderId, required int rating, String? comment}) async {
-    final response = await _api.authDio.post('/orders/$orderId/reviews', data: {
+  Future<void> createReview(String orderId, {required int rating, String? comment}) async {
+    final order = await sb.from('service_orders').select('store_id').eq('id', orderId).single();
+    await sb.from('reviews').insert({
+      'order_id': orderId,
+      'user_id': sb.user!.id,
+      'store_id': order['store_id'],
       'rating': rating,
-      if (comment != null && comment.isNotEmpty) 'comment': comment
     });
-    return ReviewResult.fromJson(unwrap(response.data));
+    await sb.rpc('update_rating_avg', params: {'p_store_id': order['store_id']});
   }
 
   Future<List<CouponReward>> getCoupons() async {
-    final response = await _api.authDio.get('/me/coupons');
-    return unwrapList(response.data).map(CouponReward.fromJson).toList();
+    final data = await sb.from('coupons').select('*').eq('user_id', sb.user!.id).eq('is_used', false);
+    return (data as List).map((json) => CouponReward.fromJson(json)).toList();
   }
 }
 
 class DisputeRepository {
-  DisputeRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<void> createDispute(
-      {required String orderId,
-      required String disputeType,
-      required String description,
-      required List<String> evidenceUrls}) async {
-    await _api.authDio.post('/orders/$orderId/disputes', data: {
-      'disputeType': disputeType,
+  Future<void> createDispute(String orderId, {required String disputeType, required String description, List<String>? evidenceUrls}) async {
+    await sb.from('disputes').insert({
+      'order_id': orderId,
+      'user_id': sb.user!.id,
+      'dispute_type': disputeType,
       'description': description,
-      'evidenceUrls': evidenceUrls
+      'evidence_urls': evidenceUrls ?? [],
     });
   }
 }
 
 class NotificationRepository {
-  NotificationRepository(this._api);
-  final CustomerApiClient _api;
-
-  Future<List<NotificationItem>> getNotifications() async {
-    final response = await _api.authDio.get('/me/notifications');
-    return unwrapList(response.data).map(NotificationItem.fromJson).toList();
+  Future<List<dynamic>> getNotifications() async {
+    final data = await sb.from('service_tracking')
+      .select('*, orders:service_orders!inner(store_id)')
+      .eq('orders.user_id', sb.user!.id)
+      .order('created_at', ascending: false)
+      .limit(50);
+    return data;
   }
 }
 
 class SessionRepository {
-  SessionRepository(this._api);
-  final CustomerApiClient _api;
+  Future<List<dynamic>> getSessions() async => [];
+  Future<void> revokeSession(String id) async {}
+  Future<void> logoutAll() async {}
+}
 
-  Future<List<UserSession>> getSessions() async {
-    final response = await _api.authDio.get('/me/sessions');
-    return unwrapList(response.data).map(UserSession.fromJson).toList();
-  }
-
-  Future<void> revokeSession(String id) async {
-    await _api.authDio.delete('/me/sessions/$id');
-  }
-
-  Future<void> logoutAll() async {
-    await _api.authDio.delete('/me/sessions');
+class UploadRepository {
+  Future<String> getPresignedUrl(String fileName, String mimeType, String folder) async {
+    final path = '$folder/${sb.user!.id}/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    await sb.client.storage.from('uploads').upload(path, Stream.value([]));
+    final url = sb.client.storage.from('uploads').getPublicUrl(path);
+    return url;
   }
 }

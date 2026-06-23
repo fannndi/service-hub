@@ -1,140 +1,119 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/app_config.dart';
 import '../data/customer_repositories.dart';
-import '../domain/device_model.dart';
 import '../domain/customer_models.dart';
+import '../../../core/supabase_service.dart';
 
-final customerSessionProvider = Provider<CustomerSessionStorage>(
-    (ref) => const CustomerSessionStorage(FlutterSecureStorage()));
-final customerApiClientProvider = Provider<CustomerApiClient>((ref) =>
-    CustomerApiClient(
-        ref.watch(appConfigProvider), ref.watch(customerSessionProvider)));
-final customerAuthRepositoryProvider = Provider<CustomerAuthRepository>((ref) =>
-    CustomerAuthRepository(ref.watch(customerApiClientProvider),
-        ref.watch(customerSessionProvider)));
-final storeDiscoveryRepositoryProvider = Provider<StoreDiscoveryRepository>(
-    (ref) => StoreDiscoveryRepository(ref.watch(customerApiClientProvider)));
-final orderRepositoryProvider = Provider<OrderRepository>(
-    (ref) => OrderRepository(ref.watch(customerApiClientProvider)));
-final uploadRepositoryProvider = Provider<UploadRepository>(
-    (ref) => UploadRepository(ref.watch(customerApiClientProvider)));
-final paymentRepositoryProvider = Provider<PaymentRepository>(
-    (ref) => PaymentRepository(ref.watch(customerApiClientProvider)));
-final reviewRepositoryProvider = Provider<ReviewRepository>(
-    (ref) => ReviewRepository(ref.watch(customerApiClientProvider)));
-final disputeRepositoryProvider = Provider<DisputeRepository>(
-    (ref) => DisputeRepository(ref.watch(customerApiClientProvider)));
-final notificationRepositoryProvider = Provider<NotificationRepository>(
-    (ref) => NotificationRepository(ref.watch(customerApiClientProvider)));
-final sessionRepositoryProvider = Provider<SessionRepository>(
-    (ref) => SessionRepository(ref.watch(customerApiClientProvider)));
+final customerAuthRepositoryProvider = Provider<CustomerAuthRepository>((_) => CustomerAuthRepository());
+final storeDiscoveryRepositoryProvider = Provider<StoreDiscoveryRepository>((_) => StoreDiscoveryRepository());
+final orderRepositoryProvider = Provider<OrderRepository>((_) => OrderRepository());
+final paymentRepositoryProvider = Provider<PaymentRepository>((_) => PaymentRepository());
+final reviewRepositoryProvider = Provider<ReviewRepository>((_) => ReviewRepository());
+final disputeRepositoryProvider = Provider<DisputeRepository>((_) => DisputeRepository());
+final notificationRepositoryProvider = Provider<NotificationRepository>((_) => NotificationRepository());
+final sessionRepositoryProvider = Provider<SessionRepository>((_) => SessionRepository());
+final uploadRepositoryProvider = Provider<UploadRepository>((_) => UploadRepository());
+
+final customerAuthProvider = AsyncNotifierProvider<CustomerAuthNotifier, CustomerUser?>(CustomerAuthNotifier.new);
 
 class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   @override
   Future<CustomerUser?> build() async {
-    final token = await ref.read(customerSessionProvider).readAccessToken();
-    if (token == null) return null;
-    try {
-      return await ref.read(customerAuthRepositoryProvider).getMe();
-    } catch (_) {
-      await ref.read(customerSessionProvider).clearAll();
-      return null;
-    }
+    final repo = ref.read(customerAuthRepositoryProvider);
+    return repo.restoreSession();
   }
 
-  Future<CustomerUser> restoreSession() async {
-    state = const AsyncLoading();
-    final user = await ref.read(customerAuthRepositoryProvider).getMe();
+  Future<CustomerUser> login(String phone, String password) async {
+    final repo = ref.read(customerAuthRepositoryProvider);
+    final user = await repo.login(phone, password);
     state = AsyncData(user);
     return user;
   }
 
-  Future<LoginResult> login(String phone, String password) async {
-    state = const AsyncLoading();
-    final result =
-        await ref.read(customerAuthRepositoryProvider).login(phone, password);
-    state = AsyncData(result.user);
-    return result;
-  }
-
-  Future<void> changePassword(String oldPassword, String newPassword) async {
-    await ref
-        .read(customerAuthRepositoryProvider)
-        .changePassword(oldPassword, newPassword);
-    final user = await ref.read(customerAuthRepositoryProvider).getMe();
-    state = AsyncData(user.copyWith(isFirstLogin: false));
-  }
-
-  Future<void> updateProfile(
-      {required String fullName, String? address, String? avatarUrl}) async {
-    final user = await ref.read(customerAuthRepositoryProvider).updateProfile(
-        fullName: fullName, address: address, avatarUrl: avatarUrl);
-    state = AsyncData(user);
-  }
-
   Future<void> logout() async {
-    await ref.read(customerAuthRepositoryProvider).logout();
+    await SupabaseService.instance.signOut();
     state = const AsyncData(null);
+  }
+
+  Future<void> changePassword(String oldPw, String newPw) async {
+    final repo = ref.read(customerAuthRepositoryProvider);
+    await repo.changePassword(oldPw, newPw);
+  }
+
+  Future<void> updateProfile({String? fullName, String? address}) async {
+    final repo = ref.read(customerAuthRepositoryProvider);
+    await repo.updateProfile(fullName: fullName, address: address);
+    state = AsyncData(state.valueOrNull);
   }
 }
 
-final customerAuthProvider =
-    AsyncNotifierProvider<CustomerAuthNotifier, CustomerUser?>(
-        CustomerAuthNotifier.new);
-
-final homeSummaryProvider = FutureProvider<HomeSummary>(
-    (ref) => ref.watch(customerAuthRepositoryProvider).getSummary());
-final featuredStoresProvider = FutureProvider<List<ServiceStore>>(
-    (ref) => ref.watch(storeDiscoveryRepositoryProvider).getStores());
-final deviceModelsProvider = FutureProvider<List<DeviceModelGroup>>(
-    (ref) => ref.watch(storeDiscoveryRepositoryProvider).getDeviceModels());
-final storeListProvider =
-    FutureProvider.family<List<ServiceStore>, ({String? brand, String? model})>(
-        (ref, filter) {
-  return ref
-      .watch(storeDiscoveryRepositoryProvider)
-      .getStores(brand: filter.brand, deviceModel: filter.model);
-});
-final storeDetailProvider = FutureProvider.family<ServiceStore, String>(
-    (ref, id) => ref.watch(storeDiscoveryRepositoryProvider).getStore(id));
-final sparepartsProvider = FutureProvider.family<List<SparePart>, String>(
-    (ref, storeId) =>
-        ref.watch(storeDiscoveryRepositoryProvider).getSpareparts(storeId));
-
-const activeStatusCsv =
-    'waiting_device,device_received,diagnosing,waiting_approval,waiting_sparepart,repairing,quality_check,waiting_payment,disputed';
-
-final customerOrdersProvider =
-    FutureProvider.family<List<CustomerOrder>, String>((ref, group) {
-  final status = switch (group) {
-    'completed' => 'completed',
-    'cancelled' => 'cancelled',
-    'recent' => null,
-    _ => activeStatusCsv,
-  };
-  return ref
-      .watch(orderRepositoryProvider)
-      .getMyOrders(status: status, limit: group == 'recent' ? 3 : 20);
+final homeSummaryProvider = FutureProvider.autoDispose<HomeSummary>((ref) async {
+  final sb = SupabaseService.instance;
+  final userId = sb.user!.id;
+  final orders = await sb.from('service_orders').select('status').eq('user_id', userId);
+  final coupons = await sb.from('coupons').select('count').eq('user_id', userId).eq('is_used', false);
+  final activeOrders = (orders as List).where((o) => !['completed', 'cancelled'].contains(o['status'])).length;
+  return HomeSummary(activeOrders: activeOrders, activeCoupons: 0, activeWarranties: 0);
 });
 
-final orderDetailProvider = FutureProvider.family<CustomerOrder, String>(
-    (ref, orderId) =>
-        ref.watch(orderRepositoryProvider).getOrderDetail(orderId));
+final deviceModelsProvider = FutureProvider.autoDispose<List<DeviceModelGroup>>((ref) async {
+  final repo = ref.read(storeDiscoveryRepositoryProvider);
+  return repo.getDeviceModels();
+});
 
-final orderTrackingProvider =
-    StreamProvider.family<CustomerOrder, String>((ref, orderId) async* {
-  final repo = ref.watch(orderRepositoryProvider);
-  yield await repo.getOrderProgress(orderId);
-  await for (final _ in Stream<void>.periodic(const Duration(seconds: 30))) {
-    yield await repo.getOrderProgress(orderId);
+final storeListProvider = FutureProvider.autoDispose.family<List<ServiceStore>, ({String? brand, String? model})>((ref, params) async {
+  final repo = ref.read(storeDiscoveryRepositoryProvider);
+  return repo.getStores(brand: params.brand, model: params.model);
+});
+
+final storeDetailProvider = FutureProvider.autoDispose.family<ServiceStore, String>((ref, id) async {
+  final repo = ref.read(storeDiscoveryRepositoryProvider);
+  return repo.getDetail(id);
+});
+
+final sparepartsProvider = FutureProvider.autoDispose.family<List<SparePart>, String>((ref, storeId) async {
+  final repo = ref.read(storeDiscoveryRepositoryProvider);
+  return repo.getSpareparts(storeId);
+});
+
+final customerOrdersProvider = FutureProvider.autoDispose.family<List<CustomerOrder>, String>((ref, status) async {
+  final repo = ref.read(orderRepositoryProvider);
+  return repo.getOrders(status: status);
+});
+
+final orderDetailProvider = FutureProvider.autoDispose.family<CustomerOrder, String>((ref, id) async {
+  final repo = ref.read(orderRepositoryProvider);
+  return repo.getDetail(id);
+});
+
+final orderTrackingProvider = StreamProvider.autoDispose.family<List<dynamic>, String>((ref, orderId) async* {
+  while (true) {
+    final data = await SupabaseService.instance.from('service_tracking').select('*').eq('order_id', orderId).order('created_at', ascending: false);
+    yield data;
+    await Future.delayed(const Duration(seconds: 30));
   }
 });
 
-final couponsProvider = FutureProvider<List<CouponReward>>(
-    (ref) => ref.watch(reviewRepositoryProvider).getCoupons());
-final notificationsProvider = FutureProvider<List<NotificationItem>>(
-    (ref) => ref.watch(notificationRepositoryProvider).getNotifications());
-final notificationPreferenceProvider = FutureProvider<bool>(
-    (ref) => ref.watch(customerSessionProvider).readNotificationPreference());
+final couponsProvider = FutureProvider.autoDispose<List<CouponReward>>((ref) async {
+  final repo = ref.read(reviewRepositoryProvider);
+  return repo.getCoupons();
+});
+
+final notificationsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final repo = ref.read(notificationRepositoryProvider);
+  return repo.getNotifications();
+});
+
+final notificationPreferenceProvider = StateProvider<bool>((_) => true);
+
+final featuredStoresProvider = FutureProvider.autoDispose((ref) async {
+  final repo = ref.read(storeDiscoveryRepositoryProvider);
+  return repo.getStores();
+});
+
+class AddressRepository {
+  Future<void> init() async {}
+  Future<List<dynamic>> getProvinces() async => [];
+  Future<List<dynamic>> getCities(String provinceId) async => [];
+  Future<List<dynamic>> getDistricts(String cityId) async => [];
+  Future<List<dynamic>> getVillages(String districtId) async => [];
+}

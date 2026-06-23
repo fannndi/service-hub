@@ -1,376 +1,190 @@
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/app_config.dart';
-import '../../../network/api_client.dart';
 import '../domain/store_admin_models.dart';
+import '../../core/supabase_service.dart';
+import '../../core/supabase_config.dart';
 
-final storeAdminStorageProvider =
-    Provider<StoreAdminSessionStorage>((ref) => StoreAdminSessionStorage());
-final storeAdminDioProvider = Provider<Dio>((ref) {
-  final config = ref.watch(appConfigProvider);
-  final storage = ref.watch(storeAdminStorageProvider);
-  return createAuthDio(
-    baseUrl: config.apiBaseUrl,
-    readAccessToken: () => storage.readAccessToken(),
-    readRefreshToken: () => storage.readRefreshToken(),
-    onSaveTokens: (accessToken, refreshToken) => storage.saveTokens(
-        accessToken: accessToken, refreshToken: refreshToken),
-    onClearSession: () => storage.clear(),
-    refreshEndpoint: '/store/auth/refresh',
-  );
-});
-
-final storeAuthRepositoryProvider = Provider<StoreAuthRepository>((ref) =>
-    StoreAuthRepository(ref.watch(storeAdminDioProvider),
-        ref.watch(storeAdminStorageProvider)));
-final storeOperationsRepositoryProvider = Provider<StoreOperationsRepository>(
-    (ref) => StoreOperationsRepository(ref.watch(storeAdminDioProvider)));
-
-class StoreAdminSessionStorage {
-  StoreAdminSessionStorage({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
-  final FlutterSecureStorage _storage;
-
-  static const _accessToken = 'store_access_token';
-  static const _refreshToken = 'store_refresh_token';
-  static const _adminId = 'store_admin_id';
-  static const _adminName = 'store_admin_name';
-  static const _phoneNumber = 'store_admin_phone';
-  static const _storeId = 'store_id';
-  static const _storeName = 'store_name';
-  static const _isFirstLogin = 'store_is_first_login';
-
-  Future<String?> readAccessToken() => _storage.read(key: _accessToken);
-
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshToken);
-
-  Future<void> saveTokens(
-      {required String accessToken, required String refreshToken}) async {
-    await _storage.write(key: _accessToken, value: accessToken);
-    await _storage.write(key: _refreshToken, value: refreshToken);
-  }
-
-  Future<void> saveLogin(
-      {required String accessToken,
-      String? refreshToken,
-      required StoreAdminSession session}) async {
-    await _storage.write(key: _accessToken, value: accessToken);
-    if (refreshToken != null) {
-      await _storage.write(key: _refreshToken, value: refreshToken);
-    }
-    await _storage.write(key: _adminId, value: session.adminId);
-    await _storage.write(key: _adminName, value: session.adminName);
-    await _storage.write(key: _phoneNumber, value: session.phoneNumber);
-    await _storage.write(key: _storeId, value: session.storeId);
-    await _storage.write(key: _storeName, value: session.storeName);
-    await _storage.write(
-        key: _isFirstLogin, value: session.isFirstLogin.toString());
-  }
-
-  Future<StoreAdminSession?> restore() async {
-    final token = await readAccessToken();
-    if (token == null) return null;
-    return StoreAdminSession.fromStorage({
-      'adminId': await _storage.read(key: _adminId),
-      'adminName': await _storage.read(key: _adminName),
-      'phoneNumber': await _storage.read(key: _phoneNumber),
-      'storeId': await _storage.read(key: _storeId),
-      'storeName': await _storage.read(key: _storeName),
-      'isFirstLogin': await _storage.read(key: _isFirstLogin),
-    });
-  }
-
-  Future<void> markPasswordChanged() =>
-      _storage.write(key: _isFirstLogin, value: 'false');
-
-  Future<void> clear() async {
-    await Future.wait([
-      for (final key in [
-        _accessToken,
-        _refreshToken,
-        _adminId,
-        _adminName,
-        _phoneNumber,
-        _storeId,
-        _storeName,
-        _isFirstLogin
-      ])
-        _storage.delete(key: key),
-    ]);
-  }
-}
+final sb = SupabaseService.instance;
 
 class StoreAuthRepository {
-  StoreAuthRepository(this._dio, this._storage);
-  final Dio _dio;
-  final StoreAdminSessionStorage _storage;
-
-  Future<StoreAdminSession?> restoreSession() => _storage.restore();
-
-  Future<StoreAdminSession> login(
-      {required String phoneNumber, required String password}) async {
-    final response = await _dio.post<Map<String, dynamic>>('/store/auth/login',
-        data: {'phoneNumber': phoneNumber, 'password': password});
-    final raw = response.data ?? const {};
-    final data = raw['data'] is Map<String, dynamic>
-        ? raw['data'] as Map<String, dynamic>
-        : raw;
-    final token = (data['access_token'] ?? data['accessToken'])?.toString();
-    if (token == null || token.isEmpty) {
-      throw StateError('Token store admin tidak tersedia dari API.');
-    }
-    final session = StoreAdminSession.fromJson(data);
-    await _storage.saveLogin(
-        accessToken: token,
-        refreshToken:
-            (data['refresh_token'] ?? data['refreshToken'])?.toString(),
-        session: session);
-    return session;
+  Future<StoreAdminSession> login(String phone, String password) async {
+    final email = SupabaseConfig.buildStoreAdminEmail(phone);
+    final response = await sb.signIn(email, password);
+    final meta = response.user?.userMetadata ?? {};
+    return StoreAdminSession(
+      id: response.user!.id,
+      fullName: meta['full_name'] as String? ?? 'Admin',
+      phoneNumber: phone,
+      storeId: meta['store_id'] as String? ?? '',
+      storeName: '',
+      isFirstLogin: meta['is_first_login'] as bool? ?? true,
+    );
   }
 
-  Future<StoreAdminSession> changePassword(
-      String oldPassword, String newPassword, StoreAdminSession session) async {
-    await _dio.post('/store/auth/change-password',
-        data: {'oldPassword': oldPassword, 'newPassword': newPassword});
-    await _storage.markPasswordChanged();
-    return session.copyWith(isFirstLogin: false);
-  }
+  Future<void> changePassword(String oldPw, String newPw) => sb.updatePassword(newPw);
 
-  Future<void> logout() async {
-    try {
-      await _dio.post('/store/auth/logout');
-    } on DioException {
-      // Logout tetap harus membersihkan session lokal walau endpoint belum tersedia.
-    }
-    await _storage.clear();
+  Future<StoreAdminSession?> restoreSession() async {
+    if (!sb.isLoggedIn || sb.role != 'store_admin') return null;
+    final meta = sb.user?.userMetadata ?? {};
+    return StoreAdminSession(
+      id: sb.user!.id,
+      fullName: meta['full_name'] as String? ?? 'Admin',
+      phoneNumber: '',
+      storeId: meta['store_id'] as String? ?? '',
+      storeName: '',
+      isFirstLogin: meta['is_first_login'] as bool? ?? true,
+    );
   }
 }
 
 class StoreOperationsRepository {
-  StoreOperationsRepository(this._dio);
-  final Dio _dio;
+  String get storeId => sb.storeId ?? '';
 
-  Future<DashboardSummary> dashboard(StoreAdminSession? session) async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/store/dashboard/summary');
-    final data = _map(response.data);
-    if (data.isEmpty) return DashboardSummary.empty(session);
-    return DashboardSummary.fromJson(data);
+  Future<DashboardSummary> getDashboardSummary() async {
+    final data = await sb.client.rpc('get_dashboard_summary', params: {'p_store_id': storeId});
+    return DashboardSummary.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<PageResult<StoreOrder>> orders(
-      {String? status,
-      String? query,
-      int page = 1,
-      int limit = 20,
-      String? actionGroup}) async {
-    final response = await _dio.get('/store/orders',
-        queryParameters: {
-          'status': status,
-          'q': query,
-          'page': page,
-          'limit': limit,
-          'actionGroup': actionGroup
-        }..removeWhere((_, value) => value == null || value == ''));
-    return _page(response.data, StoreOrder.fromJson);
+  Future<Map<String, dynamic>> getOrders({String? status, String? q, int page = 1, String? actionGroup}) async {
+    var query = sb.from('service_orders').select('*, items:order_items(*), user:users(full_name, phone_number)')
+      .eq('store_id', storeId).order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
+    if (status != null) query = query.eq('status', status);
+    if (q != null) query = query.or('order_number.ilike.%$q%,user.full_name.ilike.%$q%,device_model.ilike.%$q%');
+    final items = await query;
+    return {'items': items, 'total': items.length};
   }
 
-  Future<StoreOrder> orderDetail(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>('/store/orders/$id');
-    return StoreOrder.fromJson(_map(response.data));
+  Future<StoreOrder> getOrderDetail(String orderId) async {
+    final data = await sb.from('service_orders').select('*, items:order_items(*, sparepart:spareparts(*)), user:users(full_name, phone_number, credential_plain_enc), tracking:service_tracking(*), payments(*), disputes(*)')
+      .eq('id', orderId).eq('store_id', storeId).single();
+    return StoreOrder.fromJson(data);
   }
 
-  Future<void> updateOrderStatus(String id, String action) async {
-    await _dio.post<Map<String, dynamic>>('/store/orders/$id/actions/$action');
+  Future<void> runAction(String orderId, String action) async {
+    await sb.invoke('orders', body: {'order_id': orderId, 'action': 'status', 'status': action});
   }
 
-  Future<void> submitDiagnosis(
-      String orderId, Map<String, Object?> payload) async {
-    await _dio.post<Map<String, dynamic>>('/store/orders/$orderId/diagnosis',
-        data: payload);
+  Future<void> submitDiagnosis(String orderId, Map<String, dynamic> payload) async {
+    await sb.invoke('orders', body: {
+      'order_id': orderId,
+      'action': 'diagnosis',
+      ...payload,
+    });
   }
 
-  Future<List<TrackingEvent>> tracking(String orderId) async {
-    final response = await _dio.get('/store/orders/$orderId/tracking');
-    return _items(response.data).map(TrackingEvent.fromJson).toList();
+  Future<List<dynamic>> getTracking(String orderId) async {
+    final data = await sb.from('service_tracking').select('*')
+      .eq('order_id', orderId).order('created_at', ascending: false);
+    return data;
   }
 
-  Future<TrackingEvent> addTracking(
-      String orderId, String title, String note, String status) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-        '/store/orders/$orderId/tracking',
-        data: {'title': title, 'note': note, 'status': status});
-    return TrackingEvent.fromJson(_map(response.data));
+  Future<void> addTracking(String orderId, String title, String note, String status) async {
+    await sb.from('service_tracking').insert({
+      'order_id': orderId,
+      'status': status,
+      'note': '$title: $note',
+      'created_by_type': 'store_admin',
+      'created_by_id': sb.user!.id,
+    });
   }
 
-  Future<PageResult<Sparepart>> spareparts(
-      {String? query,
-      String? brand,
-      String? deviceModel,
-      String? partType,
-      String? status,
-      int page = 1,
-      int limit = 30}) async {
-    final response = await _dio.get('/store/spareparts',
-        queryParameters: {
-          'q': query,
-          'brand': brand,
-          'deviceModel': deviceModel,
-          'partType': partType,
-          'status': status,
-          'page': page,
-          'limit': limit
-        }..removeWhere((_, value) => value == null || value == ''));
-    return _page(response.data, Sparepart.fromJson);
+  Future<Map<String, dynamic>> getSpareparts({String? search, String? brand, String? deviceModel, String? partType, int page = 1}) async {
+    var query = sb.from('spareparts').select('*').eq('store_id', storeId);
+    if (search != null) query = query.ilike('part_name', '%$search%');
+    if (brand != null) query = query.eq('brand', brand);
+    if (deviceModel != null) query = query.eq('device_model', deviceModel);
+    if (partType != null) query = query.eq('part_type', partType);
+    final items = await query.order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
+    return {'items': items, 'total': items.length};
   }
 
-  Future<Sparepart> saveSparepart(Map<String, Object?> payload,
-      {String? id}) async {
-    final response = id == null
-        ? await _dio.post<Map<String, dynamic>>('/store/spareparts',
-            data: payload)
-        : await _dio.patch<Map<String, dynamic>>('/store/spareparts/$id',
-            data: payload);
-    return Sparepart.fromJson(_map(response.data));
+  Future<void> saveSparepart(Map<String, dynamic> data, {String? id}) async {
+    if (id != null) {
+      await sb.from('spareparts').update(data).eq('id', id);
+    } else {
+      await sb.from('spareparts').insert({...data, 'store_id': storeId});
+    }
   }
 
-  Future<List<String>> brands() async {
-    final response = await _dio.get('/store/spareparts/brands');
-    return (_data(response.data) as List?)?.cast<String>() ?? [];
+  Future<void> adjustStock(String sparepartId, int delta) async {
+    final item = await sb.from('spareparts').select('qty').eq('id', sparepartId).single();
+    final newQty = (item['qty'] as int) + delta;
+    await sb.from('spareparts').update({'qty': newQty}).eq('id', sparepartId);
   }
 
-  Future<List<String>> deviceModels({String? brand}) async {
-    final response = await _dio.get('/store/spareparts/device-models',
-        queryParameters: {if (brand != null) 'brand': brand});
-    return (_data(response.data) as List?)?.cast<String>() ?? [];
+  Future<List<String>> getBrands() async {
+    final data = await sb.from('spareparts').select('brand').eq('store_id', storeId);
+    return (data as List).map((d) => d['brand'] as String).toSet().toList()..sort();
   }
 
-  Future<Sparepart> adjustStock(String id, int delta) async {
-    final response = await _dio.patch<Map<String, dynamic>>(
-        '/store/spareparts/$id/stock',
-        data: {'delta': delta});
-    return Sparepart.fromJson(_map(response.data));
+  Future<List<String>> getDeviceModels(String? brand) async {
+    var q = sb.from('spareparts').select('device_model').eq('store_id', storeId);
+    if (brand != null) q = q.eq('brand', brand);
+    final data = await q;
+    return (data as List).map((d) => d['device_model'] as String).toSet().toList()..sort();
   }
 
-  Future<PageResult<CustomerProfile>> customers(
-      {String? query, int page = 1}) async {
-    final response = await _dio.get('/store/customers',
-        queryParameters: {'q': query, 'page': page}
-          ..removeWhere((_, value) => value == null || value == ''));
-    return _page(response.data, CustomerProfile.fromJson);
+  Future<Map<String, dynamic>> getCustomers({String? q, int page = 1}) async {
+    final orders = await sb.from('service_orders').select('user_id')
+      .eq('store_id', storeId);
+    final userIds = (orders as List).map((o) => o['user_id'] as String).toSet().toList();
+    if (userIds.isEmpty) return {'items': [], 'total': 0};
+    var query = sb.from('users').select('*').inFilter('id', userIds);
+    final items = await query;
+    return {'items': items, 'total': items.length};
   }
 
-  Future<PageResult<PaymentRecord>> payments(
-      {String? status, int page = 1}) async {
-    final response = await _dio.get('/store/payments',
-        queryParameters: {'status': status, 'page': page}
-          ..removeWhere((_, value) => value == null || value == ''));
-    return _page(response.data, PaymentRecord.fromJson);
+  Future<Map<String, dynamic>> getPayments({String? status, int page = 1}) async {
+    var query = sb.from('payments').select('*, orders:service_orders!inner(order_number, store_id)')
+      .eq('orders.store_id', storeId).order('created_at', ascending: false).range((page - 1) * 20, page * 20 - 1);
+    if (status != null) query = query.eq('status', status);
+    final items = await query;
+    return {'items': items, 'total': items.length};
   }
 
-  Future<void> confirmPayment(String orderId, String paymentId) async =>
-      _dio.post('/store/orders/$orderId/payments/$paymentId/confirm');
-
-  Future<PageResult<ReviewItem>> reviews({int page = 1}) async {
-    final response =
-        await _dio.get('/store/reviews', queryParameters: {'page': page});
-    return _page(response.data, ReviewItem.fromJson);
+  Future<void> confirmPayment(String orderId, String paymentId) async {
+    await sb.invoke('payments', body: {'order_id': orderId, 'payment_id': paymentId, 'action': 'confirm'});
   }
 
-  Future<void> respondReview(String reviewId, String response) async => _dio
-      .post('/store/reviews/$reviewId/response', data: {'response': response});
-
-  Future<PageResult<DisputeCase>> disputes(
-      {String? status, int page = 1}) async {
-    final response = await _dio.get('/store/disputes',
-        queryParameters: {'status': status, 'page': page}
-          ..removeWhere((_, value) => value == null || value == ''));
-    return _page(response.data, DisputeCase.fromJson);
+  Future<Map<String, dynamic>> getReviews({int page = 1}) async {
+    final items = await sb.from('reviews').select('*, users(full_name), orders!inner(store_id)')
+      .eq('orders.store_id', storeId).order('created_at', ascending: false);
+    return {'items': items, 'total': (items as List).length};
   }
 
-  Future<void> resolveDispute(
-          String disputeId, bool accept, String reason) async =>
-      _dio.post('/store/disputes/$disputeId/respond', data: {
-        'decision': accept ? 'store_accepted' : 'store_rejected',
-        'storeResponse': reason
-      });
+  Future<void> respondReview(String reviewId, String response) async {}
 
-  Future<PageResult<NotificationItem>> notifications({int page = 1}) async {
-    final response =
-        await _dio.get('/store/notifications', queryParameters: {'page': page});
-    return _page(response.data, NotificationItem.fromJson);
+  Future<Map<String, dynamic>> getDisputes({String? status, int page = 1}) async {
+    var query = sb.from('disputes').select('*, users(full_name, phone_number)')
+      .eq('store_id', storeId).order('created_at', ascending: false);
+    if (status != null) query = query.eq('status', status);
+    final items = await query;
+    return {'items': items, 'total': (items as List).length};
   }
 
-  Future<Map<String, dynamic>> storeProfile() async {
-    final response = await _dio.get<Map<String, dynamic>>('/store/profile');
-    return _map(response.data);
+  Future<void> resolveDispute(String disputeId, bool accept, String reason) async {
+    await sb.invoke('disputes', body: {
+      'dispute_id': disputeId,
+      'decision': accept ? 'store_accepted' : 'store_rejected',
+      'store_response': reason,
+    });
   }
 
-  Future<void> updateStoreProfile(Map<String, Object?> payload) async =>
-      _dio.patch('/store/profile', data: payload);
-
-  Future<DashboardSummary> analytics(StoreAdminSession? session) async {
-    final response = await _dio.get<Map<String, dynamic>>('/store/analytics');
-    final data = _map(response.data);
-    return data.isEmpty
-        ? DashboardSummary.empty(session)
-        : DashboardSummary.fromJson(data);
+  Future<List<dynamic>> getNotifications({int page = 1}) async {
+    final items = await sb.from('service_tracking').select('*, orders:service_orders!inner(store_id)')
+      .eq('orders.store_id', storeId).order('created_at', ascending: false).limit(50);
+    return items;
   }
 
-  Future<Map<String, String>> presignUpload(
-      String fileName, String mimeType, String folder) async {
-    final response = await _dio.post<Map<String, dynamic>>('/uploads/presign',
-        data: {'fileName': fileName, 'mimeType': mimeType, 'folder': folder});
-    return _map(response.data)
-        .map((key, value) => MapEntry(key, value.toString()));
+  Future<Map<String, dynamic>> getProfile() async {
+    final data = await sb.from('store_admins').select('*, stores(*)').eq('id', sb.user!.id).single();
+    return data;
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> payload) async {}
+
+  Future<Map<String, dynamic>> getAnalytics() async {
+    final data = await sb.client.rpc('get_analytics', params: {'p_store_id': storeId});
+    return data as Map<String, dynamic>;
   }
 }
-
-PageResult<T> _page<T>(Object? raw, T Function(Map<String, dynamic>) parse) {
-  final payload = _data(raw);
-  final data = payload is Map
-      ? payload.cast<String, dynamic>()
-      : const <String, dynamic>{};
-  final source = data['items'] ?? data['data'] ?? payload;
-  final list = _items(source).map(parse).toList();
-  return PageResult(
-      items: list,
-      page: _int(data['page'], fallback: 1),
-      limit: _int(data['limit'], fallback: list.length),
-      total: _int(data['total'], fallback: list.length));
-}
-
-Object? _data(Object? raw) {
-  if (raw is Map<String, dynamic> &&
-      raw.containsKey('success') &&
-      raw.containsKey('data')) {
-    return raw['data'];
-  }
-  return raw;
-}
-
-Map<String, dynamic> _map(Object? raw) {
-  final data = _data(raw);
-  return data is Map ? data.cast<String, dynamic>() : const <String, dynamic>{};
-}
-
-List<Map<String, dynamic>> _items(Object? raw) {
-  final data = _data(raw);
-  if (data is List) {
-    return data
-        .whereType<Map>()
-        .map((item) => item.cast<String, dynamic>())
-        .toList();
-  }
-  if (data is Map) {
-    final map = data.cast<String, dynamic>();
-    return _items(map['items'] ?? map['data']);
-  }
-  return const [];
-}
-
-int _int(Object? value, {int fallback = 0}) => value is num
-    ? value.toInt()
-    : int.tryParse(value?.toString() ?? '') ?? fallback;

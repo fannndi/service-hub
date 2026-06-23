@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_config.dart';
-import '../../../../ui/theme/app_theme.dart';
-import '../../../../ui/widgets/modern_card.dart';
+import '../../../../core/supabase_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
-
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -13,53 +10,47 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final url = EnvironmentService.currentUrl;
+    final sb = SupabaseService.instance;
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: GradientBackground(
-        child: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text('Server',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: scheme.primary, fontWeight: FontWeight.w700)),
+        child: ListView(padding: const EdgeInsets.all(16), children: [
+          const SizedBox(height: 24),
+          Center(
+            child: Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(18)),
+              child: Icon(Icons.settings, size: 36, color: scheme.primary),
             ),
-            ListTile(
-              leading: Icon(
-                url.contains('trycloudflare.com') ? Icons.cloud : Icons.computer,
-                color: url.contains('trycloudflare.com')
-                    ? AppColors.secondary
-                    : AppColors.success,
-              ),
-              title: const Text('API Server'),
-              subtitle: Text(
-                url,
-                style: const TextStyle(fontSize: 12),
-                overflow: TextOverflow.ellipsis,
-              ),
+          ),
+          const SizedBox(height: 24),
+          ModernCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Akun', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Text(sb.user?.email ?? '-', style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 4),
+                Text('Role: ${sb.role ?? '-'}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+              ],
             ),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text('Tentang',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: scheme.primary, fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 16),
+          ModernCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Aplikasi', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Text('ServisGadget v2.0', style: Theme.of(context).textTheme.bodyMedium),
+                Text('Powered by Supabase', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+              ],
             ),
-            const ListTile(
-              leading: Icon(Icons.build),
-              title: Text('ServisGadget'),
-              subtitle: Text('Platform Marketplace Servis Gadget'),
-            ),
-            const ListTile(
-              leading: Icon(Icons.info),
-              title: Text('Versi'),
-              subtitle: Text('1.0.0'),
-            ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }

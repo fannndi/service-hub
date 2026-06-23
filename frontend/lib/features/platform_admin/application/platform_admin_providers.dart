@@ -1,59 +1,46 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-import '../../../core/app_config.dart';
 import '../data/platform_admin_repositories.dart';
 import '../domain/platform_admin_models.dart';
+import '../../../core/supabase_service.dart';
 
-final adminStorageProvider = Provider<AdminSessionStorage>(
-    (ref) => const AdminSessionStorage(FlutterSecureStorage()));
-final adminApiClientProvider = Provider<AdminApiClient>((ref) => AdminApiClient(
-    ref.watch(appConfigProvider), ref.watch(adminStorageProvider)));
-final adminRepositoryProvider = Provider<AdminRepository>((ref) =>
-    AdminRepository(
-        ref.watch(adminApiClientProvider), ref.watch(adminStorageProvider)));
+final adminRepositoryProvider = Provider<AdminRepository>((_) => AdminRepository());
+final adminAuthRepositoryProvider = Provider<AdminAuthRepository>((_) => AdminAuthRepository());
 
-class AdminAuthNotifier extends AsyncNotifier<AdminSession?> {
+final adminAuthProvider = AsyncNotifierProvider<AdminAuthNotifier, PlatformAdminUser?>(AdminAuthNotifier.new);
+
+class AdminAuthNotifier extends AsyncNotifier<PlatformAdminUser?> {
   @override
-  Future<AdminSession?> build() async {
-    final token = await ref.read(adminStorageProvider).readToken();
-    if (token == null) return null;
-    try {
-      await ref.read(adminRepositoryProvider).listStores();
-      final cached = await ref.read(adminStorageProvider).readSession();
-      if (cached != null) return cached;
-    } catch (_) {}
-    await ref.read(adminStorageProvider).clear();
-    return null;
+  Future<PlatformAdminUser?> build() async {
+    if (!sb.isLoggedIn || sb.role != 'platform_admin') return null;
+    final meta = sb.user?.userMetadata ?? {};
+    return PlatformAdminUser(id: sb.user!.id, username: meta['username'] as String? ?? 'admin', fullName: meta['full_name'] as String? ?? 'Admin');
   }
 
-  Future<AdminSession> login(String username, String password) async {
-    state = const AsyncLoading();
-    final result =
-        await ref.read(adminRepositoryProvider).login(username, password);
-    state = AsyncData(result.admin);
-    return result.admin;
+  Future<void> login(String username, String password) async {
+    final repo = ref.read(adminAuthRepositoryProvider);
+    final user = await repo.login(username, password);
+    state = AsyncData(user);
   }
 
   Future<void> logout() async {
-    await ref.read(adminStorageProvider).clear();
+    await SupabaseService.instance.signOut();
     state = const AsyncData(null);
   }
 }
 
-final adminAuthProvider =
-    AsyncNotifierProvider<AdminAuthNotifier, AdminSession?>(
-        AdminAuthNotifier.new);
-
-final storeListProvider = FutureProvider<List<StoreListItem>>((ref) {
-  return ref.watch(adminRepositoryProvider).listStores();
+final storeListProvider = FutureProvider.autoDispose<List<StoreListItem>>((ref) async {
+  final repo = ref.read(adminRepositoryProvider);
+  return repo.getStores();
 });
 
-final userListProvider = FutureProvider<List<UserListItem>>((ref) {
-  return ref.watch(adminRepositoryProvider).listUsers();
+final storeAdminListProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final repo = ref.read(adminRepositoryProvider);
+  return repo.getStoreAdmins();
 });
 
-final storeAdminListProvider =
-    FutureProvider<List<StoreAdminListItem>>((ref) {
-  return ref.watch(adminRepositoryProvider).listStoreAdmins();
+final userListProvider = FutureProvider.autoDispose<List<UserListItem>>((ref) async {
+  final repo = ref.read(adminRepositoryProvider);
+  return repo.getUsers();
 });
+
+final sb = SupabaseService.instance;

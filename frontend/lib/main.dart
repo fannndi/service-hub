@@ -2,93 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
-
 import 'ui/theme/app_theme.dart';
-import 'ui/theme/app_decorations.dart';
-import 'ui/theme/app_spacing.dart';
-import 'ui/widgets/modern_card.dart';
-import 'core/app_config.dart';
-import 'core/config/config_service.dart';
 import 'features/customer/presentation/routing/customer_router.dart';
 import 'features/store_admin/presentation/routing/store_admin_router.dart';
 import 'features/platform_admin/presentation/routing/platform_admin_router.dart';
-import 'features/customer/application/customer_providers.dart';
-import 'features/store_admin/application/store_admin_providers.dart';
-import 'features/platform_admin/application/platform_admin_providers.dart';
-import 'features/maintenance/maintenance_screen.dart';
+import 'core/supabase_service.dart';
+import 'core/supabase_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID');
-  await EnvironmentService.init();
+  await SupabaseService.instance.init();
   runApp(const ProviderScope(child: ServisGadgetApp()));
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/splash',
-    refreshListenable: _AppRefresh(ref),
+    initialLocation: SupabaseConfig.isConfigured ? '/welcome' : '/splash',
+    refreshListenable: _AuthRefresh(),
     redirect: (context, state) {
+      final user = SupabaseService.instance.user;
+      final role = SupabaseService.instance.role;
+      final meta = user?.userMetadata;
+      final isFirstLogin = meta?['is_first_login'] as bool? ?? false;
       final loc = state.matchedLocation;
-      final publicRoutes = {
-        '/splash',
-        '/welcome',
-        '/login',
-        '/store-login',
-        '/service',
-        '/stores',
-        '/maintenance'
-      };
+      final publicRoutes = {'/welcome', '/login', '/store-login', '/service', '/stores'};
 
-      final storeAuth = ref.read(storeAuthControllerProvider);
-      final custAuth = ref.read(customerAuthProvider);
-      final adminAuth = ref.read(adminAuthProvider);
-
-      if (storeAuth.isLoading || custAuth.isLoading) return null;
-
-      if (loc == '/maintenance') return null;
+      if (loc == '/splash') return null;
 
       if (loc.startsWith('/admin/')) {
-        if (adminAuth.isLoading) return null;
-        final adminUser = adminAuth.valueOrNull;
-        if (adminUser == null && loc != '/admin/login') return '/admin/login';
-        if (adminUser != null && loc == '/admin/login') {
-          return '/admin/dashboard';
-        }
+        if (role != 'platform_admin' && loc != '/admin/login') return '/admin/login';
+        if (role == 'platform_admin' && loc == '/admin/login') return '/admin/dashboard';
         return null;
       }
 
       if (loc.startsWith('/store/')) {
-        final storeUser = storeAuth.valueOrNull;
-        if (storeUser == null && loc != '/store-login') return '/store-login';
-        if (storeUser != null &&
-            storeUser.isFirstLogin &&
-            loc != '/store/change-password') {
-          return '/store/change-password';
-        }
-        if (storeUser != null && loc == '/store-login') {
-          return '/store/dashboard';
-        }
+        if (role != 'store_admin' && loc != '/store-login') return '/store-login';
+        if (role == 'store_admin' && isFirstLogin && loc != '/store/change-password') return '/store/change-password';
+        if (role == 'store_admin' && loc == '/store-login') return '/store/dashboard';
         return null;
       }
 
-      final storeUser = storeAuth.valueOrNull;
-      final custUser = custAuth.valueOrNull;
-
-      if (storeUser != null) {
-        if (storeUser.isFirstLogin && loc != '/store/change-password') {
-          return '/store/change-password';
-        }
-        if (loc == '/store-login' || publicRoutes.contains(loc)) {
-          return '/store/dashboard';
-        }
+      if (role == 'store_admin') {
+        if (isFirstLogin && loc != '/store/change-password') return '/store/change-password';
+        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/store/dashboard';
         return null;
       }
 
-      if (custUser != null) {
-        if (custUser.isFirstLogin && loc != '/change-password') {
-          return '/change-password';
-        }
+      if (role == 'customer') {
+        if (isFirstLogin && loc != '/change-password') return '/change-password';
         if (publicRoutes.contains(loc)) return '/home';
         return null;
       }
@@ -101,20 +63,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (_, __) => const _InitSplash(),
-      ),
-      GoRoute(
-        path: '/maintenance',
-        builder: (_, state) {
-          final extras = state.extra as Map<String, dynamic>? ?? {};
-          return MaintenanceScreen(
-            message: extras['message'] as String? ?? 'Sedang Maintenance',
-            isOffline: extras['isOffline'] as bool? ?? false,
-          );
-        },
-      ),
+      GoRoute(path: '/splash', builder: (_, __) => const _InitSplash()),
       ...customerRoutes,
       ...storeAdminRoutes,
       ...adminRoutes,
@@ -122,13 +71,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class _AppRefresh extends ChangeNotifier {
-  _AppRefresh(this.ref) {
-    ref.listen(storeAuthControllerProvider, (_, __) => notifyListeners());
-    ref.listen(customerAuthProvider, (_, __) => notifyListeners());
-    ref.listen(adminAuthProvider, (_, __) => notifyListeners());
+class _AuthRefresh extends ChangeNotifier {
+  _AuthRefresh() {
+    SupabaseService.instance.onAuthStateChange.listen((_) => notifyListeners());
   }
-  final Ref ref;
 }
 
 class _InitSplash extends ConsumerStatefulWidget {
@@ -139,7 +85,7 @@ class _InitSplash extends ConsumerStatefulWidget {
 }
 
 class _InitSplashState extends ConsumerState<_InitSplash> {
-  String _status = 'Menghubungkan ke server...';
+  String _status = 'Memeriksa koneksi...';
 
   @override
   void initState() {
@@ -149,87 +95,39 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
 
   Future<void> _initApp() async {
     try {
-      setState(() => _status = 'Memeriksa koneksi...');
-
-      await EnvironmentService.init();
-
-      if (!mounted) return;
-
-      if (EnvironmentService.isMaintenance) {
-        setState(() => _status = 'Server tidak tersedia');
-        await Future.delayed(const Duration(milliseconds: 500));
+      if (!SupabaseConfig.isConfigured) {
+        setState(() => _status = 'Supabase belum dikonfigurasi');
+        await Future.delayed(const Duration(seconds: 2));
         if (!mounted) return;
-        context.go('/maintenance', extra: {
-          'message': 'Tidak dapat terhubung ke server. Pastikan tunnel aktif.',
-          'isOffline': true,
-        });
+        context.go('/welcome');
         return;
       }
 
-      final config = await ConfigService.fetch();
-
-      if (!mounted) return;
-
-      if (config.maintenanceMode) {
-        setState(() => _status = 'Sistem dalam perbaikan');
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (!mounted) return;
-        context.go('/maintenance', extra: {
-          'message': config.maintenanceMessage,
-          'isOffline': false,
-        });
-        return;
-      }
-
-      setState(() => _status = 'Terhubung ✓');
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (!mounted) return;
-      _checkAuth();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _status = 'Koneksi tidak ditemukan');
+      setState(() => _status = 'Memeriksa sesi...');
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
-      context.go('/maintenance', extra: {
-        'message': 'Sedang Maintenance',
-        'isOffline': true,
-      });
-    }
-  }
 
-  Future<void> _checkAuth() async {
-    if (!mounted) return;
+      setState(() => _status = 'Siap ✓');
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
 
-    try {
-      final adminAuth = ref.read(adminAuthProvider);
-      if (adminAuth.valueOrNull != null) {
-        if (!mounted) return;
+      final role = SupabaseService.instance.role;
+      if (role == 'platform_admin') {
         context.go('/admin/dashboard');
-        return;
-      }
-    } catch (_) {}
-
-    try {
-      final storeAuth = ref.read(storeAuthControllerProvider);
-      if (storeAuth.valueOrNull != null) {
-        if (!mounted) return;
+      } else if (role == 'store_admin') {
         context.go('/store/dashboard');
-        return;
-      }
-    } catch (_) {}
-
-    try {
-      final custAuth = ref.read(customerAuthProvider);
-      if (custAuth.valueOrNull != null) {
-        if (!mounted) return;
+      } else if (role == 'customer') {
         context.go('/home');
-        return;
+      } else {
+        context.go('/welcome');
       }
-    } catch (_) {}
-
-    if (!mounted) return;
-    context.go('/welcome');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _status = 'Gagal memulai');
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      context.go('/welcome');
+    }
   }
 
   @override
@@ -237,64 +135,40 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Scaffold(
-      body: GradientBackground(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [scheme.surfaceContainerHighest, scheme.surface],
+          ),
+        ),
         child: Center(
-          child: ModernCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 40,
-              vertical: 36,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: AppDecorations.iconBadge(
-                    scheme.primaryContainer,
-                  ),
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    width: 48,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.handyman_rounded,
-                      size: 40,
-                      color: scheme.primary,
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.handyman_rounded, size: 64, color: scheme.primary),
+              const SizedBox(height: 24),
+              Text('ServisGadget', style: theme.textTheme.headlineMedium),
+              const SizedBox(height: 16),
+              Text(
+                _status,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: _status.contains('✓') ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (!_status.contains('✓'))
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: scheme.primary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'ServisGadget',
-                  style: theme.textTheme.headlineMedium,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  _status,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: _status.contains('✓')
-                        ? scheme.primary
-                        : _status.contains('tidak ditemukan') ||
-                                _status.contains('perbaikan')
-                            ? scheme.tertiary
-                            : scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                if (!_status.contains('✓') &&
-                    !_status.contains('tidak ditemukan') &&
-                    !_status.contains('perbaikan'))
-                  SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: scheme.primary,
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -312,7 +186,6 @@ class ServisGadgetApp extends ConsumerWidget {
       title: 'ServisGadget',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
       routerConfig: router,
     );
   }
