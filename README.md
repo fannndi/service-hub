@@ -1,6 +1,6 @@
 ﻿# ServisGadget
 
-> Platform Marketplace Servis Gadget Dua Sisi — Customer booking tanpa akun, admin toko kelola dari mobile
+> Platform Marketplace Servis Gadget Dua Sisi — Backendless dengan Supabase
 
 ---
 
@@ -8,45 +8,55 @@
 
 | Layer | Tech |
 |-------|------|
-| Backend | NestJS 10, TypeScript 5, Prisma 5, PostgreSQL 16, Redis 7 |
-| Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14 |
-| Auth | 3 JWT systems (Customer, Store Admin, Platform Admin) |
-| Infra | Docker Compose, Cloudflare Tunnel, GitHub Actions CI |
+| Backend | Supabase (PostgreSQL + Auth + Edge Functions) |
+| Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14, Supabase Flutter |
+| Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) |
+| Storage | Supabase Storage |
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Clone & setup
+# 1. Clone
 git clone https://github.com/fannndi/service-hub.git && cd service-hub
-./switch-env.sh local
 
-# 2. Fix Docker hostnames
-sed -i 's|@localhost:5432/|@postgres:5432/|' .env
-sed -i 's|REDIS_HOST=localhost|REDIS_HOST=redis|' .env
+# 2. Setup backend (SQL + Edge Functions)
+#    a) Buka Supabase SQL Editor:
+#       https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
+#    b) Copy-paste dan run urut:
+#       supabase/migrations/001_init.sql
+#       supabase/migrations/002_rls.sql
+#       supabase/migrations/003_functions.sql
+#       supabase/migrations/004_seed.sql
 
-# 3. Start
-docker compose up -d --build
-docker compose exec backend npx prisma db push
-docker compose exec backend npx prisma db seed
+# 3. Deploy Edge Functions
+supabase login
+supabase link --project-ref eboplbemgtvmviwhdlfa
+supabase functions deploy orders
+supabase functions deploy payments
+supabase functions deploy disputes
+supabase functions deploy admin
+supabase functions deploy cron-sla
 
-# 4. Tunnel (optional)
-cloudflared tunnel --url http://localhost:3000
+# 4. Build APK
+cd frontend
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+
+# 5. Install di HP → buka apps
 ```
-
-Health check: `curl http://localhost:3000/v1/health`
-Swagger: `http://localhost:3000/docs`
 
 ---
 
 ## Login
 
-| Role | Route | Credentials |
-|------|-------|-------------|
-| Platform Admin | `/admin` | `admin` / `admin` |
-| Store Admin | `/store-login` | Dibuat dari platform admin |
-| Customer | `/login` | Booking langsung (stealth account) |
+| Role | Email Format | Password |
+|------|-------------|----------|
+| Platform Admin | `admin@admin.servisgadget.com` | `admin` |
+| Store Admin | `{phone}@store.servisgadget.com` | Dibuat dari platform admin |
+| Customer | `{phone}@customer.servisgadget.com` | Auto-created saat booking |
 
 ---
 
@@ -54,92 +64,79 @@ Swagger: `http://localhost:3000/docs`
 
 ```
 service-hub/
-├── backend/                  NestJS API (15 modules)
-│   └── src/modules/
-│       ├── auth/             Customer auth + stealth accounts
-│       ├── store-auth/       Store admin auth + sessions
-│       ├── platform-admin/   Admin dashboard
-│       ├── orders/           Order lifecycle + state machine
-│       ├── spareparts/       Inventory + stock management
-│       ├── payments/         Payment confirmation
-│       ├── reviews/          Reviews + coupons
-│       ├── disputes/         Warranty claims
-│       ├── notifications/    WhatsApp + email
-│       ├── uploads/          Presigned S3 URLs
-│       └── jobs/             SLA monitor + credential cleaner
+├── supabase/
+│   ├── migrations/              SQL schema + RLS + functions
+│   │   ├── 001_init.sql         14 tables, 13 enums, indexes
+│   │   ├── 002_rls.sql          50 RLS policies
+│   │   ├── 003_functions.sql    Atomic stock, SLA, auth triggers
+│   │   └── 004_seed.sql         Platform admin seed
+│   ├── functions/               Edge Functions (Deno)
+│   │   ├── orders/              Order state machine
+│   │   ├── payments/            Payment confirmation
+│   │   ├── disputes/            Warranty orders
+│   │   └── admin/               Create store + SLA cron
+│   └── config.toml              Supabase CLI config
 │
-├── frontend/                 Flutter mobile app
+├── frontend/                    Flutter mobile app
 │   └── lib/
-│       ├── core/             Config, models, helpers
-│       ├── network/          Dio client + auth
-│       ├── ui/               ★ Theme, widgets, config (UI system)
-│       │   ├── theme/        Colors, typography, spacing
-│       │   └── config/       App constants
+│       ├── core/                SupabaseService, Config
+│       ├── ui/                  Theme, widgets (Material 3)
 │       └── features/
-│           ├── customer/     22 screens
-│           ├── store_admin/  14 screens
-│           └── platform_admin/ 2 screens
+│           ├── customer/        24 screens
+│           ├── store_admin/     17 screens
+│           └── platform_admin/  2 screens
 │
-├── docs/                     Documentation
-│   ├── PRD/                  Product requirements (3 phases + master)
-│   ├── backend/              API reference, auth system, business logic
-│   ├── frontend/             Store admin architecture
-│   └── architecture.md       System overview
+├── scripts/                     Deployment helpers
+│   ├── deploy.sh                One-command deploy guide
+│   └── push-sql.js              SQL push via Management API
 │
-├── docker-compose.yml        PostgreSQL + Redis + Backend
-├── secrets/                  Environment files (gitignored)
-├── tunel.txt                 Cloudflare tunnel URL
-└── start-demo.sh             One-click demo launcher
+└── docs/                        Documentation
 ```
 
 ---
 
-## UI Configuration
+## Backend Architecture
 
-Theme files di `frontend/lib/ui/`:
-- `theme/app_theme.dart` — Light/dark ThemeData
-- `theme/app_spacing.dart` — Spacing constants (xs/s/md/lg/xl/xxl)
-- `theme/app_typography.dart` — Text style hierarchy
-- `config/` — App-wide constants
+**Tidak ada server — backendless.** Semua logic di:
+
+| Layer | Lokasi | Fungsi |
+|-------|--------|--------|
+| Database | Supabase PostgreSQL | Data storage, RLS policies |
+| Auth | Supabase Auth | 3 roles, JWT, session management |
+| Business Logic | Edge Functions | Order flow, stock, disputes |
+| Cache | Supabase DB cache-aside | Store list cache |
 
 ---
 
-## API Overview
+## Edge Functions
 
-### Customer (`/v1/`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/orders` | Create order (stealth) |
-| POST | `/orders/:id/approve` | Approve diagnosis |
-| POST | `/orders/:id/reject` | Reject diagnosis |
-| POST | `/orders/:id/payments` | Submit payment |
-| POST | `/orders/:id/reviews` | Write review |
-| POST | `/orders/:id/disputes` | File warranty claim |
-| GET | `/stores/match` | Find matching stores |
-
-### Store Admin (`/v1/store/`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/login` | Store login |
-| GET | `/orders` | List orders |
-| POST | `/orders/:id/diagnosis` | Submit diagnosis |
-| GET | `/spareparts` | List inventory |
-| POST | `/spareparts` | Add sparepart |
-| PATCH | `/spareparts/:id/stock` | Quick stock adjust |
-
-### Platform Admin (`/v1/platform/`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/login` | Admin login |
-| POST | `/stores` | Create store |
+| Function | Auth | Fungsi |
+|----------|------|--------|
+| `orders` | User JWT | Buat/approve/reject/diagnosis/update status |
+| `payments` | User JWT | Konfirmasi pembayaran |
+| `disputes` | User JWT | Resolusi klaim garansi |
+| `admin` | User JWT | Buat toko baru (platform admin) |
+| `cron-sla` | None | Auto-cancel SLA breach + credential cleanup |
 
 ---
 
 ## Deployment
 
-- **Local**: Docker Compose + Cloudflare Tunnel
-- **Production**: Render (`render.yaml` included) or any VPS with Docker
-- See `docs/deployment.md` for full guide
+### Backend (Supabase)
+
+1. **SQL Migrations** — via SQL Editor atau `node scripts/push-sql.js`
+2. **Edge Functions** — `supabase functions deploy`
+
+### Frontend (APK)
+
+```bash
+cd frontend
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV
+```
+
+Output: `build/app/outputs/flutter-apk/app-release.apk`
 
 ---
 
@@ -148,11 +145,5 @@ Theme files di `frontend/lib/ui/`:
 | File | Content |
 |------|---------|
 | `docs/PRD/00_MASTER_PRD.md` | Master product requirements |
-| `docs/PRD/01_PHASE_FOUNDATION.md` | Phase 1: Foundation |
-| `docs/PRD/02_PHASE_CUSTOMER.md` | Phase 2: Customer features |
-| `docs/PRD/03_PHASE_STORE_ADMIN.md` | Phase 3: Store admin features |
 | `docs/architecture.md` | System architecture |
-| `docs/deployment.md` | Deployment guide |
-| `docs/run-guide.md` | Run guide (Docker + non-Docker) |
 | `CHANGELOG.md` | Version history |
-| `TODO.md` | Audit tracker |
