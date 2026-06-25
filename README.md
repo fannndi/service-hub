@@ -2,6 +2,8 @@
 
 Monorepo Phase 1 Foundation only.
 
+> UAS Team Project — fannndi, dryns, Nisa Aulia.
+
 ## Scope
 - Backend foundation: NestJS modular monolith, Prisma, Redis, BullMQ, auth separation.
 - Flutter shared layer only: networking, storage, models, repositories, utilities.
