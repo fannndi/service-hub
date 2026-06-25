@@ -38,6 +38,11 @@ jobs:
 
       - run: npm ci
       - run: npx prisma generate
+      - name: Cache NestJS build
+        uses: actions/cache@v4
+        with:
+          path: backend/dist
+          key: nest-${{ runner.os }}-${{ hashFiles('backend/src/**/*.ts') }}
       - run: npm run lint
       - run: npm test
         env:
