@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState(
-      {super.key, required this.title, this.description, this.icon});
+      {super.key, required this.title, this.description, this.icon, this.actionLabel, this.onAction});
 
   final String title;
   final String? description;
   final IconData? icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,14 @@ class EmptyState extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            ],
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                onPressed: onAction,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(actionLabel!),
+              ),
             ],
           ],
         ),
