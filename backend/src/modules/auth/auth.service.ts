@@ -41,6 +41,9 @@ export class AuthService {
     if (!match) {
       const attempts = user.loginAttemptCount + 1;
       const updateData: { loginAttemptCount: number; lockedUntil?: Date } = { loginAttemptCount: attempts };
+      if (attempts >= 3 && attempts < 5) {
+        console.warn(`[RATE_LIMIT] ${phone}: ${attempts} failed attempts — monitoring`);
+      }
       if (attempts >= 5) {
         updateData.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
         updateData.loginAttemptCount = 0;
