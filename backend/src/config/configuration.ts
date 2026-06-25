@@ -34,6 +34,13 @@ export interface AppConfig {
   };
   throttle: { ttl: number; limit: number };
   maintenance: { mode: boolean; message: string };
+  midtrans: {
+    serverKey: string;
+    clientKey: string;
+    merchantId: string;
+    isProduction: boolean;
+    snapUrl: string;
+  };
 }
 
 function requireEnv(name: string): string {
@@ -134,5 +141,15 @@ export default (): AppConfig => ({
   maintenance: {
     mode: process.env.MAINTENANCE_MODE === 'true',
     message: process.env.MAINTENANCE_MESSAGE || 'Sedang Maintenance',
+  },
+
+  midtrans: {
+    serverKey: requireEnv('MIDTRANS_SERVER_KEY'),
+    clientKey: process.env.MIDTRANS_CLIENT_KEY || '',
+    merchantId: process.env.MIDTRANS_MERCHANT_ID || '',
+    isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
+    snapUrl: process.env.MIDTRANS_IS_PRODUCTION === 'true'
+      ? 'https://app.midtrans.com/snap/v1/transactions'
+      : 'https://app.sandbox.midtrans.com/snap/v1/transactions',
   },
 });

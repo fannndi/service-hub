@@ -4,6 +4,9 @@ class SupabaseConfig {
 
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
 
+  /// NestJS backend API URL (for Midtrans etc.)
+  static const String backendUrl = String.fromEnvironment('BACKEND_URL', defaultValue: 'http://localhost:3000');
+
   static String buildCustomerEmail(String phone) =>
       '$phone@customer.servisgadget.com';
   static String buildStoreAdminEmail(String phone) =>

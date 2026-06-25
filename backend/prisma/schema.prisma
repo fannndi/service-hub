@@ -52,6 +52,10 @@ enum PaymentMethod {
   qris
   cash
   ewallet
+  midtrans_va
+  midtrans_qris
+  midtrans_wallet
+  midtrans_other
 }
 
 enum PaymentType {
@@ -340,6 +344,9 @@ model Payment {
   confirmedBy   String?             @map("confirmed_by")
   confirmedAt   DateTime?           @map("confirmed_at") @db.Timestamptz
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  midtransOrderId     String?  @map("midtrans_order_id") @db.VarChar(100)
+  midtransTransactionId String? @map("midtrans_transaction_id") @db.VarChar(100)
+  midtransPaymentType String?  @map("midtrans_payment_type") @db.VarChar(50)
   order         ServiceOrder        @relation(fields: [orderId], references: [id])
   user          User                @relation(fields: [userId], references: [id])
 

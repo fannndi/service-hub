@@ -33,7 +33,7 @@ export class PaymentsService {
         orderId,
         userId,
         amount: dto.amount,
-        paymentMethod: dto.paymentMethod as 'transfer_bank' | 'qris' | 'cash' | 'ewallet',
+        paymentMethod: dto.paymentMethod as 'transfer_bank' | 'qris' | 'cash' | 'ewallet' | 'midtrans_va' | 'midtrans_qris' | 'midtrans_wallet' | 'midtrans_other',
         paymentType: dto.paymentType as 'deposit' | 'final_payment',
         proofUrl: dto.proofUrl,
         status: 'pending',

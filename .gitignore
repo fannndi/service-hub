@@ -9,3 +9,4 @@ backend/node_modules/
 node_modules/
 # Secrets folder (shared via messaging, not via git)
 secrets/
+.opencode/

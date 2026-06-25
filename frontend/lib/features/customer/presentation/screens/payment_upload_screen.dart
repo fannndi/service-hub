@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/supabase_config.dart';
+import '../../../../core/supabase_service.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
@@ -61,6 +66,38 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
     }
   }
 
+  Future<void> _payWithMidtrans(CustomerOrder order) async {
+    setState(() => _loading = true);
+    try {
+      final userId = SupabaseService.instance.user?.id ?? '';
+      final res = await http.post(
+        Uri.parse('${SupabaseConfig.backendUrl}/payments/midtrans/snap-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'orderId': order.id, 'userId': userId}),
+      );
+      if (res.statusCode != 200) throw Exception('Gagal memproses pembayaran');
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final redirectUrl = data['redirect_url'] as String;
+      final uri = Uri.parse(redirectUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan pembayaran di browser. Kembali setelah selesai.'),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Midtrans: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final orderValue = ref.watch(orderDetailProvider(widget.orderId));
@@ -93,44 +130,83 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                   DropdownMenuItem(value: 'qris', child: Text('QRIS')),
                   DropdownMenuItem(value: 'cash', child: Text('Tunai')),
                   DropdownMenuItem(value: 'ewallet', child: Text('E-Wallet')),
+                  DropdownMenuItem(
+                      value: 'midtrans',
+                      child: Text('Kartu/M-Banking (Midtrans)')),
                 ],
                 onChanged: (v) => setState(() => _method = v!)),
-            DropdownButtonFormField(
-                initialValue: _type,
-                decoration:
-                    const InputDecoration(labelText: 'Jenis Pembayaran'),
-                items: const [
-                  DropdownMenuItem(value: 'deposit', child: Text('Uang Muka')),
-                  DropdownMenuItem(
-                      value: 'final_payment', child: Text('Pelunasan Final')),
-                ],
-                onChanged: (v) => setState(() => _type = v!)),
-            TextField(
-                controller: _amount,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Nominal')),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-                onPressed: () async => setState(() => _file = null),
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Hapus Foto')),
-            OutlinedButton.icon(
-                onPressed: () async {
-                  final picked = await ImagePicker().pickImage(
-                      source: ImageSource.gallery,
-                      imageQuality: 72,
-                      maxWidth: 1600);
-                  if (picked != null) setState(() => _file = picked);
-                },
-                icon: const Icon(Icons.image),
-                label: Text(_file?.name ?? 'Ambil dari Galeri')),
-            if (_file != null) Text('Dipilih: ${_file!.name}'),
-            if (_progress > 0 && _progress < 1)
-              LinearProgressIndicator(value: _progress),
-            const SizedBox(height: 20),
-            FilledButton(
-                onPressed: _loading ? null : () => _submit(order),
-                child: Text(_loading ? 'Mengirim...' : 'Kirim Pembayaran')),
+            if (_method != 'midtrans') ...[
+              DropdownButtonFormField(
+                  initialValue: _type,
+                  decoration:
+                      const InputDecoration(labelText: 'Jenis Pembayaran'),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'deposit', child: Text('Uang Muka')),
+                    DropdownMenuItem(
+                        value: 'final_payment',
+                        child: Text('Pelunasan Final')),
+                  ],
+                  onChanged: (v) => setState(() => _type = v!)),
+              TextField(
+                  controller: _amount,
+                  keyboardType: TextInputType.number,
+                  decoration:
+                      const InputDecoration(labelText: 'Nominal')),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                  onPressed: () async => setState(() => _file = null),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Hapus Foto')),
+              OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 72,
+                        maxWidth: 1600);
+                    if (picked != null) setState(() => _file = picked);
+                  },
+                  icon: const Icon(Icons.image),
+                  label: Text(_file?.name ?? 'Ambil dari Galeri')),
+              if (_file != null) Text('Dipilih: ${_file!.name}'),
+              if (_progress > 0 && _progress < 1)
+                LinearProgressIndicator(value: _progress),
+              const SizedBox(height: 20),
+              FilledButton(
+                  onPressed: _loading ? null : () => _submit(order),
+                  child: Text(_loading ? 'Mengirim...' : 'Kirim Pembayaran')),
+            ] else ...[
+              const SizedBox(height: 20),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(children: [
+                    const Icon(Icons.payment, size: 48),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Bayar dengan Midtrans',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Kartu Kredit, Bank Transfer, QRIS, E-Wallet',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _loading ? null : () => _payWithMidtrans(order),
+                      icon: _loading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.open_in_browser),
+                      label: Text(_loading ? 'Memproses...' : 'Bayar via Midtrans'),
+                    ),
+                  ]),
+                ),
+              ),
+            ],
           ]);
         },
       ),
