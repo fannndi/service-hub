@@ -153,6 +153,7 @@ model User {
   disputes           Dispute[]
   sessions           UserSession[]
 
+  @@index([accountStatus, isFirstLogin])
   @@map("users")
 }
 
