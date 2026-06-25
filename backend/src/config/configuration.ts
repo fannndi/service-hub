@@ -2,6 +2,7 @@ export interface AppConfig {
   port: number;
   nodeEnv: string;
   appUrl: string;
+  cors: { origin: string; credentials: boolean };
   database: { url: string };
   redis: { host: string; port: number };
   jwt: {
@@ -64,6 +65,11 @@ export default (): AppConfig => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
+
+  cors: {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    credentials: process.env.CORS_CREDENTIALS !== 'false',
+  },
 
   database: {
     url: requireEnv('DATABASE_URL'),
