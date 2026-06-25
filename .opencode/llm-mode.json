@@ -1,5 +1,6 @@
 {
-  "mode": "eco",
-  "updated_at": "2026-06-20T09:26:55+0000",
-  "model": "qwen2.5-coder-1.5b"
+  "mode": "on",
+  "model": "qwen3.5-0.8b",
+  "updated_at": "2026-06-24T18:32:17+0000",
+  "llm_mode": "online"
 }

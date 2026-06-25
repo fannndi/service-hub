@@ -20,6 +20,6 @@ export class PaymentsController {
     @Body() dto: CreatePaymentDto,
   ) {
     return this.paymentsService.createPayment(orderId, user.id, dto);
+  }
 }
-
 

@@ -130,7 +130,7 @@ export class StoresService {
         ratingAvg: Number(store.ratingAvg),
         totalCompleted: store.totalCompleted,
         spareparts: availableParts,
-        estimatedCost: availableParts[0].price + serviceFee,
+        estimatedCost: (availableParts[0]?.price ?? 0) + serviceFee,
       });
     }
 

@@ -41,16 +41,16 @@ export class PrismaMock {
 
   // ─── Direct access for seeding ─────────────────────────────────────────────
   seed(table: string, id: string, row: Row) {
-    this._tables[table][id] = { ...row };
+    this._tables[table]![id] = { ...row };
   }
 
   rows(table: string): Row[] {
-    return Object.values(this._tables[table]);
+    return Object.values(this._tables[table]!);
   }
 
   // ─── Internal ──────────────────────────────────────────────────────────────
   private _proxy(table: string) {
-    const rows = this._tables[table];
+    const rows = this._tables[table]!;
     const parent = this;
 
     return {

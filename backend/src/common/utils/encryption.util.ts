@@ -14,7 +14,9 @@ export function decryptCredential(ciphertext: string, hexKey: string): string {
   const key = Buffer.from(hexKey, 'hex');
   const parts = ciphertext.split(':');
   if (parts.length !== 3) throw new Error('Invalid ciphertext format');
-  const [ivHex, tagHex, encHex] = parts;
+  const ivHex = parts[0]!;
+  const tagHex = parts[1]!;
+  const encHex = parts[2]!;
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   return decipher.update(Buffer.from(encHex, 'hex')).toString('utf8') + decipher.final('utf8');

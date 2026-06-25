@@ -72,7 +72,7 @@ describe('Sparepart Stock Guard', () => {
       );
 
       expect(available).toHaveLength(1);
-      expect(available[0].id).toBe('sp-1');
+      expect(available[0]!.id).toBe('sp-1');
     });
 
     it('should not include discontinued spareparts', () => {

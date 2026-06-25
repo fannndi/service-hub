@@ -1,5 +1,5 @@
 export function generatePassword(fullName: string, phoneNumber: string): string {
-  const firstName = fullName.trim().split(/\s+/)[0].toUpperCase();
+  const firstName = (fullName.trim().split(/\s+/)[0] ?? '').toUpperCase();
   const letters = firstName.replace(/[^A-Z]/g, '');
   const padded = letters.padEnd(4, '_').substring(0, 4);
   const part1 = padded

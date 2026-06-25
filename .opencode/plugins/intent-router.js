@@ -24,6 +24,8 @@ exports.server = async (ctx) => {
             try {
                 const text = extractText(output?.parts);
                 if (!text || text.length < 3) return;
+                // Skip footer for slash commands (/daily, /workmode, etc.)
+                if (text.startsWith("/")) return;
 
                 const py = findPython(ctx.directory);
                 const callTime = Date.now();
@@ -93,10 +95,9 @@ exports.server = async (ctx) => {
                 const turn = data.turn || 0;
                 const chainLen = Array.isArray(data.chain) ? data.chain.length : 0;
                 const confidence = data.confidence ? Math.round(data.confidence * 100) + "%" : "-";
-                const llmMode = (data.profile || "eco");
-                const llmDisplay = llmMode.charAt(0).toUpperCase() + llmMode.slice(1);
+                const llmModel = data.model_primary || "qwen3.5-0.8b";
 
-                const footer = `Farewell: ON | Project: ${projectLabel} | ${workMode} | Turn: ${turn} | Chain: ${chainLen} | ${confidence} | ${llmDisplay}\n`;
+                const footer = `Farewell: ON | Project: ${projectLabel} | ${workMode} | Turn: ${turn} | Chain: ${chainLen} | ${confidence} | LLM:${llmModel}\n`;
 
                 // Prepend warnings and metadata
                 const parts = [{ type: "text", text: footer }];

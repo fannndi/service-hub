@@ -1,11 +1,11 @@
 {
   "session": {
     "project": "service-hub",
-    "mode": "eco",
+    "mode": "on",
     "work": "BUILD",
-    "kategori": "BACKEND - CI/CD - DATABASE - DOCS - FRONTEND - INFRA",
-    "started": "2026-06-23T12:34:55+0000",
-    "last_save": "2026-06-23T12:34:55+0000"
+    "kategori": "MOBILE+WEB",
+    "started": "2026-06-25T09:47:04+0000",
+    "last_save": "2026-06-25T09:47:04+0000"
   },
   "metrics": {
     "tokens_input": 0,

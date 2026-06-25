@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:servisgadget_foundation/features/customer/data/customer_repositories.dart';
+import 'package:servisgadget_foundation/features/customer/data/barrel.dart';
 import 'package:servisgadget_foundation/features/customer/domain/customer_models.dart';
 
 void main() {
