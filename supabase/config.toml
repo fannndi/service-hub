@@ -1,3 +1,8 @@
 [project]
 ref = "eboplbemgtvmviwhdlfa"
 port = 54321
+
+[functions]
+enabled = true
+verify_jwt = true
+include_base_path = true
