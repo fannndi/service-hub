@@ -19,6 +19,7 @@ if (!TOKEN) {
   process.exit(1);
 }
 
+const DRY_RUN = process.env.DRY_RUN === 'true';
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'supabase', 'migrations');
 
 async function executeSql(sql) {
@@ -48,6 +49,10 @@ async function main() {
   for (const file of files) {
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
     console.log(`Applying: ${file} (${sql.split('\n').length} lines)`);
+    if (DRY_RUN) {
+      console.log(`  DRY-RUN — skipped`);
+      continue;
+    }
     try {
       const result = await executeSql(sql);
       console.log(`  OK`);
