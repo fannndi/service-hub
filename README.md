@@ -1,8 +1,8 @@
 ﻿# ServisGadget
 
 > Platform Marketplace Servis Gadget Dua Sisi — Backendless dengan Supabase
-
----
+>
+> UAS Team Project — fannndi, dryns, Nisa Aulia.
 
 ## Tech Stack
 
