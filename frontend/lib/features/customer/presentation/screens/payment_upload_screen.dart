@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/supabase_config.dart';
 import '../../../../core/supabase_service.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
@@ -70,17 +67,17 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
     setState(() => _loading = true);
     try {
       final userId = SupabaseService.instance.user?.id ?? '';
-      final res = await http.post(
-        Uri.parse('${SupabaseConfig.backendUrl}/payments/midtrans/snap-token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'orderId': order.id, 'userId': userId}),
-      );
-      if (res.statusCode != 200) throw Exception('Gagal memproses pembayaran');
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      final redirectUrl = data['redirect_url'] as String;
-      final uri = Uri.parse(redirectUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final result = await SupabaseService.instance.invoke('midtrans', body: {
+        'orderId': order.id,
+        'userId': userId,
+      });
+      if (result is Map && result['redirect_url'] != null) {
+        final uri = Uri.parse(result['redirect_url'] as String);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } else {
+        throw Exception('Gagal mendapatkan tautan pembayaran');
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
