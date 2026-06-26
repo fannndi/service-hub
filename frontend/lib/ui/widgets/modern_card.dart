@@ -36,12 +36,17 @@ class ModernCard extends StatelessWidget {
         : BoxDecoration(
             color: color ?? scheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+            border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
             boxShadow: [
               BoxShadow(
-                color: scheme.shadow.withValues(alpha: 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
             ],
           );
@@ -85,8 +90,8 @@ class GradientBackground extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: brightness == Brightness.dark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFFF0F4F8), const Color(0xFFE8EEF4)],
+              ? [const Color(0xFF0F172A), const Color(0xFF141824)]
+              : [const Color(0xFFE8EEF4), const Color(0xFFEDF2F7)],
         ),
       ),
       child: child,
