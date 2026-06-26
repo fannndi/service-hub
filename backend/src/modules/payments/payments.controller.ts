@@ -27,9 +27,11 @@ export class PaymentsController {
   }
 
   @Post('midtrans/snap-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(200)
-  async getSnapToken(@Body('orderId') orderId: string, @Body('userId') userId: string) {
-    return this.midtrans.createSnapToken(orderId, userId);
+  async getSnapToken(@GetUser() user: AuthenticatedUser, @Body('orderId') orderId: string) {
+    return this.midtrans.createSnapToken(orderId, user.id);
   }
 
   @Post('midtrans/notification')

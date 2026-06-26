@@ -7,7 +7,6 @@ class StoreAdminListItem {
     required this.phoneNumber,
     required this.isActive,
     required this.isFirstLogin,
-    required this.plainPassword,
     required this.storeName,
     required this.storeId,
   });
@@ -16,7 +15,6 @@ class StoreAdminListItem {
   final String phoneNumber;
   final bool isActive;
   final bool isFirstLogin;
-  final String? plainPassword;
   final String storeName;
   final String storeId;
 
@@ -28,7 +26,6 @@ class StoreAdminListItem {
       phoneNumber: readString(json, 'phoneNumber'),
       isActive: json['isActive'] as bool? ?? true,
       isFirstLogin: json['isFirstLogin'] as bool? ?? false,
-      plainPassword: json['plainPassword'] as String?,
       storeName: readString(store, 'storeName'),
       storeId: readString(store, 'id'),
     );

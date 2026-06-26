@@ -27,7 +27,7 @@ export class CredentialService {
     const existing = await this.prisma.user.findUnique({ where: { phoneNumber: phone } });
     if (existing) return { user: existing, isNew: false };
 
-    const rawPass = generatePassword(fullName, phone);
+    const rawPass = generatePassword();
     const passwordHash = await bcrypt.hash(rawPass, 12);
     const encryptionKey = this.config.get('credential.encryptionKey', { infer: true });
     if (!encryptionKey) throw new Error('CREDENTIAL_ENCRYPTION_KEY not configured');

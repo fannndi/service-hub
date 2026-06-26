@@ -9,7 +9,6 @@ class UserListItem {
     required this.accountStatus,
     required this.isFirstLogin,
     required this.isCredentialSent,
-    required this.plainPassword,
     required this.createdAt,
   });
   final String id;
@@ -19,7 +18,6 @@ class UserListItem {
   final String accountStatus;
   final bool isFirstLogin;
   final bool isCredentialSent;
-  final String? plainPassword;
   final String createdAt;
 
   factory UserListItem.fromJson(Map<String, dynamic> json) => UserListItem(
@@ -30,7 +28,6 @@ class UserListItem {
         accountStatus: readString(json, 'accountStatus'),
         isFirstLogin: json['isFirstLogin'] as bool? ?? false,
         isCredentialSent: json['isCredentialSent'] as bool? ?? false,
-        plainPassword: json['plainPassword'] as String?,
         createdAt: readString(json, 'createdAt'),
       );
 }

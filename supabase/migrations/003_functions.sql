@@ -274,25 +274,17 @@ SET search_path = ''
 AS $$
 DECLARE
   v_role TEXT;
-  v_store_id UUID;
 BEGIN
   v_role := NEW.raw_user_meta_data ->> 'role';
-  v_store_id := (NEW.raw_user_meta_data ->> 'store_id')::UUID;
 
+  -- Only auto-create customer profiles from self-signup.
+  -- Store admin and platform admin accounts must be created via
+  -- the admin API (platform-admin-jwt guarded endpoints), not via self-signup.
   IF v_role = 'customer' THEN
     INSERT INTO public.users (id, full_name, phone_number, password_hash)
     VALUES (
       NEW.id,
       COALESCE(NEW.raw_user_meta_data ->> 'full_name', 'Pelanggan'),
-      SPLIT_PART(NEW.email, '@', 1),
-      'supabase-managed'
-    );
-  ELSIF v_role = 'store_admin' THEN
-    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash)
-    VALUES (
-      NEW.id,
-      v_store_id,
-      COALESCE(NEW.raw_user_meta_data ->> 'full_name', 'Admin'),
       SPLIT_PART(NEW.email, '@', 1),
       'supabase-managed'
     );

@@ -245,196 +245,136 @@ class _Step3WidgetState extends State<Step3Widget> {
           const SizedBox(height: 24),
           const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          Text(
-              context.l10n.noMatchingStore,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge),
+          Text(context.l10n.noMatchingStore, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
-          Text(
-              context.l10n.checkSelectionSubtitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(context.l10n.checkSelectionSubtitle, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 24),
-          FilledButton.icon(
-              onPressed: widget.onBack,
-              icon: const Icon(Icons.arrow_back),
-              label: Text(context.l10n.back)),
+          FilledButton.icon(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), label: Text(context.l10n.back)),
         ],
       );
     }
+
+    final selectedStore = state.matchedStores.where((s) => s.storeId == state.selectedStoreId).firstOrNull;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(context.l10n.selectPartnerStore, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text(
-            '${state.matchedStores.length} toko tersedia untuk perangkat kamu.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(context.l10n.storesAvailableCount.replaceFirst('{count}', state.matchedStores.length.toString()),
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 16),
 
-        // Selected sparepart indicator
-        if (state.selectedPartId != null)
-          Card(
-            color: theme.colorScheme.primaryContainer,
-            child: ListTile(
-              leading:
-                  Icon(Icons.check_circle, color: theme.colorScheme.primary),
-              title: Text(state.selectedPartName ?? 'Sparepart dipilih',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(context.l10n.priceEstimate.replaceFirst('{price}', formatRupiah(state.selectedPartPrice))),
-              trailing: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    state.selectedPartId = null;
-                    state.selectedPartName = null;
-                    state.selectedPartPrice = 0;
-                  });
-                },
-              ),
-            ),
-          ),
-
-        // Store cards
+        // Store list — radio style
         ...state.matchedStores.map((store) {
           final selected = store.storeId == state.selectedStoreId;
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 8),
             color: selected ? theme.colorScheme.primaryContainer : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: selected
-                  ? BorderSide(color: theme.colorScheme.primary)
-                  : BorderSide.none,
+              side: selected ? BorderSide(color: theme.colorScheme.primary, width: 1.5) : BorderSide.none,
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () => widget.onSelectStore(store),
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Expanded(
-                            child: Text(store.storeName,
-                                style: theme.textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold))),
-                        Row(children: [
-                          const Icon(Icons.star, size: 18, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          Text(store.ratingAvg.toStringAsFixed(1),
-                              style: theme.textTheme.bodyMedium),
-                        ]),
-                      ]),
-                      const SizedBox(height: 4),
-                      Row(children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                            child: Text(store.address,
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(color: Colors.grey),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis)),
-                      ]),
-                      const SizedBox(height: 8),
-                      Text(context.l10n.completedServicesCount.replaceFirst('{count}', store.totalCompleted.toString()),
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(color: theme.colorScheme.tertiary)),
-
-                      // Spareparts — tappable
-                      if (store.spareparts.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(context.l10n.availableSparepart,
-                            style: theme.textTheme.labelMedium
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        ...store.spareparts.map((sp) {
-                          final isPartSelected = sp.id == state.selectedPartId;
-                          return InkWell(
-                            onTap: sp.status != 'available'
-                                ? null
-                                : () {
-                                    widget.onSelectStore(store);
-                                    setState(() {
-                                      state.selectedPartId = sp.id;
-                                      state.selectedPartName = sp.partName;
-                                      state.selectedPartPrice = sp.price;
-                                      state.estimateCost = sp.price;
-                                    });
-                                  },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 6, horizontal: 8),
-                              margin: const EdgeInsets.symmetric(vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isPartSelected
-                                    ? theme.colorScheme.primaryContainer
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(children: [
-                                Icon(
-                                  isPartSelected
-                                      ? Icons.check_circle
-                                      : Icons.radio_button_unchecked,
-                                  size: 16,
-                                  color: isPartSelected
-                                      ? theme.colorScheme.primary
-                                      : Colors.grey,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(sp.partName,
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                  fontWeight: isPartSelected
-                                                      ? FontWeight.w600
-                                                      : FontWeight.normal)),
-                                      Text(
-                                          sp.status == 'available'
-                                              ? 'Tersedia'
-                                              : 'Preorder',
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              color: sp.status == 'available'
-                                                  ? Colors.green
-                                                  : Colors.orange)),
-                                    ],
-                                  ),
-                                ),
-                                Text(formatRupiah(sp.price),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.bold)),
-                              ]),
-                            ),
-                          );
-                        }),
-                      ],
-
-                      const Divider(height: 16),
-                      Row(children: [
-                        const Icon(Icons.info_outline, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                            'Estimasi awal: ${formatRupiah(store.estimatedCost)}',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w600)),
-                      ]),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(children: [
+                  Icon(selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                      color: selected ? theme.colorScheme.primary : Colors.grey, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(store.storeName, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(store.address, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ]),
+                  ),
+                  Row(children: [
+                    const Icon(Icons.star, size: 16, color: Colors.amber),
+                    const SizedBox(width: 2),
+                    Text(store.ratingAvg.toStringAsFixed(1), style: theme.textTheme.bodySmall),
+                  ]),
+                  const SizedBox(width: 8),
+                  Text(context.l10n.completedServicesCount.replaceFirst('{count}', store.totalCompleted.toString()),
+                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.tertiary)),
+                ]),
               ),
             ),
           );
         }),
+
+        // Sparepart section — only show if store selected
+        if (selectedStore != null && selectedStore.spareparts.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          Text(context.l10n.availableSparepart, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          ...selectedStore.spareparts.map((sp) {
+            final isPartSelected = sp.id == state.selectedPartId;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              color: isPartSelected ? theme.colorScheme.primaryContainer : null,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: isPartSelected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: sp.status != 'available' ? null : () => setState(() {
+                  widget.onSelectStore(selectedStore);
+                  state.selectedPartId = sp.id;
+                  state.selectedPartName = sp.partName;
+                  state.selectedPartPrice = sp.price;
+                  state.estimateCost = sp.price;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(children: [
+                    Icon(isPartSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                        size: 20, color: isPartSelected ? theme.colorScheme.primary : Colors.grey),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(sp.partName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isPartSelected ? FontWeight.w600 : FontWeight.normal)),
+                        Text(sp.status == 'available' ? context.l10n.available : context.l10n.preorder,
+                            style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
+                      ]),
+                    ),
+                    Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  ]),
+                ),
+              ),
+            );
+          }),
+        ],
+
+        // Selected part indicator
+        if (state.selectedPartId != null) ...[
+          const SizedBox(height: 16),
+          Card(
+            color: Colors.green.shade50,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${state.selectedPartName} - ${formatRupiah(state.selectedPartPrice)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600))),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () => setState(() {
+                    state.selectedPartId = null;
+                    state.selectedPartName = null;
+                    state.selectedPartPrice = 0;
+                  }),
+                ),
+              ]),
+            ),
+          ),
+        ],
       ],
     );
   }

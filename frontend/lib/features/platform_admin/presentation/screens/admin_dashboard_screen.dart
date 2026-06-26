@@ -512,7 +512,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
           data: (list) => list.isEmpty
               ? Padding(padding: const EdgeInsets.all(16), child: Text(context.l10n.noCustomers))
               : Column(children: list.map((u) {
-                  final isNew = u.isFirstLogin && u.plainPassword != null;
+                  final isNew = u.isFirstLogin;
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: Padding(

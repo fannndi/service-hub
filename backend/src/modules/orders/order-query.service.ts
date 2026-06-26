@@ -84,8 +84,9 @@ export class OrderQueryService {
     });
     if (!order) throw new OrderNotFoundException();
 
+    const { credentialPlainEnc: _enc, ...safeUser } = order.user;
     const credentialPanel = this.trackingService.buildCredentialPanel(order.user);
-    return this.trackingService.withAllowedActions({ ...order, credentialPanel });
+    return this.trackingService.withAllowedActions({ ...order, user: safeUser, credentialPanel });
   }
 
   async getOrderProgress(userId: string, orderId: string) {

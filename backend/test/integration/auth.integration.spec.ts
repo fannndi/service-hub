@@ -129,16 +129,12 @@ describe('Auth Integration — AC-01 to AC-07', () => {
 
   // ─── Stealth Account Tests ────────────────────────────────────────────
   describe('Stealth Account: password generation', () => {
-    it('should generate deterministic password from name + phone', () => {
-      const pass1 = generatePassword('Budi Santoso', '+6281234567890');
-      const pass2 = generatePassword('Budi Santoso', '+6281234567890');
-      expect(pass1).toBe(pass2);
+    it('should generate 12-character random password', () => {
+      const pass1 = generatePassword();
+      const pass2 = generatePassword();
+      expect(pass1).not.toBe(pass2);
       expect(pass1.length).toBe(12);
-    });
-
-    it('should include last 4 digits of phone', () => {
-      const pass = generatePassword('Budi Santoso', '+6281234567890');
-      expect(pass).toContain('7890');
+      expect(pass1).toMatch(/^[A-Za-z0-9]+$/);
     });
   });
 

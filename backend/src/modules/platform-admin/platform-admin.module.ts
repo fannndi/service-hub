@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { PlatformAdminService } from './platform-admin.service';
 import { PlatformAuthService } from './platform-auth.service';
 import { PlatformStoreService } from './platform-store.service';
 import { PlatformUserService } from './platform-user.service';
@@ -23,7 +22,6 @@ import { PlatformAdminJwtStrategy } from './strategies/platform-admin-jwt.strate
   ],
   controllers: [PlatformAdminController],
   providers: [
-    PlatformAdminService,
     PlatformAuthService,
     PlatformStoreService,
     PlatformUserService,

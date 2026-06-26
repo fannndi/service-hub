@@ -1,11 +1,9 @@
-# Supabase CLI config — minimal for 2.x compatibility
-# API keys are managed via supabase CLI login
-
 [project]
 ref = "eboplbemgtvmviwhdlfa"
+
+[api]
 port = 54321
 
 [functions]
-enabled = true
-verify_jwt = true
-include_base_path = true
+enabled = {}
+verify_jwt = {}

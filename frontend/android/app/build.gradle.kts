@@ -22,12 +22,12 @@ fun loadProperties(path: String): Map<String, String> {
 }
 
 val keystoreProps = loadProperties("key.properties")
-val storeFile = if (keystoreProps.containsKey("storeFile")) {
+val ksFile = if (keystoreProps.containsKey("storeFile")) {
     rootProject.file(keystoreProps["storeFile"]!!)
 } else {
     null
 }
-val hasKeystore = storeFile != null && storeFile.exists()
+val hasKeystore = ksFile != null && ksFile.exists()
 
 android {
     namespace = "id.servisgadget.servisgadget_foundation"
@@ -56,7 +56,7 @@ android {
             create("release") {
                 keyAlias = keystoreProps["keyAlias"]!!
                 keyPassword = keystoreProps["keyPassword"]!!
-                storeFile = storeFile!!
+                storeFile = ksFile!!
                 storePassword = keystoreProps["storePassword"]!!
             }
         }
