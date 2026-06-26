@@ -9,5 +9,5 @@ class SupabaseConfig {
   static String buildStoreAdminEmail(String phone) =>
       '$phone@store.servisgadget.com';
   static String buildPlatformAdminEmail(String username) =>
-      '$username@admin.servisgadget.com';
+      '$username@servisgadget.com';
 }

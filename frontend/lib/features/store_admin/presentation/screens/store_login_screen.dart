@@ -114,7 +114,7 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                                       .read(
                                           storeAuthControllerProvider.notifier)
                                       .login(
-                                        '08${phone.text.trim()}',
+                                        phone.text.trim(),
                                         password.text,
                                       ),
                               icon: auth.isLoading
