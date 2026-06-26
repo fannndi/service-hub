@@ -30,7 +30,7 @@ val ksFile = if (keystoreProps.containsKey("storeFile")) {
 val hasKeystore = ksFile != null && ksFile.exists()
 
 android {
-    namespace = "id.servisgadget.servisgadget_foundation"
+    namespace = "com.ti23a4.serviceme"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -44,7 +44,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "id.servisgadget.servisgadget_foundation"
+        applicationId = "com.ti23a4.serviceme"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

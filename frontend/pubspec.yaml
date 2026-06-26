@@ -1,7 +1,7 @@
-name: servisgadget_foundation
-description: ServisGadget - Platform Marketplace Servis Gadget Dua Sisi
+name: service_me
+description: Service Me - Aplikasi Servis Gadget
 publish_to: none
-version: 2.0.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

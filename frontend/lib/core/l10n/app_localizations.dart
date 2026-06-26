@@ -458,7 +458,7 @@ extension AppLocalizationsX on BuildContext {
 }
 
 class AppLocalizationsId extends AppLocalizations {
-  @override String get appName => 'ServisGadget';
+  @override String get appName => 'Service Me';
   @override String get submitService => 'Ajukan Servis';
   @override String get checkOrder => 'Cek Pesanan';
   @override String get customer => 'Pelanggan';
@@ -678,7 +678,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get account => 'Akun';
   @override String get roleLabel => 'Role: {role}';
   @override String get application => 'Aplikasi';
-  @override String get appVersion => 'ServisGadget v2.0';
+  @override String get appVersion => 'Service Me v1.0';
   @override String get poweredBy => 'Powered by Supabase';
   @override String get notifications => 'Notifikasi';
   @override String get noNotifications => 'Belum ada notifikasi.';
@@ -889,7 +889,7 @@ class AppLocalizationsId extends AppLocalizations {
 }
 
 class AppLocalizationsEn extends AppLocalizations {
-  @override String get appName => 'ServisGadget';
+  @override String get appName => 'Service Me';
   @override String get submitService => 'Submit Service';
   @override String get checkOrder => 'Check Order';
   @override String get customer => 'Customer';
@@ -1109,7 +1109,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get account => 'Account';
   @override String get roleLabel => 'Role: {role}';
   @override String get application => 'Application';
-  @override String get appVersion => 'ServisGadget v2.0';
+  @override String get appVersion => 'Service Me v1.0';
   @override String get poweredBy => 'Powered by Supabase';
   @override String get notifications => 'Notifications';
   @override String get noNotifications => 'No notifications yet.';

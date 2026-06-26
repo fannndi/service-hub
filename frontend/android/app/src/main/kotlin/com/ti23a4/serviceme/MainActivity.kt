@@ -1,4 +1,4 @@
-package id.servisgadget.servisgadget_foundation
+package com.ti23a4.serviceme
 
 import io.flutter.embedding.android.FlutterActivity
 
