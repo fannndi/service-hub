@@ -1,6 +1,6 @@
 ﻿# ServisGadget
 
-> Platform Marketplace Servis Gadget Dua Sisi — Backendless dengan Supabase
+> Platform Marketplace Servis Gadget Dua Sisi
 >
 > UAS Team Project — fannndi, dryns, Nisa Aulia.
 
@@ -11,6 +11,7 @@
 | Backend | NestJS 10+ (TypeScript) + Prisma ORM + Supabase (PostgreSQL + Auth + Edge Functions) |
 | Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14, Supabase Flutter |
 | Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) |
+| Guest Flow | NestJS API → auto-create suspended account → sync ke Supabase Auth saat toko approve |
 | Storage | Supabase Storage |
 | Infra | Docker Compose (Postgres + Redis + Backend) |
 
@@ -44,9 +45,113 @@ supabase functions deploy cron-sla
 cd frontend
 flutter build apk --release \
   --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV \
+  --dart-define=API_BASE_URL=http://localhost:3000/v1
 
 # 5. Install di HP → buka apps
+```
+
+---
+
+## Guest Account Flow
+
+Aplikasi ini punya mekanisme **guest account** seperti game — user bisa langsung booking tanpa login:
+
+```
+User → [Ajukan Servis]
+  → Isi form (device, keluhan, toko, nama, no hp)
+  → Submit → NestJS POST /v1/orders (no auth)
+     → autoCreateAccount() → Prisma user = SUSPENDED + credential encrypted
+     → Order dibuat, link ke user
+  → [GuestBookingSuccessScreen] → catat nomor order
+
+User → [Cek Pesanan] (dari welcome atau langsung)
+  → Input nomor order + WhatsApp
+  → NestJS POST /v1/orders/guest/track
+  → Lihat tracking + credential (masked)
+  → Jika status < device_received:
+       "Menunggu toko menerima perangkat..."
+       Credential card: nama, username (phone), password (masked)
+       Tombol "Hubungkan Akun" disabled
+  → Jika status >= device_received:
+       Akun otomatis aktif + sync ke Supabase Auth
+       User bisa login via Supabase Auth normal
+
+[Store Admin] → terima device → POST /v1/store/orders/:id/status { status: device_received }
+  → Backend activateGuestAccount():
+     1. Decrypt credential dari Prisma
+     2. Panggil Supabase Admin API → create Auth user
+        email: {phone}@customer.servisgadget.com
+        password: auto-generated
+     3. Prisma user: accountStatus = active, credentialPlainEnc = null
+     4. WhatsApp notif: "Akun aktif! Login dengan..."
+```
+
+### Key Components
+
+| Component | File | Fungsi |
+|-----------|------|--------|
+| `CredentialService` | `auth/credential.service.ts` | Auto-create account → set status `suspended` |
+| `GuestOrdersService` | `orders/guest-orders.service.ts` | Verify tracking, activate account, sync ke Supabase Auth |
+| `GuestOrdersController` | `orders/guest-orders.controller.ts` | Public endpoints: track, credentials, activate |
+| `OrderStatusService` | `orders/order-status.service.ts` | Hook: on `device_received` → activate guest account |
+| `GuestBookingSuccessScreen` | `frontend/.../guest_booking_success_screen.dart` | Booking success tanpa login |
+| `GuestTrackingScreen` | `frontend/.../guest_tracking_screen.dart` | Tracking + credential card + CTA login |
+| `ApiClient` | `frontend/core/api_client.dart` | HTTP client ke NestJS backend |
+
+### Endpoints
+
+| Method | Endpoint | Auth | Deskripsi |
+|--------|----------|------|-----------|
+| `POST` | `/v1/orders` | No | Guest order creation (auto-create suspended account) |
+| `POST` | `/v1/orders/guest/track` | No | Tracking + status by orderNumber + phone |
+| `POST` | `/v1/orders/guest/credentials` | No | Get credential status (masked password) |
+| `POST` | `/v1/orders/guest/:orderId/activate` | Store Admin | Activate guest account (hook from device_received) |
+
+### Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      WELCOME SCREEN                      │
+│  [Ajukan Servis]  [Cek Pesanan]  [Pelanggan]  [Toko]    │
+└──────────┬──────────────────┬────────────────────────────┘
+           │                  │
+     Ajukan Servis      Cek Pesanan
+           │                  │
+           ▼                  ▼
+  ┌─────────────────┐  ┌──────────────────┐
+  │ Service Flow    │  │ Guest Tracking   │
+  │ (5-step wizard) │  │ (order+phone)    │
+  └────────┬────────┘  └────────┬─────────┘
+           │                    │
+     POST /v1/orders       POST /v1/orders/guest/track
+     (no auth)                  │
+           │                    ├── status < device_received
+           ▼                    │   → card credential (disabled)
+  ┌────────────────────┐        │
+  │ Booking Success    │        ├── status >= device_received
+  │ (catat order no)   │        │   → "Akun Aktif, Silakan Login"
+  └────────────────────┘        │
+                                ▼
+                         ┌──────────────┐
+                         │ Login Screen │
+                         │ (Supabase)   │
+                         └──────────────┘
+
+  ┌─────────────────────────────────────────────────────┐
+  │              STORE ADMIN SIDE                        │
+  │                                                     │
+  │  Menerima device → POST /v1/store/orders/:id/status │
+  │  { status: "device_received" }                      │
+  │       ↓                                              │
+  │  OrderStatusService.updateStatus()                   │
+  │       ↓                                              │
+  │  GuestOrdersService.activateGuestAccount()           │
+  │      1. Decrypt credential                            │
+  │      2. Create Supabase Auth user via Admin API       │
+  │      3. Set accountStatus = active                    │
+  │      4. WA notif ke customer                          │
+  └─────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -57,7 +162,7 @@ flutter build apk --release \
 |------|-------------|----------|
 | Platform Admin | `admin@admin.servisgadget.com` | `admin` |
 | Store Admin | `{phone}@store.servisgadget.com` | Dibuat dari platform admin |
-| Customer | `{phone}@customer.servisgadget.com` | Auto-created saat booking |
+| Customer | `{phone}@customer.servisgadget.com` | Auto-generated saat guest booking, diaktifkan saat toko approve |
 
 ---
 
@@ -70,10 +175,10 @@ service-hub/
 │   ├── src/
 │   │   ├── main.ts              Bootstrap (Swagger, CORS, validation)
 │   │   ├── app.module.ts        Root module
-│   │   ├── config/              App configuration (JWT, SLA, storage)
+│   │   ├── config/              App configuration (JWT, SLA, storage, Supabase)
 │   │   └── common/              Shared infrastructure
 │   │       ├── prisma/          PrismaClient wrapper
-│   │       ├── exceptions/      23 exception classes (1 per file)
+│   │       ├── exceptions/      24 exception classes (1 per file)
 │   │       ├── guards/          JWT auth guards
 │   │       ├── filters/         Global exception filter
 │   │       ├── interceptors/    Response wrapper
@@ -89,7 +194,7 @@ service-hub/
 │       ├── stores/              6 files (discovery, dashboard, profile)
 │       ├── store-auth/          4 files
 │       ├── store-register/      3 files
-│       ├── orders/              12 files (creation, diagnosis, status, query, tracking)
+│       ├── orders/              15 files (creation, diagnosis, status, query, tracking, guest)
 │       ├── payments/            4 files (customer + store controllers)
 │       ├── disputes/            4 files (customer + store controllers)
 │       ├── reviews/             3 files
@@ -103,7 +208,7 @@ service-hub/
 ├── frontend/                    Flutter mobile app
 │   └── lib/
 │       ├── main.dart            App entry, GoRouter, splash
-│       ├── core/                SupabaseService, Config, JSON helpers
+│       ├── core/                SupabaseService, ApiClient, Config, JSON helpers
 │       ├── ui/                  Theme (Material 3), design system widgets
 │       ├── shared_widgets/      Cross-feature reusable widgets
 │       └── features/            Domain-driven feature modules
@@ -112,8 +217,8 @@ service-hub/
 │           │   ├── data/        9 repository files (1 per domain)
 │           │   ├── domain/      15 model files (1 per class)
 │           │   └── presentation/
-│           │       ├── routing/ 1 router
-│           │       ├── screens/ 22 screen files (1 per screen)
+│           │       ├── routing/ 1 router (25 routes)
+│           │       ├── screens/ 25 screen files (1 per screen)
 │           │       └── widgets/ 11 widget files (1 per widget)
 │           ├── store_admin/
 │           │   ├── application/ 11 provider files
@@ -146,14 +251,27 @@ service-hub/
 
 ## Backend Architecture
 
-**Tidak ada server — backendless.** Semua logic di:
+**Dual-layer architecture:**
 
 | Layer | Lokasi | Fungsi |
 |-------|--------|--------|
-| Database | Supabase PostgreSQL | Data storage, RLS policies |
-| Auth | Supabase Auth | 3 roles, JWT, session management |
-| Business Logic | Edge Functions | Order flow, stock, disputes |
-| Cache | Supabase DB cache-aside | Store list cache |
+| Auth & Queries | Supabase (Auth + RLS + DB) | Customer login, order tracking, store discovery |
+| Business Logic | NestJS + Prisma | Order creation, guest account, store admin ops, credentials |
+| Edge Functions | Supabase Functions | Order flow, stock management, disputes |
+| Cache | Redis | Session, rate limiting |
+
+### NestJS API Endpoints
+
+| Prefix | Controller | Auth |
+|--------|-----------|------|
+| `POST /v1/orders` | OrdersController | No (guest order) |
+| `GET /v1/orders/me` | OrdersController | Customer JWT |
+| `GET /v1/orders/:id` | OrdersController | Customer JWT |
+| `POST /v1/orders/guest/track` | GuestOrdersController | No |
+| `POST /v1/orders/guest/credentials` | GuestOrdersController | No |
+| `POST /v1/orders/guest/:orderId/activate` | GuestOrdersController | Store Admin JWT |
+| `POST /v1/auth/login` | AuthController | No |
+| `POST /v1/store/orders/*` | StoreOrdersController | Store Admin JWT |
 
 ---
 
@@ -169,12 +287,84 @@ service-hub/
 
 ---
 
+## Environment Variables
+
+### Required (backend)
+
+| Variable | Deskripsi |
+|----------|-----------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | Customer JWT access token secret |
+| `JWT_REFRESH_SECRET` | Customer JWT refresh token secret |
+| `JWT_STORE_ACCESS_SECRET` | Store admin JWT access secret |
+| `JWT_STORE_REFRESH_SECRET` | Store admin JWT refresh secret |
+| `JWT_PLATFORM_ADMIN_SECRET` | Platform admin JWT secret |
+| `CREDENTIAL_ENCRYPTION_KEY` | AES-256-GCM key for guest credentials (32-byte hex) |
+| `MIDTRANS_SERVER_KEY` | Midtrans payment server key |
+| `SUPABASE_PROJECT_REF` | Supabase project ref (for Admin API) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role key (for guest sync) |
+
+### Frontend build args
+
+| Arg | Default | Deskripsi |
+|-----|---------|-----------|
+| `SUPABASE_URL` | `''` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | `''` | Supabase anon key |
+| `API_BASE_URL` | `http://localhost:3000/v1` | NestJS backend URL |
+
+---
+
+## Workflow Skenario
+
+### Skenario 1: Guest Booking + Activation (Happy Path)
+
+1. User buka app → tap **Ajukan Servis**
+2. Pilih device (brand + model), jenis kerusakan, pilih toko, isi nama & WA
+3. Tap **Booking** → order terkirim via NestJS API
+4. System auto-generate credential (password random), user status = **suspended**
+5. Muncul **GuestBookingSuccessScreen** dengan nomor order
+6. User tap **Cek Status Pesanan** → masuk **GuestTrackingScreen**
+7. Input nomor order + WA → lihat tracking + **credential card (disabled)**
+8. Store admin terima device → update status → `device_received`
+9. Backend otomatis activate guest account:
+   - Buat Supabase Auth user (`{phone}@customer.servisgadget.com`)
+   - Set `accountStatus = active` di Prisma
+   - Kirim notif WA: "Akun aktif!"
+10. User refresh tracking → credential card berubah jadi **"Akun Aktif, Silakan Login"**
+11. User tap **Login** → login via Supabase Auth dengan credential dari card
+
+### Skenario 2: Guest — Store Belum Terima Device
+
+1. User booking + dapat nomor order
+2. Cek tracking → lihat status `waiting_device`
+3. Credential card muncul tapi **disabled** + pesan "Menunggu toko menerima perangkat"
+4. User harus tunggu sampai store admin update status
+
+### Skenario 3: Customer Login (Existing User)
+
+1. User tap **Pelanggan** → login screen
+2. Input phone + password → login via Supabase Auth
+3. Redirect ke **HomeScreen** dengan order history
+
+### Skenario 4: Store Admin — Menerima Device + Auto-Activate
+
+1. Store admin login, buka order detail
+2. Tap **Terima Perangkat** → `POST /v1/store/orders/:id/status` dengan `device_received`
+3. Backend `OrderStatusService.updateStatus()` hook:
+   - Update status order
+   - Panggil `GuestOrdersService.activateGuestAccount()`
+   - Jika user punya `credentialPlainEnc` (guest): sync ke Supabase Auth + update status
+4. Customer dapat notif WA akun aktif
+
+---
+
 ## Deployment
 
-### Backend (Supabase)
+### Backend (Docker Compose)
 
-1. **SQL Migrations** — via SQL Editor atau `node scripts/push-sql.js`
-2. **Edge Functions** — `supabase functions deploy`
+```bash
+docker compose up -d
+```
 
 ### Frontend (APK)
 
@@ -182,7 +372,8 @@ service-hub/
 cd frontend
 flutter build apk --release \
   --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV \
+  --dart-define=API_BASE_URL=http://YOUR_SERVER_IP:3000/v1
 ```
 
 Output: `build/app/outputs/flutter-apk/app-release.apk`

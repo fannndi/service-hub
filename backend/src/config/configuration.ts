@@ -2,6 +2,7 @@ export interface AppConfig {
   port: number;
   nodeEnv: string;
   appUrl: string;
+  supabase: { projectRef: string; serviceRoleKey: string };
   cors: { origin: string; credentials: boolean };
   database: { url: string };
   redis: { host: string; port: number };
@@ -72,6 +73,11 @@ export default (): AppConfig => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
+
+  supabase: {
+    projectRef: process.env.SUPABASE_PROJECT_REF || '',
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  },
 
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',

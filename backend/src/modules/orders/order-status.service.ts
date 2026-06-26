@@ -7,12 +7,14 @@ import {
 } from '../../common/exceptions';
 import { assertValidTransition } from './utils/state-machine.util';
 import { UpdateOrderStatusDto } from './dto';
+import { GuestOrdersService } from './guest-orders.service';
 
 @Injectable()
 export class OrderStatusService {
   constructor(
     private prisma: PrismaService,
     private notif: NotificationsService,
+    private guestOrders: GuestOrdersService,
   ) {}
 
   async updateStatus(
@@ -99,6 +101,10 @@ export class OrderStatusService {
         fullOrder.orderNumber,
         Number(fullOrder.finalPrice),
       );
+    }
+
+    if (dto.status === 'device_received') {
+      await this.guestOrders.activateGuestAccount(orderId, storeId);
     }
 
     return { status: dto.status };

@@ -6,6 +6,8 @@ import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
+import '../../../../core/api_client.dart';
+import '../../../../core/supabase_service.dart';
 import 'service_flow_steps.dart';
 
 class ServiceFlowScreen extends ConsumerStatefulWidget {
@@ -62,43 +64,64 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   Future<void> _createBooking() async {
     setState(() => _state.loading = true);
     try {
-      final req = CreateOrderRequest(
-        storeId: _state.selectedStoreId!,
-        fullName: _state.name.text.trim(),
-        phoneNumber: normalizePhone(_state.phone.text.trim()),
-        deviceType: _state.deviceType,
-        brand: _state.selectedBrand!,
-        deviceModel: _state.selectedModel!,
-        deliveryMethod: _state.delivery,
-        deliveryAddress: _state.delivery == 'courier_pickup'
-            ? _state.address.text.trim()
-            : null,
-        couponCode: _state.coupon.text.trim().isEmpty
-            ? null
-            : _state.coupon.text.trim(),
-        items: [
-          CreateOrderItemInput(
-            serviceType: _state.serviceType,
-            complaint: _state.complaint.text.trim(),
-            sparepartId: _state.selectedPartId,
-            itemPrice: _state.estimateCost,
+      final isGuest = SupabaseService.instance.user == null;
+      final phone = normalizePhone(_state.phone.text.trim());
+      final items = [
+        {
+          'service_type': _state.serviceType,
+          'complaint': _state.complaint.text.trim(),
+          if (_state.selectedPartId != null) 'sparepart_id': _state.selectedPartId,
+          'item_price': _state.estimateCost,
+        },
+      ];
+
+      final body = {
+        'store_id': _state.selectedStoreId!,
+        'device_type': _state.deviceType,
+        'brand': _state.selectedBrand!,
+        'device_model': _state.selectedModel!,
+        'delivery_method': _state.delivery,
+        if (_state.delivery == 'courier_pickup') 'delivery_address': _state.address.text.trim(),
+        'customer_name': _state.name.text.trim(),
+        'phone_number': phone,
+        'items': items,
+        if (_state.coupon.text.trim().isNotEmpty) 'coupon_code': _state.coupon.text.trim(),
+      };
+
+      if (isGuest) {
+        final result = await ApiClient.instance.post('/orders', body);
+        if (!mounted) return;
+        context.go('/booking-success/${result['order_number']}', extra: {'isGuest': true});
+      } else {
+        final result = await ref.read(orderRepositoryProvider).createOrder(
+          CreateOrderRequest(
+            storeId: _state.selectedStoreId!,
+            fullName: _state.name.text.trim(),
+            phoneNumber: phone,
+            deviceType: _state.deviceType,
+            brand: _state.selectedBrand!,
+            deviceModel: _state.selectedModel!,
+            deliveryMethod: _state.delivery,
+            deliveryAddress: _state.delivery == 'courier_pickup' ? _state.address.text.trim() : null,
+            couponCode: _state.coupon.text.trim().isEmpty ? null : _state.coupon.text.trim(),
+            items: [CreateOrderItemInput(serviceType: _state.serviceType, complaint: _state.complaint.text.trim(), sparepartId: _state.selectedPartId, itemPrice: _state.estimateCost)],
           ),
-        ],
-      );
-      final result = await ref.read(orderRepositoryProvider).createOrder(req);
-      if (!mounted) return;
-      context.go('/booking-success/${result.orderNumber}',
-          extra: result.isNewCustomer);
+        );
+        if (!mounted) return;
+        context.go('/booking-success/${result.orderNumber}', extra: result.isNewCustomer);
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(parseApiError(error))),
+          SnackBar(content: Text(isApiError(error) ? parseApiError(error) : error.toString())),
         );
       }
     } finally {
       if (mounted) setState(() => _state.loading = false);
     }
   }
+
+  bool isApiError(Object error) => error.toString().contains('STOCK_UNAVAILABLE') || error.toString().contains('COUPON') || error.toString().contains('STORE_NOT_ACTIVE');
 
   void _nextStep() {
     if (_step >= 4) return;

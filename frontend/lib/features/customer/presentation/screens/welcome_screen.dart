@@ -91,6 +91,15 @@ class WelcomeScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
+                          SizedBox(
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.go('/guest/track'),
+                              icon: const Icon(Icons.search, size: 20),
+                              label: const Text('Cek Pesanan'),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
                           Row(
                             children: [
                               Expanded(

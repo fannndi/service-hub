@@ -38,6 +38,7 @@ export class CredentialService {
         phoneNumber: phone,
         passwordHash,
         credentialPlainEnc,
+        accountStatus: 'suspended',
         isFirstLogin: true,
         isCredentialSent: false,
       },

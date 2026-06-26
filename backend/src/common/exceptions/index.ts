@@ -21,3 +21,4 @@ export { ForbiddenException } from './forbidden.exception';
 export { NotFoundException } from './not-found.exception';
 export { RateLimitExceededException } from './rate-limit-exceeded.exception';
 export { FileValidationException } from './file-validation.exception';
+export { GuestAccountNotActivatedException } from './guest-account-not-activated.exception';

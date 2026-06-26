@@ -11,6 +11,8 @@ import '../screens/store_list_screen.dart';
 import '../screens/store_detail_screen.dart';
 import '../screens/booking_form_screen.dart';
 import '../screens/booking_success_screen.dart';
+import '../screens/guest_booking_success_screen.dart';
+import '../screens/guest_tracking_screen.dart';
 import '../screens/order_list_screen.dart';
 import '../screens/order_detail_screen.dart';
 import '../screens/tracking_screen.dart';
@@ -44,9 +46,27 @@ final customerRoutes = <RouteBase>[
           BookingFormScreen(storeId: state.pathParameters['storeId']!)),
   GoRoute(
     path: '/booking-success/:orderNumber',
-    builder: (_, state) => BookingSuccessScreen(
-      orderNumber: state.pathParameters['orderNumber']!,
-      isNewCustomer: state.extra as bool? ?? false,
+    builder: (_, state) {
+      final extra = state.extra;
+      if (extra is Map && extra['isGuest'] == true) {
+        return GuestBookingSuccessScreen(
+          orderNumber: state.pathParameters['orderNumber']!,
+        );
+      }
+      return BookingSuccessScreen(
+        orderNumber: state.pathParameters['orderNumber']!,
+        isNewCustomer: extra is bool ? extra : (extra is Map ? (extra['isNewCustomer'] as bool? ?? false) : false),
+      );
+    },
+  ),
+  GoRoute(
+    path: '/guest/track',
+    builder: (_, __) => const GuestTrackingScreen(),
+  ),
+  GoRoute(
+    path: '/guest/track/:orderNumber',
+    builder: (_, state) => GuestTrackingScreen(
+      initialOrderNumber: state.pathParameters['orderNumber'],
     ),
   ),
   GoRoute(path: '/orders', builder: (_, __) => const OrderListScreen()),
