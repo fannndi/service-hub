@@ -1,5 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { assertValidTransition, ok, fail } from '../_shared/helpers.ts'
+import { assertValidTransition, VALID_TRANSITIONS, ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 
 export default {
@@ -69,7 +69,13 @@ export default {
           created_by_type: 'customer', created_by_id: userClaims.id,
         });
 
-        return ok({ order_id: order.id, order_number });
+        await admin.from('notifications').insert({
+          store_id, role: 'store_admin', type: 'new_order',
+          title: 'Pesanan Baru', message: `#${order_number} — ${brand} ${device_model}`,
+          link_to: `/store/orders/${order.id}`,
+        });
+
+        return ok({ order_id: order.id, order_number, allowed_actions: VALID_TRANSITIONS['waiting_device'] || [] });
       }
 
       // ─── APPROVE ORDER ───
@@ -84,7 +90,7 @@ export default {
         }
         await admin.from('service_orders').update({ status: 'repairing', sla_deadline: null }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'repairing', note: 'Order disetujui, perbaikan dimulai', created_by_type: 'customer', created_by_id: userClaims.id });
-        return ok({ status: 'repairing' });
+        return ok({ status: 'repairing', allowed_actions: VALID_TRANSITIONS['repairing'] || [] });
       }
 
       // ─── REJECT ORDER ───
@@ -99,7 +105,7 @@ export default {
         }
         await admin.from('service_orders').update({ status: 'cancelled', cancelled_at: new Date().toISOString() }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'cancelled', note: 'Order ditolak oleh pelanggan', created_by_type: 'customer', created_by_id: userClaims.id });
-        return ok({ status: 'cancelled' });
+        return ok({ status: 'cancelled', allowed_actions: [] });
       }
 
       // ─── DIAGNOSIS (Store Admin) ───
@@ -126,7 +132,12 @@ export default {
 
         await admin.from('service_orders').update({ status: 'waiting_approval', final_price: finalPrice, service_fee: service_fee || 0, diagnosis_note: diagnosis_note || null, sla_deadline: null }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'waiting_approval', note: 'Diagnosa dikirim', created_by_type: 'store_admin', created_by_id: userClaims.id });
-        return ok({ final_price: finalPrice });
+        await admin.from('notifications').insert({
+          user_id: order.user_id, role: 'customer', type: 'diagnosis_result',
+          title: 'Diagnosa Selesai', message: `Diagnosa untuk #${order.order_number} sudah selesai. Total: Rp ${finalPrice.toLocaleString('id-ID')}. Silakan cek dan setujui.`,
+          link_to: `/orders/${order_id}`,
+        });
+        return ok({ final_price: finalPrice, allowed_actions: VALID_TRANSITIONS['waiting_approval'] || [] });
       }
 
       // ─── STATUS UPDATE (Store Admin) ───
@@ -212,7 +223,7 @@ export default {
         await admin.from('service_tracking').insert({ order_id: order.id, status, note: note || null, created_by_type: 'store_admin', created_by_id: userClaims.id });
         if (status === 'completed') await admin.rpc('update_rating_avg', { p_store_id: adminRow.store_id });
 
-        return ok({ status });
+        return ok({ status, allowed_actions: VALID_TRANSITIONS[status] || [] });
       }
 
       return fail('NOT_FOUND', 'Endpoint not found', 404);
