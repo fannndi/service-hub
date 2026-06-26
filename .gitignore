@@ -13,3 +13,5 @@ secrets/
 
 # Secrets
 data.md
+*.keystore
+key.properties
