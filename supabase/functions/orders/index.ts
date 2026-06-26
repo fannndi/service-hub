@@ -11,8 +11,9 @@ export default {
       const { userClaims, supabaseAdmin: admin, supabase: sb } = ctx;
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
-      const role = userClaims.user_metadata?.role as string;
+      const role = userClaims.userMetadata?.role as string;
       const body = await req.json();
+      const now = new Date().toISOString();
       const action = body.action as string | undefined;
 
       // ─── CREATE ORDER (Customer) ───
@@ -50,7 +51,7 @@ export default {
         const { data: order, error: orderErr } = await admin.from('service_orders').insert({
           user_id: userClaims.id, store_id, order_number, device_type, brand, device_model,
           delivery_method, delivery_address: delivery_address || null,
-          status: 'waiting_device', total_estimasi: totalEstimasi, discount_amount: discount, coupon_id,
+          status: 'waiting_device', total_estimasi: totalEstimasi, discount_amount: discount, coupon_id, updated_at: now,
         }).select().single();
 
         if (orderErr) return fail('CREATE_FAILED', orderErr.message);
@@ -86,7 +87,7 @@ export default {
         for (const item of order.order_items) {
           if (item.sparepart_id) await admin.rpc('consume_stock', { p_sparepart_id: item.sparepart_id });
         }
-        await admin.from('service_orders').update({ status: 'repairing', sla_deadline: null }).eq('id', order.id);
+        await admin.from('service_orders').update({ status: 'repairing', sla_deadline: null, updated_at: now }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'repairing', note: 'Order disetujui, perbaikan dimulai', created_by_type: 'customer', created_by_id: userClaims.id });
         return ok({ status: 'repairing', allowed_actions: VALID_TRANSITIONS['repairing'] || [] });
       }
@@ -101,7 +102,7 @@ export default {
         for (const item of order.order_items) {
           if (item.sparepart_id) await admin.rpc('release_stock', { p_sparepart_id: item.sparepart_id });
         }
-        await admin.from('service_orders').update({ status: 'cancelled', cancelled_at: new Date().toISOString() }).eq('id', order.id);
+        await admin.from('service_orders').update({ status: 'cancelled', cancelled_at: new Date().toISOString(), updated_at: now }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'cancelled', note: 'Order ditolak oleh pelanggan', created_by_type: 'customer', created_by_id: userClaims.id });
         return ok({ status: 'cancelled', allowed_actions: [] });
       }
@@ -128,7 +129,7 @@ export default {
           await admin.from('order_items').update({ status: item.status, final_item_price: item.final_item_price, technician_note: item.technician_note || null }).eq('id', item.order_item_id);
         }
 
-        await admin.from('service_orders').update({ status: 'waiting_approval', final_price: finalPrice, service_fee: service_fee || 0, diagnosis_note: diagnosis_note || null, sla_deadline: null }).eq('id', order.id);
+        await admin.from('service_orders').update({ status: 'waiting_approval', final_price: finalPrice, service_fee: service_fee || 0, diagnosis_note: diagnosis_note || null, sla_deadline: null, updated_at: now }).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'waiting_approval', note: 'Diagnosa dikirim', created_by_type: 'store_admin', created_by_id: userClaims.id });
         await admin.from('notifications').insert({
           user_id: order.user_id, role: 'customer', type: 'diagnosis_result',
@@ -150,7 +151,7 @@ export default {
         if (!order) return fail('ORDER_NOT_FOUND', 'Pesanan tidak ditemukan', 404);
         assertValidTransition(order.status, status);
 
-        const update: Record<string, any> = { status };
+        const update: Record<string, any> = { status, updated_at: now };
         if (status === 'completed') update.completed_at = new Date().toISOString();
         if (status === 'cancelled') update.cancelled_at = new Date().toISOString();
 

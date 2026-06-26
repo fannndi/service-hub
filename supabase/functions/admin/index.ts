@@ -50,7 +50,8 @@ export default {
         });
 
         if (authErr) {
-          await admin.from('stores').delete().eq('id', store.id);
+          const { error: delErr } = await admin.from('stores').delete().eq('id', store.id);
+          if (delErr) console.error(`Rollback delete store ${store.id} failed:`, delErr.message);
           return fail('AUTH_FAILED', authErr.message);
         }
 
@@ -76,10 +77,12 @@ export default {
       // ─── UPDATE STORE ───
       if (action === 'update-store') {
         const { store_id, store_name, address, phone_number } = body;
+        const now = new Date().toISOString();
         const upd: Record<string, unknown> = {};
         if (store_name !== undefined) upd.store_name = store_name;
         if (address !== undefined) upd.address = address;
         if (phone_number !== undefined) upd.phone_number = phone_number;
+        if (Object.keys(upd).length > 0) upd.updated_at = now;
         await admin.from('stores').update(upd).eq('id', store_id);
         return ok({ message: 'Store updated' });
       }
@@ -102,16 +105,19 @@ export default {
       // ─── UPDATE CUSTOMER ───
       if (action === 'update-customer') {
         const { user_id, full_name, phone_number, address, password } = body;
+        const now = new Date().toISOString();
         const upd: Record<string, unknown> = {};
         if (full_name !== undefined) upd.full_name = full_name;
         if (phone_number !== undefined) upd.phone_number = phone_number;
         if (address !== undefined) upd.address = address;
+        if (Object.keys(upd).length > 0) upd.updated_at = now;
         if (Object.keys(upd).length > 0) await admin.from('users').update(upd).eq('id', user_id);
         if (password) {
           const { data: u } = await admin.from('users').select('phone_number').eq('id', user_id).single();
           if (u) {
             const email = `${u.phone_number}@customer.servisgadget.com`;
-            await admin.auth.admin.updateUserById(user_id, { password, email }).catch(() => {});
+            const { error: pwErr } = await admin.auth.admin.updateUserById(user_id, { password, email });
+            if (pwErr) { console.error(`updateUserById failed for ${user_id}:`, pwErr.message); return fail('AUTH_FAILED', pwErr.message); }
           }
         }
         return ok({ message: 'Customer updated' });

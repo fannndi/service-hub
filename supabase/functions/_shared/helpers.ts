@@ -19,15 +19,17 @@ export function assertValidTransition(from: string, to: string): void {
   }
 }
 
+import { corsHeaders } from '../_shared/cors.ts';
+
 export function ok(data: unknown): Response {
   return new Response(JSON.stringify({ success: true, data }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
 export function fail(code: string, message: string, status = 400): Response {
   return new Response(JSON.stringify({ success: false, error: { code, message } }), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }

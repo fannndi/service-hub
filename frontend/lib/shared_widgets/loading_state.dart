@@ -18,9 +18,9 @@ class LoadingState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(height: 120, width: 120, decoration: BoxDecoration(color: theme.colorScheme.surfaceVariant, borderRadius: BorderRadius.circular(12))),
+              Container(height: 120, width: 120, decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12))),
               const SizedBox(height: 16),
-              Container(height: 16, width: 200, decoration: BoxDecoration(color: theme.colorScheme.surfaceVariant, borderRadius: BorderRadius.circular(4))),
+              Container(height: 16, width: 200, decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4))),
             ],
           ),
         ),

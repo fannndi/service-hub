@@ -125,7 +125,7 @@ class _ApplicationsTabState extends ConsumerState<_ApplicationsTab> {
   Future<void> _reject(String id) async {
     try {
       await SupabaseService.instance.invoke('admin', body: {'action': 'reject', 'application_id': id});
-      showServisSnackbar(context, 'Ditolak', type: SnackbarType.success);
+      if (mounted) showServisSnackbar(context, 'Ditolak', type: SnackbarType.success);
       _fetch();
     } catch (_) {}
   }

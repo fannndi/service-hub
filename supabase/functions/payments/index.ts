@@ -12,6 +12,7 @@ export default {
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
       const body = await req.json();
+      const now = new Date().toISOString();
       const action = body.action as string | undefined;
 
       if (action === 'confirm') {
@@ -31,7 +32,7 @@ export default {
         const { count: totalPayments } = await admin.from('payments').select('*', { count: 'exact', head: true }).eq('order_id', order_id);
         const { count: confirmedPayments } = await admin.from('payments').select('*', { count: 'exact', head: true }).eq('order_id', order_id).eq('status', 'confirmed');
 
-        await admin.from('service_orders').update({ payment_status: confirmedPayments === totalPayments ? 'paid' : 'partially_paid' }).eq('id', order_id);
+        await admin.from('service_orders').update({ payment_status: confirmedPayments === totalPayments ? 'paid' : 'partially_paid', updated_at: now }).eq('id', order_id);
         await admin.from('service_tracking').insert({ order_id, status: order.status, note: note || 'Pembayaran dikonfirmasi', created_by_type: 'store_admin', created_by_id: userClaims.id });
 
         const { data: store } = await admin.from('stores').select('config').eq('id', adminRow.store_id).single();
@@ -42,6 +43,7 @@ export default {
           warranty_days: warrantyDays,
           warranty_expired_at: warrantyExpiredAt,
           completed_at: new Date().toISOString(),
+          updated_at: now,
         }).eq('id', order_id);
 
         await admin.from('notifications').insert([{ user_id: order.user_id, store_id: order.store_id, role: 'customer', title: 'Pembayaran Berhasil', message: `Pembayaran untuk pesanan #${order.order_number} telah dikonfirmasi. Garansi berlaku selama ${warrantyDays} hari hingga ${warrantyExpiredAt}.`, type: 'payment', is_read: false, link_to: `/orders/${order_id}` }]);

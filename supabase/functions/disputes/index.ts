@@ -12,6 +12,7 @@ export default {
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
       const { dispute_id, decision, store_response } = await req.json();
+      const now = new Date().toISOString();
 
       const { data: adminRow } = await admin.from('store_admins').select('store_id').eq('id', userClaims.id).single();
       if (!adminRow) return fail('FORBIDDEN', 'Unauthorized', 403);
@@ -30,7 +31,7 @@ export default {
           user_id: dispute.user_id, store_id: dispute.store_id, order_number: orderNumber,
           device_type: parentOrder.device_type, brand: parentOrder.brand, device_model: parentOrder.device_model,
           delivery_method: parentOrder.delivery_method, delivery_address: parentOrder.delivery_address,
-          status: 'waiting_device', total_estimasi: 0, is_warranty_order: true, parent_order_id: dispute.order_id,
+          status: 'waiting_device', total_estimasi: 0, is_warranty_order: true, parent_order_id: dispute.order_id, updated_at: now,
         }).select().single();
 
         await admin.from('disputes').update({ status: newStatus, store_response, warranty_order_id: warrantyOrder.id, resolved_at: new Date().toISOString() }).eq('id', dispute_id);
@@ -47,7 +48,7 @@ export default {
           }
 
           const newQtyReserved = sparepart.qty_reserved + 1;
-          await admin.from('spareparts').update({ qty_reserved: newQtyReserved }).eq('id', item.sparepart_id);
+          await admin.from('spareparts').update({ qty_reserved: newQtyReserved, updated_at: now }).eq('id', item.sparepart_id);
 
           await admin.from('order_items').insert({
             order_id: warrantyOrder.id,
@@ -59,7 +60,7 @@ export default {
           });
         }
 
-        await admin.from('service_orders').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', dispute.order_id);
+        await admin.from('service_orders').update({ status: 'completed', completed_at: new Date().toISOString(), updated_at: now }).eq('id', dispute.order_id);
 
         await admin.from('notifications').insert({
           user_id: dispute.user_id,
@@ -72,18 +73,12 @@ export default {
           link_to: `/orders/${warrantyOrder.id}`,
         });
 
-        try {
-          const waRes = await fetch('https://api.whatsapp.com/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: parentOrder.phone_number || dispute.user_id,
-              message: `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda. Tim kami akan segera menghubungi Anda.`, 
-            }),
-          });
-          await waRes.json();
-        } catch (waErr) {
-          console.error('WhatsApp notification failed:', waErr);
+        const waUrl = Deno.env.get('WA_GATEWAY_URL');
+        const waToken = Deno.env.get('WA_GATEWAY_TOKEN');
+        if (waUrl && waToken) {
+          const { data: store } = await admin.from('stores').select('phone_number').eq('id', dispute.store_id).single();
+          const waMsg = `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda.`;
+          fetch(waUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: waToken }, body: JSON.stringify({ target: store?.phone_number || '', message: waMsg, countryCode: '62' }) }).catch(() => {});
         }
       } else {
         await admin.from('disputes').update({ status: newStatus, store_response, resolved_at: new Date().toISOString() }).eq('id', dispute_id);

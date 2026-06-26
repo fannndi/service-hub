@@ -29,7 +29,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final meta = user?.userMetadata;
       final isFirstLogin = meta?['is_first_login'] as bool? ?? false;
       final loc = state.matchedLocation;
-      final publicRoutes = {'/welcome', '/login', '/store-login', '/service', '/stores'};
+      final publicRoutes = {'/welcome', '/login', '/store-login', '/service', '/stores', '/store-register'};
 
       if (loc.startsWith('/guest/') || loc.startsWith('/booking-success/')) return null;
       if (loc == '/splash') return null;
