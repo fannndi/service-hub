@@ -36,6 +36,7 @@ class ModernCard extends StatelessWidget {
         : BoxDecoration(
             color: color ?? scheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.35)),
             boxShadow: [
               BoxShadow(
                 color: scheme.shadow.withValues(alpha: 0.06),
@@ -77,14 +78,15 @@ class GradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: Theme.of(context).brightness == Brightness.dark
+          colors: brightness == Brightness.dark
               ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
+              : [const Color(0xFFF0F4F8), const Color(0xFFE8EEF4)],
         ),
       ),
       child: child,

@@ -66,15 +66,24 @@ class WelcomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                          const SizedBox(height: AppSpacing.xl),
                     ModernCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            context.l10n.startHere,
-                            style: theme.textTheme.titleMedium,
-                          ),
+                          Row(children: [
+                            Container(
+                              width: 4, height: 20,
+                              decoration: BoxDecoration(
+                                color: scheme.primary,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(context.l10n.startHere,
+                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ]),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             context.l10n.chooseHowToContinue,
