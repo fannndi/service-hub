@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-
 import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
 
 class ModernCard extends StatelessWidget {
   const ModernCard({
-    super.key,
-    required this.child,
-    this.onTap,
-    this.padding,
-    this.gradient,
-    this.color,
+    super.key, required this.child, this.onTap, this.padding, this.gradient, this.color,
   });
-
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
@@ -20,78 +14,45 @@ class ModernCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final decoration = gradient != null
         ? BoxDecoration(
             gradient: gradient,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: [
-              BoxShadow(
-                color: scheme.shadow.withValues(alpha: 0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 1)),
             ],
           )
         : BoxDecoration(
-            color: color ?? scheme.surface,
+            color: color ?? Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+            border: Border.all(color: AppColors.border, width: 1),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 1)),
             ],
           );
-
     final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.lg);
-
     if (onTap != null) {
-      return Material(
-        color: gradient != null ? Colors.transparent : (color ?? scheme.surface),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Ink(
-            decoration: decoration,
-            padding: effectivePadding,
-            child: child,
-          ),
-        ),
-      );
+      return Material(color: Colors.transparent, borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Ink(decoration: decoration, padding: effectivePadding, child: child)));
     }
-
-    return Container(
-      decoration: decoration,
-      padding: effectivePadding,
-      child: child,
-    );
+    return Container(decoration: decoration, padding: effectivePadding, child: child);
   }
 }
 
 class GradientBackground extends StatelessWidget {
   const GradientBackground({super.key, required this.child});
   final Widget child;
-
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
+    final b = Theme.of(context).brightness;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: brightness == Brightness.dark
-              ? [const Color(0xFF0F172A), const Color(0xFF141824)]
-              : [const Color(0xFFE8EEF4), const Color(0xFFEDF2F7)],
+          begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          colors: b == Brightness.dark ? [const Color(0xFF0F172A), const Color(0xFF141824)] : [AppColors.bg, const Color(0xFFD6E0EB)],
         ),
       ),
       child: child,

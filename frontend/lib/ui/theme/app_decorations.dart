@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'app_spacing.dart';
+import 'app_theme.dart';
 
 class AppGradients {
   static const primary = LinearGradient(
@@ -49,41 +49,26 @@ class AppGradients {
 
 class AppShadows {
   static List<BoxShadow> soft(BuildContext context) => [
-        BoxShadow(
-          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
-          blurRadius: 24,
-          offset: const Offset(0, 8),
-        ),
-        BoxShadow(
-          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.04),
-          blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
-      ];
+    BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
+    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
+  ];
 
   static List<BoxShadow> card(BuildContext context) => [
-        BoxShadow(
-          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2)),
+    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 1)),
+  ];
 
   static List<BoxShadow> elevated(BuildContext context) => [
-        BoxShadow(
-          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.12),
-          blurRadius: 32,
-          offset: const Offset(0, 12),
-        ),
-      ];
+    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 32, offset: const Offset(0, 12)),
+  ];
 }
 
 class AppDecorations {
   static BoxDecoration card(BuildContext context, {Color? color}) {
-    final scheme = Theme.of(context).colorScheme;
     return BoxDecoration(
-      color: color ?? scheme.surface,
+      color: color ?? Colors.white,
       borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.border, width: 1),
       boxShadow: AppShadows.card(context),
     );
   }
