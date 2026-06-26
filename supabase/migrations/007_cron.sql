@@ -2,10 +2,11 @@
 -- Requires pg_cron extension (enabled by default on Supabase)
 -- https://supabase.com/docs/guides/platform/cron
 
+-- Enable pg_cron if not already
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
+
 -- SLA Monitor: auto-cancel orders breaching SLA (every 30 seconds)
-SELECT cron.schedule('sla-monitor', '*/30 * * * *', $$
-  SELECT auto_cancel_sla();
-$$);
+SELECT cron.schedule('sla-monitor', '*/30 * * * *', $$SELECT auto_cancel_sla();$$);
 
 -- Credential Cleaner: clear credentialPlainEnc after 24h (every 30 minutes)
 SELECT cron.schedule('credential-cleaner', '0 */30 * * *', $$

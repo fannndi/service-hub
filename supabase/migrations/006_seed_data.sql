@@ -4,16 +4,17 @@
 
 -- ─── STORES ───
 
-INSERT INTO stores (id, store_name, address, phone_number, config, is_active, rating_avg, total_completed)
+INSERT INTO stores (id, store_name, address, phone_number, config, is_active, rating_avg, total_completed, updated_at)
 VALUES
-  ('a0000001-0000-0000-0000-000000000001', 'TechFix Center', 'Jl. Merdeka No. 123, Jakarta', '628123456781', '{"warranty_days": 30}', true, 4.5, 150),
-  ('a0000001-0000-0000-0000-000000000002', 'GadgetCare Plus', 'Jl. Sudirman No. 45, Bandung', '628123456782', '{"warranty_days": 45}', true, 4.8, 230),
-  ('a0000001-0000-0000-0000-000000000003', 'AppleOnly Service', 'Jl. Thamrin No. 67, Jakarta', '628123456783', '{"warranty_days": 60, "device_types": {"android": false, "ios": true}}', true, 4.9, 310),
-  ('a0000001-0000-0000-0000-000000000004', 'Android Masters', 'Jl. Gatot Subroto No. 89, Surabaya', '628123456784', '{"warranty_days": 30, "device_types": {"android": true, "ios": false}}', true, 4.6, 180),
-  ('a0000001-0000-0000-0000-000000000005', 'FixPedia', 'Jl. Diponegoro No. 12, Yogyakarta', '628123456785', '{"warranty_days": 30}', true, 4.3, 95)
+  ('a0000001-0000-0000-0000-000000000001', 'TechFix Center', 'Jl. Merdeka No. 123, Jakarta', '628123456781', '{"warranty_days": 30}', true, 4.5, 150, now()),
+  ('a0000001-0000-0000-0000-000000000002', 'GadgetCare Plus', 'Jl. Sudirman No. 45, Bandung', '628123456782', '{"warranty_days": 45}', true, 4.8, 230, now()),
+  ('a0000001-0000-0000-0000-000000000003', 'AppleOnly Service', 'Jl. Thamrin No. 67, Jakarta', '628123456783', '{"warranty_days": 60, "device_types": {"android": false, "ios": true}}', true, 4.9, 310, now()),
+  ('a0000001-0000-0000-0000-000000000004', 'Android Masters', 'Jl. Gatot Subroto No. 89, Surabaya', '628123456784', '{"warranty_days": 30, "device_types": {"android": true, "ios": false}}', true, 4.6, 180, now()),
+  ('a0000001-0000-0000-0000-000000000005', 'FixPedia', 'Jl. Diponegoro No. 12, Yogyakarta', '628123456785', '{"warranty_days": 30}', true, 4.3, 95, now())
 ON CONFLICT (id) DO NOTHING;
 
 -- ─── SPAREPARTS ───
+ALTER TABLE spareparts ALTER COLUMN updated_at SET DEFAULT now();
 -- Samsung S24 series
 INSERT INTO spareparts (store_id, brand, device_model, part_type, part_name, price, qty, qty_reserved, status)
 VALUES

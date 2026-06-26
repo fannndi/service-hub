@@ -1,9 +1,3 @@
-[project]
-ref = "eboplbemgtvmviwhdlfa"
-
 [api]
+enabled = true
 port = 54321
-
-[functions]
-enabled = {}
-verify_jwt = {}
