@@ -1,5 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 const ORDER_NO_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -57,7 +58,7 @@ async function createSupabaseAuthUser(user: { id: string; phoneNumber: string; f
 
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
-    if (req.method === 'OPTIONS') return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' } });
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
 
     const url = new URL(req.url);
     const action = url.pathname.split('/').pop();

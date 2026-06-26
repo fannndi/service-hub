@@ -10,3 +10,6 @@ node_modules/
 # Secrets folder (shared via messaging, not via git)
 secrets/
 .opencode/
+
+# Secrets
+data.md

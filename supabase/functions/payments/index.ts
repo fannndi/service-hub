@@ -1,8 +1,10 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
 
     try {
