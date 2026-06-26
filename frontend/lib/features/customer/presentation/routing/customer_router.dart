@@ -26,9 +26,11 @@ import '../screens/settings_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/coupons_screen.dart';
 import '../screens/security_screen.dart';
+import '../screens/store_register_screen.dart';
 
 final customerRoutes = <RouteBase>[
   GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
+  GoRoute(path: '/store-register', builder: (_, __) => const StoreRegisterScreen()),
   GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
   GoRoute(path: '/service', builder: (_, __) => const ServiceFlowScreen()),
   GoRoute(

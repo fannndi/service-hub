@@ -123,6 +123,16 @@ class WelcomeScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: AppSpacing.sm),
+                          SizedBox(
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.go('/store-register'),
+                              icon: const Icon(Icons.add_business_rounded,
+                                  size: 20),
+                              label: const Text('Daftarkan Toko'),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
                           OutlinedButton.icon(
                             onPressed: () => context.push('/admin/login'),
                             icon: const Icon(
