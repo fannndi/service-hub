@@ -17,8 +17,8 @@ export default {
     try {
       const { userClaims, supabaseAdmin: admin } = ctx;
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
-      const role = userClaims.user_metadata?.role as string;
-      if (role !== 'platform_admin') return fail('FORBIDDEN', 'Only platform admin', 403);
+      const role = (userClaims.user_metadata?.role || userClaims.userMetadata?.role) as string;
+      if (role !== 'platform_admin') return fail('FORBIDDEN', `Only platform admin. Got role: ${role}`, 403);
 
       const body = await req.json();
       const action = body.action;
@@ -37,9 +37,10 @@ export default {
         const { data: app } = await admin.from('store_applications').select('*').eq('id', application_id).eq('status', 'pending').single();
         if (!app) return fail('NOT_FOUND', 'Aplikasi tidak ditemukan');
 
+        const now = new Date().toISOString();
         const { data: store } = await admin.from('stores').insert({
           store_name: app.store_name, address: app.address, phone_number: app.phone_number, is_active: true,
-          config: { warranty_days: 30 },
+          config: { warranty_days: 30 }, updated_at: now,
         }).select('id').single();
 
         const email = `${app.phone_number}@store.servisgadget.com`;
@@ -122,9 +123,10 @@ export default {
         if (!store_name || !address || !store_phone || !admin_name || !admin_phone || !password) {
           return fail('INVALID_INPUT', 'Semua field wajib diisi');
         }
+        const now = new Date().toISOString();
         const { data: store } = await admin.from('stores').insert({
           store_name, address, phone_number: store_phone, is_active: true,
-          config: { warranty_days: 30 },
+          config: { warranty_days: 30 }, updated_at: now,
         }).select('id').single();
         const email = `${admin_phone.replace(/\D/g, '')}@store.servisgadget.com`;
         const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
