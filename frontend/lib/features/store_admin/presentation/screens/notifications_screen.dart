@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_notification_models.dart';
 import '../widgets/store_admin_widgets.dart';
@@ -14,7 +15,7 @@ class NotificationsScreen extends ConsumerWidget {
     final value = ref.watch(notificationsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notification Center'),
+        title: Text(context.l10n.notificationCenter),
         actions: [
           TextButton.icon(
             onPressed: () async {
@@ -23,7 +24,7 @@ class NotificationsScreen extends ConsumerWidget {
               ref.invalidate(storeUnreadCountProvider);
             },
             icon: const Icon(Icons.done_all, size: 18),
-            label: const Text('Baca Semua'),
+            label: Text(context.l10n.readAll),
           ),
         ],
       ),
@@ -35,7 +36,7 @@ class NotificationsScreen extends ConsumerWidget {
               .whereType<Map<String, dynamic>>()
               .map(NotificationItem.fromJson)
               .toList();
-          if (items.isEmpty) return const Center(child: Text('Belum ada notifikasi.'));
+          if (items.isEmpty) return Center(child: Text(context.l10n.noNotifications));
           return ListView(children: [
             for (final item in items)
               ListTile(

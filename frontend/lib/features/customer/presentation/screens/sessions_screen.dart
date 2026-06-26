@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/user_session.dart';
 import '../../../../ui/widgets/servis_dialog.dart';
@@ -31,9 +32,9 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
   Future<void> _revoke(String id) async {
     final confirm = await showServisConfirmDialog(
       context,
-      title: 'Revoke Sesi',
-      message: 'Sesi ini akan diakhiri. Lanjutkan?',
-      confirmLabel: 'Revoke',
+      title: context.l10n.revokeSession,
+      message: context.l10n.revokeSessionConfirm,
+      confirmLabel: context.l10n.revoke,
       isDestructive: true,
     );
     if (confirm) {
@@ -45,9 +46,9 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
   Future<void> _logoutAll() async {
     final confirm = await showServisConfirmDialog(
       context,
-      title: 'Logout Semua',
-      message: 'Semua sesi akan diakhiri kecuali sesi saat ini. Lanjutkan?',
-      confirmLabel: 'Logout Semua',
+      title: context.l10n.logoutAll,
+      message: context.l10n.logoutAllConfirm,
+      confirmLabel: context.l10n.logoutAll,
       isDestructive: true,
     );
     if (confirm) {
@@ -60,12 +61,12 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return CustomerScaffold(
-      title: 'Sesi Login',
+      title: context.l10n.loginSessions,
       actions: [
         IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logoutAll,
-            tooltip: 'Logout Semua'),
+            tooltip: context.l10n.logoutAll),
       ],
       child: FutureBuilder<List<dynamic>>(
         future: _sessionsFuture,
@@ -75,12 +76,12 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
           }
           if (snapshot.hasError) {
             return ErrorState(
-                message: 'Gagal memuat sesi: ${snapshot.error}',
+                message: '${context.l10n.sessionLoadError} ${snapshot.error}',
                 onRetry: _refresh);
           }
           final raw = snapshot.data ?? [];
           if (raw.isEmpty) {
-            return const EmptyMessage('Tidak ada sesi aktif');
+            return EmptyMessage(context.l10n.noActiveSessions);
           }
           final sessions = raw
               .map((j) => UserSession.fromJson(j as Map<String, dynamic>))
@@ -92,21 +93,21 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
             itemBuilder: (context, index) {
               final s = sessions[index];
               final deviceName = s.deviceInfo?['device'] as String? ??
-                  'Perangkat tidak dikenal';
+                  context.l10n.unknownDevice;
               return ListTile(
                 leading: Icon(
                     s.isActive ? Icons.phone_android : Icons.phone_android,
                     color: s.isActive ? Colors.green : Colors.grey),
                 title: Text(deviceName, style: theme.textTheme.bodyLarge),
                 subtitle: Text(
-                  '${s.ipAddress ?? '-'} \u2022 ${_formatDate(s.lastActiveAt)}',
+                  '${s.ipAddress ?? '-'} \u2022 ${_formatDate(context, s.lastActiveAt)}',
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 trailing: s.isActive
                     ? TextButton(
                         onPressed: () => _revoke(s.id),
-                        child: const Text('Revoke'))
+                        child: Text(context.l10n.revoke))
                     : const Icon(Icons.check_circle,
                         size: 18, color: Colors.grey),
               );
@@ -117,10 +118,10 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     );
   }
 
-  String _formatDate(DateTime dt) {
+  String _formatDate(BuildContext context, DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'baru saja';
+    if (diff.inMinutes < 1) return context.l10n.justNow;
     if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
     if (diff.inDays < 1) return '${diff.inHours}h lalu';
     return '${diff.inDays}d lalu';

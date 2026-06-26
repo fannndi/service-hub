@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
@@ -13,11 +14,11 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final order = ref.watch(orderDetailProvider(orderId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Order'), actions: [
-        IconButton(
+        appBar: AppBar(title: Text(context.l10n.orderDetail), actions: [
+          IconButton(
             onPressed: () => context.push('/store/orders/$orderId/tracking'),
             icon: const Icon(Icons.timeline),
-            tooltip: 'Tracking')
+            tooltip: context.l10n.tracking)
       ]),
       body: order.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,26 +34,26 @@ class OrderDetailScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.headlineSmall),
                 StatusPill(label: o.status.label)
               ]),
-          InfoCard(title: 'Pelanggan', rows: {
-            'Nama': o.customerName,
-            'HP': o.customerPhone,
-            'Device': o.deviceName,
-            'Alamat': o.deliveryAddress ?? '-'
+          InfoCard(title: context.l10n.customer, rows: {
+            context.l10n.name: o.customerName,
+            context.l10n.phone: o.customerPhone,
+            context.l10n.device: o.deviceName,
+            context.l10n.address: o.deliveryAddress ?? '-'
           }),
           if (o.credentialPanel != null)
             CredentialCard(panel: o.credentialPanel!),
-          InfoCard(title: 'Harga', rows: {
-            'Estimasi': money(o.estimatedTotal),
-            'Final': money(o.finalPrice),
-            'Payment': o.paymentStatus
+          InfoCard(title: context.l10n.payment, rows: {
+            context.l10n.estimate: money(o.estimatedTotal),
+            context.l10n.finalPrice: money(o.finalPrice),
+            context.l10n.payment: o.paymentStatus
           }),
-          Text('Item Order', style: Theme.of(context).textTheme.titleMedium),
+          Text(context.l10n.orderItem, style: Theme.of(context).textTheme.titleMedium),
           AdminDataTable<OrderItem>(
               items: o.items,
-              columns: const [
-                DataColumn(label: Text('Service')),
-                DataColumn(label: Text('Sparepart')),
-                DataColumn(label: Text('Harga')),
+              columns: [
+                DataColumn(label: Text(context.l10n.service)),
+                DataColumn(label: Text(context.l10n.sparepart)),
+                DataColumn(label: Text(context.l10n.price)),
                 DataColumn(label: Text('Status'))
               ],
               cells: (i) => [

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
@@ -24,7 +25,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
   Future<void> _submit() async {
     if (_description.text.length < 20) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Deskripsi minimal 20 karakter.')));
+          SnackBar(content: Text(context.l10n.descriptionMinLength)));
       return;
     }
     setState(() => _loading = true);
@@ -42,9 +43,8 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
           evidenceUrls: urls);
       ref.invalidate(orderDetailProvider(widget.orderId));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Klaim diterima. Admin toko akan merespons dalam 24 jam.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.claimAccepted)));
         context.pop();
       }
     } catch (error) {
@@ -61,38 +61,38 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
   Widget build(BuildContext context) {
     final order = ref.watch(orderDetailProvider(widget.orderId));
     return CustomerScaffold(
-      title: 'Klaim Garansi',
+      title: context.l10n.claimWarrantyTitle,
       child: AsyncPage(
           value: order,
           builder: (data) {
             if (data.warrantyExpiredAt == null ||
                 DateTime.now().isAfter(data.warrantyExpiredAt!)) {
               return EmptyMessage(
-                  'Garansi sudah berakhir pada ${shortDate(data.warrantyExpiredAt)}.');
+                  context.l10n.warrantyExpired.replaceFirst('{date}', shortDate(data.warrantyExpiredAt)));
             }
             return ListView(padding: const EdgeInsets.all(16), children: [
-              Text('Garansi aktif s/d ${shortDate(data.warrantyExpiredAt)}'),
+              Text(context.l10n.warrantyActiveUntil.replaceFirst('{date}', shortDate(data.warrantyExpiredAt))),
               DropdownButtonFormField(
                   initialValue: _type,
-                  decoration: const InputDecoration(labelText: 'Jenis Masalah'),
-                  items: const [
+                  decoration: InputDecoration(labelText: context.l10n.issueType),
+                  items: [
                     DropdownMenuItem(
-                        value: 'warranty_claim', child: Text('Klaim Garansi')),
+                        value: 'warranty_claim', child: Text(context.l10n.warrantyClaim)),
                     DropdownMenuItem(
                         value: 'service_quality',
-                        child: Text('Kualitas Servis')),
+                        child: Text(context.l10n.serviceQuality)),
                     DropdownMenuItem(
                         value: 'wrong_diagnosis',
-                        child: Text('Diagnosa Salah')),
-                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                        child: Text(context.l10n.wrongDiagnosis)),
+                    DropdownMenuItem(value: 'other', child: Text(context.l10n.other)),
                   ],
                   onChanged: (v) => setState(() => _type = v!)),
               TextField(
                   controller: _description,
                   minLines: 4,
                   maxLines: 7,
-                  decoration: const InputDecoration(
-                      labelText: 'Deskripsi Masalah')),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.issueDescription)),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                   onPressed: _files.length >= 5
@@ -107,7 +107,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
                           }
                         },
                   icon: const Icon(Icons.add_a_photo),
-                  label: const Text('Tambah Foto')),
+                  label: Text(context.l10n.addPhoto)),
               Wrap(
                   spacing: 8,
                   children: _files
@@ -118,7 +118,7 @@ class _WarrantyClaimScreenState extends ConsumerState<WarrantyClaimScreen> {
               const SizedBox(height: 20),
               FilledButton(
                   onPressed: _loading ? null : _submit,
-                  child: Text(_loading ? 'Mengirim...' : 'Kirim Klaim')),
+                  child: Text(_loading ? context.l10n.sending : context.l10n.submitClaim)),
             ]);
           }),
     );

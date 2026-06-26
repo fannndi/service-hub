@@ -7,6 +7,7 @@ import '../../../../core/widgets/address_dropdowns.dart';
 import '../../../../core/api_client.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../ui/theme/app_theme.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/widgets/servis_snackbar.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -42,26 +43,26 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          title: const Text('Broadcast Notifikasi'),
+          title: Text(context.l10n.broadcastNotification),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               DropdownButtonFormField<String>(
                 initialValue: 'customer',
-                decoration: const InputDecoration(labelText: 'Target', isDense: true),
-                items: const [
-                  DropdownMenuItem(value: 'customer', child: Text('Semua Pelanggan')),
-                  DropdownMenuItem(value: 'store_admin', child: Text('Semua Admin Toko')),
+                decoration: InputDecoration(labelText: context.l10n.target, isDense: true),
+                items: [
+                  DropdownMenuItem(value: 'customer', child: Text(context.l10n.allCustomers)),
+                  DropdownMenuItem(value: 'store_admin', child: Text(context.l10n.allStoreAdmins)),
                 ],
                 onChanged: (v) => setD(() => roleCtrl.text = v ?? 'customer'),
               ),
               const SizedBox(height: 12),
-              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Judul', isDense: true)),
+              TextField(controller: titleCtrl, decoration: InputDecoration(labelText: context.l10n.title, isDense: true)),
               const SizedBox(height: 12),
-              TextField(controller: msgCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Pesan', isDense: true, alignLabelWithHint: true)),
+              TextField(controller: msgCtrl, maxLines: 4, decoration: InputDecoration(labelText: context.l10n.message, isDense: true, alignLabelWithHint: true)),
             ]),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.cancel)),
             FilledButton.icon(
               onPressed: loading
                   ? null
@@ -75,9 +76,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                           'message': msgCtrl.text.trim(),
                         });
                         if (ctx.mounted) Navigator.pop(ctx);
-                        if (context.mounted) showServisSnackbar(context, 'Broadcast terkirim!', type: SnackbarType.success);
+                        if (context.mounted) showServisSnackbar(context, context.l10n.broadcastSent, type: SnackbarType.success);
                       } catch (e) {
-                        if (context.mounted) showServisSnackbar(context, 'Gagal: $e', type: SnackbarType.error);
+                        if (context.mounted) showServisSnackbar(context, context.l10n.failed.replaceFirst('{error}', '$e'), type: SnackbarType.error);
                       } finally {
                         setD(() => loading = false);
                       }
@@ -85,7 +86,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
               icon: loading
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.send, size: 18),
-              label: const Text('Kirim'),
+              label: Text(context.l10n.send),
             ),
           ],
         ),
@@ -97,11 +98,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Platform'),
+        title: Text(context.l10n.platformAdmin),
         actions: [
           IconButton(
             icon: const Icon(Icons.campaign_outlined),
-            tooltip: 'Broadcast Notifikasi',
+            tooltip: context.l10n.broadcastNotification,
             onPressed: () => _showBroadcastDialog(context),
           ),
           IconButton(
@@ -114,9 +115,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
         ],
         bottom: TabBar(
           controller: _tabCtrl,
-          tabs: const [
-            Tab(icon: Icon(Icons.store), text: 'Toko'),
-            Tab(icon: Icon(Icons.people), text: 'Pelanggan'),
+          tabs: [
+            Tab(icon: const Icon(Icons.store), text: context.l10n.stores),
+            Tab(icon: const Icon(Icons.people), text: context.l10n.customers),
           ],
         ),
       ),
@@ -164,19 +165,19 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
 
   List<String> _validate() {
     final errors = <String>[];
-    if (_storeName.text.trim().isEmpty) errors.add('Nama Toko wajib diisi');
+    if (_storeName.text.trim().isEmpty) errors.add(context.l10n.storeNameRequired);
     if (_storeName.text.trim().length < 3) {
-      errors.add('Nama Toko minimal 3 karakter');
+      errors.add(context.l10n.storeNameMinLength);
     }
     if (!(_addressKey.currentState?.isValid ?? false)) {
-      errors.add('Alamat belum lengkap (Provinsi s/d Kelurahan)');
+      errors.add(context.l10n.addressIncomplete);
     }
-    if (_storePhone.text.trim().isEmpty) errors.add('No HP Toko wajib diisi');
-    if (_adminName.text.trim().isEmpty) errors.add('Nama Admin wajib diisi');
-    if (_adminPhone.text.trim().isEmpty) errors.add('No HP Admin wajib diisi');
-    if (_password.text.isEmpty) errors.add('Password wajib diisi');
-    if (_password.text.length < 8) errors.add('Password minimal 8 karakter');
-    if (!_android && !_ios) errors.add('Pilih minimal 1 tipe perangkat');
+    if (_storePhone.text.trim().isEmpty) errors.add(context.l10n.storePhoneRequired);
+    if (_adminName.text.trim().isEmpty) errors.add(context.l10n.adminNameRequired);
+    if (_adminPhone.text.trim().isEmpty) errors.add(context.l10n.adminPhoneRequired);
+    if (_password.text.isEmpty) errors.add(context.l10n.passwordRequired);
+    if (_password.text.length < 8) errors.add(context.l10n.passwordMinLength);
+    if (!_android && !_ios) errors.add(context.l10n.selectDeviceType);
     return errors;
   }
 
@@ -212,7 +213,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
         _addressKey.currentState?.clear();
       });
       if (mounted) {
-        showServisSnackbar(context, 'Toko berhasil dibuat!', type: SnackbarType.success);
+        showServisSnackbar(context, context.l10n.storeCreated, type: SnackbarType.success);
       }
     } catch (e) {
       _showError(e);
@@ -222,10 +223,10 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
   }
 
   void _showError(Object e) {
-    String msg = 'Gagal.';
+    String msg = context.l10n.failed.replaceFirst('{error}', '');
     if (e.toString().contains('DioException')) {
       final m = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(e.toString());
-      msg = m?.group(1) ?? 'Cek isi form.';
+      msg = m?.group(1) ?? context.l10n.checkFormContent;
     } else { msg = e.toString(); }
     if (mounted) {
       showServisSnackbar(context, msg, type: SnackbarType.error);
@@ -241,23 +242,23 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          title: const Text('Edit Toko'),
+          title: Text(context.l10n.editStore),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nama Toko', isDense: true)),
+              TextField(controller: nameCtrl, decoration: InputDecoration(labelText: context.l10n.storeName, isDense: true)),
               const SizedBox(height: 8),
-              TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Alamat', isDense: true)),
+              TextField(controller: addrCtrl, decoration: InputDecoration(labelText: context.l10n.address, isDense: true)),
               const SizedBox(height: 8),
-              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'No HP', isDense: true)),
+              TextField(controller: phoneCtrl, decoration: InputDecoration(labelText: context.l10n.phoneNumber, isDense: true)),
               const SizedBox(height: 8),
               Row(children: [
-                const Text('Aktif: '),
+                Text(context.l10n.active),
                 Switch(value: active, onChanged: (v) => setD(() => active = v)),
               ]),
             ]),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.cancel)),
             FilledButton(onPressed: () async {
               try {
                 await ref.read(adminStoreRepositoryProvider).updateStore(
@@ -270,7 +271,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                 ref.invalidate(storeListProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               } catch (e) { _showError(e); }
-            }, child: const Text('Simpan')),
+            }, child: Text(context.l10n.save)),
           ],
         ),
       ),
@@ -288,7 +289,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
         FilledButton.icon(
           onPressed: () => setState(() { _showCreate = !_showCreate; _validated = false; _validationErrors = []; }),
           icon: Icon(_showCreate ? Icons.close : Icons.add),
-          label: Text(_showCreate ? 'Batal' : 'Buat Toko Baru'),
+          label: Text(_showCreate ? context.l10n.cancel : context.l10n.createNewStore),
         ),
         if (_showCreate) ...[
           const SizedBox(height: 12),
@@ -298,36 +299,36 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Buat Toko Baru', style: theme.textTheme.titleMedium),
+                  Text(context.l10n.createNewStore, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 16),
-                  TextField(controller: _storeName, decoration: const InputDecoration(labelText: 'Nama Toko', isDense: true)),
+                  TextField(controller: _storeName, decoration: InputDecoration(labelText: context.l10n.storeName, isDense: true)),
                   const SizedBox(height: 12),
-                  Text('Alamat', style: theme.textTheme.titleSmall),
+                  Text(context.l10n.address, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   AddressDropdowns(key: _addressKey),
                   const SizedBox(height: 12),
                   TextField(controller: _storePhone, keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'No HP Toko', prefixText: '08', isDense: true)),
+                    decoration: InputDecoration(labelText: context.l10n.storePhone, prefixText: '08', isDense: true)),
                   const SizedBox(height: 12),
                   const Divider(),
-                  Text('Admin Toko', style: theme.textTheme.titleSmall),
+                  Text(context.l10n.storeAdmin, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
-                  TextField(controller: _adminName, decoration: const InputDecoration(labelText: 'Nama Admin', isDense: true)),
+                  TextField(controller: _adminName, decoration: InputDecoration(labelText: context.l10n.adminName, isDense: true)),
                   const SizedBox(height: 8),
                   TextField(controller: _adminPhone, keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'No HP Admin (login)', prefixText: '08', isDense: true)),
+                    decoration: InputDecoration(labelText: context.l10n.adminPhone, prefixText: '08', isDense: true)),
                   const SizedBox(height: 8),
                   TextField(controller: _password,
-                    decoration: const InputDecoration(labelText: 'Password Admin', isDense: true, helperText: 'Min 8 karakter')),
+                    decoration: InputDecoration(labelText: context.l10n.adminPassword, isDense: true, helperText: context.l10n.minLength8)),
                   const SizedBox(height: 12),
                   const Divider(),
-                  Text('Tipe Perangkat', style: theme.textTheme.titleSmall),
+                  Text(context.l10n.deviceType, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   Row(children: [
-                    FilterChip(label: const Text('Android'), selected: _android,
+                    FilterChip(label: Text(context.l10n.android), selected: _android,
                       onSelected: (v) => setState(() { _android = v; _validated = false; })),
                     const SizedBox(width: 8),
-                    FilterChip(label: const Text('iPhone / iOS'), selected: _ios,
+                    FilterChip(label: Text(context.l10n.iphoneIos), selected: _ios,
                       onSelected: (v) => setState(() { _ios = v; _validated = false; })),
                   ]),
                   if (_validated && _validationErrors.isNotEmpty) ...[
@@ -338,7 +339,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                         border: Border.all(color: Colors.red.shade200)),
                       child: Column(children: [
                         Row(children: [const Icon(Icons.error, color: Colors.red, size: 18), const SizedBox(width: 8),
-                          Text('Perbaiki:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red.shade700))]),
+                          Text(context.l10n.fixThese, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red.shade700))]),
                         ..._validationErrors.map((e) => Padding(
                           padding: const EdgeInsets.only(left: 26, top: 2),
                           child: Text('- $e', style: TextStyle(color: Colors.red.shade700, fontSize: 13)))),
@@ -353,7 +354,7 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                         border: Border.all(color: Colors.green.shade200)),
                       child: Column(children: [
                         Row(children: [const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                          const SizedBox(width: 8), Text('Valid!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700))]),
+                          const SizedBox(width: 8), Text(context.l10n.valid, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700))]),
                         Padding(padding: const EdgeInsets.only(left: 26, top: 4),
                           child: Text('Nama: ${_storeName.text.trim()} | Admin: ${_adminName.text.trim()} | Android: $_android iOS: $_ios', style: const TextStyle(fontSize: 12))),
                       ]),
@@ -362,11 +363,11 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: OutlinedButton.icon(onPressed: () { setState(() { _validationErrors = _validate(); _validated = true; }); },
-                      icon: const Icon(Icons.fact_check), label: const Text('Cek Data'))),
+                      icon: const Icon(Icons.fact_check), label: Text(context.l10n.checkData))),
                     const SizedBox(width: 8),
                     Expanded(child: FilledButton.icon(onPressed: (_loading || !_validated || _validationErrors.isNotEmpty) ? null : _create,
                       icon: _loading ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white))
-                        : const Icon(Icons.save), label: const Text('Buat Toko'))),
+                        : const Icon(Icons.save), label: Text(context.l10n.createStoreButton))),
                   ]),
                 ],
               ),
@@ -375,13 +376,13 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
           const SizedBox(height: 16),
         ],
         const SizedBox(height: 8),
-        Text('Daftar Toko', style: theme.textTheme.titleMedium),
+        Text(context.l10n.storeList, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         stores.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Gagal: $e'),
+          error: (e, _) => Text(context.l10n.failed.replaceFirst('{error}', '$e')),
           data: (list) => list.isEmpty
-              ? const Padding(padding: EdgeInsets.all(16), child: Text('Belum ada toko.'))
+              ? Padding(padding: const EdgeInsets.all(16), child: Text(context.l10n.noStores))
               : Column(children: list.map((store) {
                   final dt = store.deviceTypes;
                   final android = dt?['android'] as bool? ?? true;
@@ -399,10 +400,10 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
                         Text(store.phoneNumber, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
                         Row(children: [
-                          Chip(label: Text('Android', style: TextStyle(fontSize: 11, color: android ? AppColors.success : AppColors.error)),
+                          Chip(label: Text(context.l10n.android, style: TextStyle(fontSize: 11, color: android ? AppColors.success : AppColors.error)),
                             backgroundColor: android ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1)),
                           const SizedBox(width: 4),
-                          Chip(label: Text('iOS', style: TextStyle(fontSize: 11, color: ios ? AppColors.success : AppColors.error)),
+                          Chip(label: Text(context.l10n.iphoneIos, style: TextStyle(fontSize: 11, color: ios ? AppColors.success : AppColors.error)),
                             backgroundColor: ios ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1)),
                           const Spacer(),
                           Row(children: [const Icon(Icons.star, size: 14, color: AppColors.warning), const SizedBox(width: 2),
@@ -439,28 +440,28 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Pelanggan'),
+        title: Text(context.l10n.editCustomer),
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nama', isDense: true)),
+            TextField(controller: nameCtrl, decoration: InputDecoration(labelText: context.l10n.name, isDense: true)),
             const SizedBox(height: 8),
-            TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'No HP', isDense: true)),
+            TextField(controller: phoneCtrl, decoration: InputDecoration(labelText: context.l10n.phoneNumber, isDense: true)),
             const SizedBox(height: 8),
-            TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Alamat', isDense: true), maxLines: 2),
+            TextField(controller: addrCtrl, decoration: InputDecoration(labelText: context.l10n.address, isDense: true), maxLines: 2),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: status,
-              decoration: const InputDecoration(labelText: 'Status', isDense: true),
+              decoration: InputDecoration(labelText: context.l10n.status, isDense: true),
               items: const [DropdownMenuItem(value: 'active', child: Text('Active')), DropdownMenuItem(value: 'suspended', child: Text('Suspended')), DropdownMenuItem(value: 'deleted', child: Text('Deleted'))],
               onChanged: (v) => status = v ?? 'active',
               borderRadius: const BorderRadius.all(Radius.circular(14)),
             ),
             const Divider(),
-            TextField(controller: pwCtrl, decoration: const InputDecoration(labelText: 'Password Baru (kosongkan jika tidak diubah)', isDense: true), obscureText: true),
+            TextField(controller: pwCtrl, decoration: InputDecoration(labelText: context.l10n.newPasswordOptional, isDense: true), obscureText: true),
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.cancel)),
           FilledButton(onPressed: () async {
             try {
               final repo = ref.read(adminUserRepositoryProvider);
@@ -476,20 +477,20 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
               }
               ref.invalidate(userListProvider);
               if (mounted) {
-                showServisSnackbar(context, 'Pelanggan diupdate.', type: SnackbarType.success);
+                showServisSnackbar(context, context.l10n.customerUpdated, type: SnackbarType.success);
               }
               if (ctx.mounted) Navigator.pop(ctx);
             } catch (e) {
-              String msg = 'Gagal.';
+              String msg = context.l10n.failed.replaceFirst('{error}', '');
               if (e.toString().contains('DioException')) {
                 final m = RegExp(r'"message"\s*:\s*"([^"]+)"').firstMatch(e.toString());
-                msg = m?.group(1) ?? 'Cek isi form.';
+                msg = m?.group(1) ?? context.l10n.checkFormContent;
               } else { msg = e.toString(); }
               if (mounted) {
                 showServisSnackbar(context, msg, type: SnackbarType.error);
               }
             }
-          }, child: const Text('Simpan')),
+          }, child: Text(context.l10n.save)),
         ],
       ),
     );
@@ -503,13 +504,13 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Daftar Pelanggan', style: theme.textTheme.titleMedium),
+        Text(context.l10n.customerList, style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         users.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Text('Gagal: $e'),
+          error: (e, _) => Text(context.l10n.failed.replaceFirst('{error}', '$e')),
           data: (list) => list.isEmpty
-              ? const Padding(padding: EdgeInsets.all(16), child: Text('Belum ada pelanggan.'))
+              ? Padding(padding: const EdgeInsets.all(16), child: Text(context.l10n.noCustomers))
               : Column(children: list.map((u) {
                   final isNew = u.isFirstLogin && u.plainPassword != null;
                   return Card(
@@ -525,7 +526,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                           Text(u.phoneNumber, style: theme.textTheme.bodySmall)]),
                         if (u.plainPassword != null)
                           Row(children: [const Icon(Icons.key, size: 14, color: AppColors.warning), const SizedBox(width: 4),
-                            Text('Password: ${u.plainPassword}', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.warning, fontWeight: FontWeight.w600))]),
+                            Text(context.l10n.passwordLabel.replaceFirst('{password}', u.plainPassword ?? ''), style: theme.textTheme.bodySmall?.copyWith(color: AppColors.warning, fontWeight: FontWeight.w600))]),
                         if (u.address != null && u.address!.isNotEmpty)
                           Text(u.address!, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                         const SizedBox(height: 4),
@@ -537,7 +538,7 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                           if (u.isFirstLogin)
                             _badge('first login', AppColors.accent),
                         ]),
-                        Text('Bergabung: ${u.createdAt.substring(0, 10)}', style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontSize: 11)),
+                        Text(context.l10n.joinedDate.replaceFirst('{date}', u.createdAt.substring(0, 10)), style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary, fontSize: 11)),
                       ]),
                     ),
                   );

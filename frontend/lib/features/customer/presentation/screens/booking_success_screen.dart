@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/customer_widgets.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class BookingSuccessScreen extends StatelessWidget {
   const BookingSuccessScreen(
@@ -10,11 +11,11 @@ class BookingSuccessScreen extends StatelessWidget {
   final bool isNewCustomer;
   @override
   Widget build(BuildContext context) => CustomerScaffold(
-        title: 'Order Berhasil',
+        title: context.l10n.orderSuccess,
         child: ListView(padding: const EdgeInsets.all(24), children: [
           const Icon(Icons.check_circle, size: 84, color: Colors.green),
           const SizedBox(height: 16),
-          Text('Order berhasil dibuat!',
+          Text(context.l10n.orderCreated,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -23,23 +24,22 @@ class BookingSuccessScreen extends StatelessWidget {
           const SizedBox(height: 8),
           SelectableText(orderNumber, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          const Text('Admin toko akan segera mengkonfirmasi perangkatmu.',
+          Text(context.l10n.adminConfirmMessage,
               textAlign: TextAlign.center),
           if (isNewCustomer)
-            const Padding(
-                padding: EdgeInsets.only(top: 16),
+            Padding(
+                padding: const EdgeInsets.only(top: 16),
                 child: Card(
                     child: Padding(
                         padding: EdgeInsets.all(16),
-                        child: Text(
-                            'Cek WhatsApp kamu. Admin toko akan mengirimkan informasi akun ServisGadget.')))),
+                        child: Text(context.l10n.whatsappInfoMessage)))),
           const SizedBox(height: 24),
           FilledButton(
               onPressed: () => context.go('/orders'),
-              child: const Text('Lihat Pesanan Saya')),
+              child: Text(context.l10n.viewMyOrders)),
           OutlinedButton(
               onPressed: () => context.go('/home'),
-              child: const Text('Kembali ke Beranda')),
+              child: Text(context.l10n.backToHome)),
         ]),
       );
 }

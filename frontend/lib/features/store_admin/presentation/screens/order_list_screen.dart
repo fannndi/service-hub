@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
@@ -12,17 +13,17 @@ class OrderListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(storeOrdersProvider);
     return StoreAdminScaffold(
-      title: 'Order Management',
+      title: context.l10n.orderManagement,
       selectedIndex: 1,
       body: Column(children: [
         QueryToolbar(
-          hint: 'Cari order, pelanggan, device',
+          hint: context.l10n.searchOrdersHint,
           onSearch: (q) => ref.read(orderQueryProvider.notifier).state =
               ref.read(orderQueryProvider).copyWith(search: q, page: 1),
           filters: [
             for (final s in [null, ...StoreOrderStatus.values])
               FilterChip(
-                  label: Text(s?.label ?? 'Semua'),
+                  label: Text(s?.label ?? context.l10n.all),
                   selected: ref.watch(orderQueryProvider).status == s?.value,
                   onSelected: (_) =>
                       ref.read(orderQueryProvider.notifier).state = ref
@@ -38,12 +39,12 @@ class OrderListScreen extends ConsumerWidget {
                 onRetry: () => ref.invalidate(storeOrdersProvider)),
             data: (page) => AdminDataTable<StoreOrder>(
               items: page.items,
-              columns: const [
-                DataColumn(label: Text('Order')),
-                DataColumn(label: Text('Pelanggan')),
-                DataColumn(label: Text('Device')),
+              columns: [
+                DataColumn(label: Text(context.l10n.orders)),
+                DataColumn(label: Text(context.l10n.customer)),
+                DataColumn(label: Text(context.l10n.device)),
                 DataColumn(label: Text('Status')),
-                DataColumn(label: Text('SLA'))
+                DataColumn(label: Text(context.l10n.sla))
               ],
               cells: (o) => [
                 DataCell(Text(o.orderNumber)),

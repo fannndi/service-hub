@@ -7,6 +7,7 @@ import '../../data/customer_repositories.dart';
 import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class BookingFormScreen extends ConsumerStatefulWidget {
   const BookingFormScreen({super.key, required this.storeId});
@@ -148,7 +149,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
         ref.watch(sparepartsProvider(widget.storeId)).valueOrNull ??
             const <SparePart>[];
     return CustomerScaffold(
-      title: 'Buat Order',
+      title: context.l10n.createOrder,
       floatingActionButton: Container(
         width: double.infinity,
         margin: const EdgeInsets.only(left: 32),
@@ -156,67 +157,67 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
             onPressed: _loading ? null : _submit,
             icon: const Icon(Icons.check),
             label: Text(_loading
-                ? 'Membuat order...'
-                : 'Estimasi ${rupiah(_estimate)} - Buat Order')),
+                ? context.l10n.processing
+                : '${context.l10n.costEstimate} ${rupiah(_estimate)} - ${context.l10n.createOrder}')),
       ),
       child: Form(
         key: _form,
         child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
             children: [
-              const SectionTitle('Info Pelanggan'),
+              SectionTitle(context.l10n.customerInfo),
               TextFormField(
                   controller: _name,
-                  decoration: const InputDecoration(
-                      labelText: 'Nama Lengkap'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.fullName),
                   validator: _required),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _phone,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                      labelText: 'Nomor HP'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.phoneNumber),
                   validator: _required),
-              const SectionTitle('Info Perangkat'),
+              SectionTitle(context.l10n.deviceInfo),
               SegmentedButton(
                   selected: {
                     _deviceType
                   },
-                  segments: const [
-                    ButtonSegment(value: 'android', label: Text('Android')),
-                    ButtonSegment(value: 'ios', label: Text('iOS'))
+                  segments: [
+                    ButtonSegment(value: 'android', label: Text(context.l10n.android)),
+                    ButtonSegment(value: 'ios', label: Text(context.l10n.iphoneIos))
                   ],
                   onSelectionChanged: (v) =>
                       setState(() => _deviceType = v.first)),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _brand,
-                  decoration: const InputDecoration(
-                      labelText: 'Brand',
-                      prefixIcon: Icon(Icons.branding_watermark_outlined)),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.smartphoneBrand,
+                      prefixIcon: const Icon(Icons.branding_watermark_outlined)),
                   validator: _required),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _model,
-                  decoration: const InputDecoration(
-                      labelText: 'Model Device',
-                      prefixIcon: Icon(Icons.phone_android_outlined)),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.deviceModel,
+                      prefixIcon: const Icon(Icons.phone_android_outlined)),
                   validator: _required),
-              const SectionTitle('Kerusakan'),
+              SectionTitle(context.l10n.damage),
               DropdownButtonFormField<String>(
                   initialValue: _serviceType,
-                  decoration: const InputDecoration(
-                      labelText: 'Jenis Servis',
-                      prefixIcon: Icon(Icons.build_outlined)),
-                  items: const [
+                  decoration: InputDecoration(
+                      labelText: context.l10n.serviceType,
+                      prefixIcon: const Icon(Icons.build_outlined)),
+                  items: [
                     DropdownMenuItem(
-                        value: 'screen_replacement', child: Text('Layar')),
+                        value: 'screen_replacement', child: Text(context.l10n.screenReplacement)),
                     DropdownMenuItem(
-                        value: 'battery_replacement', child: Text('Baterai')),
+                        value: 'battery_replacement', child: Text(context.l10n.batteryReplacement)),
                     DropdownMenuItem(
-                        value: 'charging_port', child: Text('Port')),
-                    DropdownMenuItem(value: 'camera', child: Text('Kamera')),
-                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                        value: 'charging_port', child: Text(context.l10n.chargingPort)),
+                    DropdownMenuItem(value: 'camera', child: Text(context.l10n.camera)),
+                    DropdownMenuItem(value: 'other', child: Text(context.l10n.other)),
                   ],
                   onChanged: (v) => setState(() => _serviceType = v!),
                   borderRadius: const BorderRadius.all(Radius.circular(14))),
@@ -225,28 +226,28 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                   controller: _complaint,
                   minLines: 3,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                      labelText: 'Deskripsi kerusakan',
-                      border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.damageDescription,
+                      border: const OutlineInputBorder()),
                   validator: (v) => v == null || v.length < 10
-                      ? 'Minimal 10 karakter.'
+                      ? context.l10n.minLength10
                       : null),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                   onPressed:
                       spareparts.isEmpty ? null : () => _selectPart(spareparts),
                   icon: const Icon(Icons.inventory),
-                  label: Text(_selectedPart?.partName ?? 'Pilih Sparepart')),
-              const SectionTitle('Pengiriman'),
+                  label: Text(_selectedPart?.partName ?? context.l10n.selectSparepart)),
+              SectionTitle(context.l10n.delivery),
               SegmentedButton(
                   selected: {
                     _delivery
                   },
-                  segments: const [
+                  segments: [
                     ButtonSegment(
-                        value: 'walk_in', label: Text('Antar Sendiri')),
+                        value: 'walk_in', label: Text(context.l10n.dropOffSelf)),
                     ButtonSegment(
-                        value: 'courier_pickup', label: Text('Pickup Kurir'))
+                        value: 'courier_pickup', label: Text(context.l10n.courierPickup))
                   ],
                   onSelectionChanged: (v) =>
                       setState(() => _delivery = v.first)),
@@ -254,22 +255,22 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                     controller: _address,
-                    decoration: const InputDecoration(
-                        labelText: 'Alamat Pickup',
-                        border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.pickupAddress,
+                        border: const OutlineInputBorder()),
                     validator: _required),
               ],
               const SizedBox(height: 12),
               TextFormField(
                   controller: _coupon,
-                  decoration: const InputDecoration(
-                      labelText: 'Kode Kupon (opsional)',
-                      border: OutlineInputBorder())),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.couponCodeOptional,
+                      border: const OutlineInputBorder())),
             ]),
       ),
     );
   }
 
   String? _required(String? value) =>
-      value == null || value.trim().isEmpty ? 'Wajib diisi.' : null;
+      value == null || value.trim().isEmpty ? context.l10n.required : null;
 }

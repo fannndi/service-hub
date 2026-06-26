@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/supabase_service.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
@@ -32,7 +33,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
     if (amount <= 0) return;
     if (_method == 'transfer_bank' && _file == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bukti transfer wajib diunggah.')));
+          SnackBar(content: Text(context.l10n.transferProofRequired)));
       return;
     }
     setState(() => _loading = true);
@@ -49,8 +50,8 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
           proofUrl: proofUrl);
       ref.invalidate(orderDetailProvider(order.id));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Pembayaran dikirim, menunggu konfirmasi toko.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.l10n.paymentSubmitted)));
         context.pop();
       }
     } catch (error) {
@@ -80,8 +81,8 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
         throw Exception('Gagal mendapatkan tautan pembayaran');
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Selesaikan pembayaran di browser. Kembali setelah selesai.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.l10n.completeInBrowser),
         ));
       }
     } catch (e) {
@@ -99,7 +100,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
   Widget build(BuildContext context) {
     final orderValue = ref.watch(orderDetailProvider(widget.orderId));
     return CustomerScaffold(
-      title: 'Pembayaran',
+      title: context.l10n.payment,
       child: AsyncPage(
         value: orderValue,
         builder: (order) {
@@ -111,50 +112,50 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
             _amount.text = due.clamp(0, double.infinity).toStringAsFixed(0);
           }
           return ListView(padding: const EdgeInsets.all(16), children: [
-            _InfoCard(title: 'Tagihan', rows: {
+            _InfoCard(title: context.l10n.invoice, rows: {
               'Order': order.orderNumber,
               'Final': rupiah(order.finalPrice ?? order.totalEstimasi),
-              'Sudah Bayar': rupiah(confirmed),
-              'Sisa': rupiah(due)
+              context.l10n.paid: rupiah(confirmed),
+              context.l10n.remaining: rupiah(due)
             }),
             DropdownButtonFormField(
                 initialValue: _method,
                 decoration:
-                    const InputDecoration(labelText: 'Metode Pembayaran'),
-                items: const [
+                    InputDecoration(labelText: context.l10n.paymentMethod),
+                items: [
                   DropdownMenuItem(
-                      value: 'transfer_bank', child: Text('Transfer Bank')),
-                  DropdownMenuItem(value: 'qris', child: Text('QRIS')),
-                  DropdownMenuItem(value: 'cash', child: Text('Tunai')),
-                  DropdownMenuItem(value: 'ewallet', child: Text('E-Wallet')),
+                      value: 'transfer_bank', child: Text(context.l10n.bankTransfer)),
+                  DropdownMenuItem(value: 'qris', child: Text(context.l10n.qris)),
+                  DropdownMenuItem(value: 'cash', child: Text(context.l10n.cash)),
+                  DropdownMenuItem(value: 'ewallet', child: Text(context.l10n.ewallet)),
                   DropdownMenuItem(
                       value: 'midtrans',
-                      child: Text('Kartu/M-Banking (Midtrans)')),
+                      child: Text(context.l10n.midtransCard)),
                 ],
                 onChanged: (v) => setState(() => _method = v!)),
             if (_method != 'midtrans') ...[
               DropdownButtonFormField(
                   initialValue: _type,
                   decoration:
-                      const InputDecoration(labelText: 'Jenis Pembayaran'),
-                  items: const [
+                      InputDecoration(labelText: context.l10n.paymentType),
+                  items: [
                     DropdownMenuItem(
-                        value: 'deposit', child: Text('Uang Muka')),
+                        value: 'deposit', child: Text(context.l10n.deposit)),
                     DropdownMenuItem(
                         value: 'final_payment',
-                        child: Text('Pelunasan Final')),
+                        child: Text(context.l10n.finalPayment)),
                   ],
                   onChanged: (v) => setState(() => _type = v!)),
               TextField(
                   controller: _amount,
                   keyboardType: TextInputType.number,
                   decoration:
-                      const InputDecoration(labelText: 'Nominal')),
+                      InputDecoration(labelText: context.l10n.amount)),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                   onPressed: () async => setState(() => _file = null),
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Hapus Foto')),
+                  label: Text(context.l10n.removePhoto)),
               OutlinedButton.icon(
                   onPressed: () async {
                     final picked = await ImagePicker().pickImage(
@@ -164,14 +165,14 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                     if (picked != null) setState(() => _file = picked);
                   },
                   icon: const Icon(Icons.image),
-                  label: Text(_file?.name ?? 'Ambil dari Galeri')),
-              if (_file != null) Text('Dipilih: ${_file!.name}'),
+                  label: Text(_file?.name ?? context.l10n.pickFromGallery)),
+              if (_file != null) Text(context.l10n.selectedFile.replaceFirst('{file}', _file!.name)),
               if (_progress > 0 && _progress < 1)
                 LinearProgressIndicator(value: _progress),
               const SizedBox(height: 20),
               FilledButton(
                   onPressed: _loading ? null : () => _submit(order),
-                  child: Text(_loading ? 'Mengirim...' : 'Kirim Pembayaran')),
+                  child: Text(_loading ? context.l10n.sending : context.l10n.submitPayment)),
             ] else ...[
               const SizedBox(height: 20),
               Card(
@@ -180,14 +181,14 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                   child: Column(children: [
                     const Icon(Icons.payment, size: 48),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Bayar dengan Midtrans',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    Text(
+                      context.l10n.payWithMidtrans,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Kartu Kredit, Bank Transfer, QRIS, E-Wallet',
-                      style: TextStyle(fontSize: 13),
+                    Text(
+                      context.l10n.midtransMethods,
+                      style: const TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 16),
                     FilledButton.icon(
@@ -198,7 +199,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                               height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.open_in_browser),
-                      label: Text(_loading ? 'Memproses...' : 'Bayar via Midtrans'),
+                      label: Text(_loading ? context.l10n.processing : context.l10n.payViaMidtrans),
                     ),
                   ]),
                 ),

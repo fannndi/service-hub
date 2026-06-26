@@ -8,6 +8,8 @@ import 'features/store_admin/presentation/routing/store_admin_router.dart';
 import 'features/platform_admin/presentation/routing/platform_admin_router.dart';
 import 'core/supabase_service.dart';
 import 'core/supabase_config.dart';
+import 'core/l10n/app_localizations.dart';
+import 'core/l10n/l10n_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,7 +152,7 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
             children: [
               Icon(Icons.handyman_rounded, size: 64, color: scheme.primary),
               const SizedBox(height: 24),
-              Text('ServisGadget', style: theme.textTheme.headlineMedium),
+              Text(context.l10n.appName, style: theme.textTheme.headlineMedium),
               const SizedBox(height: 16),
               Text(
                 _status,
@@ -183,10 +185,17 @@ class ServisGadgetApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     return MaterialApp.router(
       title: 'ServisGadget',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
+      locale: locale,
+      supportedLocales: const [Locale('id'), Locale('en')],
+      localizationsDelegates: const [AppLocalizationsDelegate()],
       routerConfig: router,
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
@@ -17,19 +18,19 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
   final password = TextEditingController();
   bool obscure = true;
 
-  String _parseError(Object? error) {
+  String _parseError(Object? error, AppLocalizations l10n) {
     final msg = error?.toString() ?? 'Terjadi kesalahan.';
     if (msg.contains('InvalidCredentialsException') ||
         msg.contains('INVALID_CREDENTIALS')) {
-      return 'Nomor HP atau password salah.';
+      return l10n.invalidCredentials;
     }
     if (msg.contains('StoreNotActiveException') ||
         msg.contains('STORE_NOT_ACTIVE')) {
-      return 'Toko tidak aktif.';
+      return l10n.storeNotActive;
     }
     if (msg.contains('AccountLockedException') ||
         msg.contains('ACCOUNT_LOCKED')) {
-      return 'Akun terkunci sementara.';
+      return l10n.accountLocked;
     }
     return msg;
   }
@@ -63,10 +64,10 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    Text('Portal Toko', style: theme.textTheme.headlineSmall),
+                    Text(context.l10n.storePortal, style: theme.textTheme.headlineSmall),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Masuk sebagai admin operasional',
+                      context.l10n.storeLoginSubtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -79,8 +80,8 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                           TextField(
                             controller: phone,
                             keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Nomor HP',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.phoneNumber,
                               prefixIcon: Icon(Icons.phone_outlined),
                               prefixText: '08',
                             ),
@@ -90,7 +91,7 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                             controller: password,
                             obscureText: obscure,
                             decoration: InputDecoration(
-                              labelText: 'Password',
+                              labelText: context.l10n.password,
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 onPressed: () =>
@@ -126,14 +127,14 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
                                       ),
                                     )
                                   : const Icon(Icons.login_rounded),
-                              label: const Text('Masuk'),
+                              label: Text(context.l10n.login),
                             ),
                           ),
                           if (auth.hasError)
                             Padding(
                               padding: const EdgeInsets.only(top: AppSpacing.md),
                               child: Text(
-                                _parseError(auth.error),
+                                _parseError(auth.error, context.l10n),
                                 style: TextStyle(color: scheme.error),
                               ),
                             ),

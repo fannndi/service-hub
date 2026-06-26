@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../widgets/customer_widgets.dart';
 
@@ -26,7 +27,7 @@ class _StoreListScreenState extends ConsumerState<StoreListScreen> {
     final stores =
         ref.watch(storeListProvider((brand: _brand, model: _model.text)));
     return CustomerScaffold(
-      title: 'Pilih Toko',
+      title: context.l10n.selectStore,
       child: Column(children: [
         SizedBox(
           height: 54,
@@ -48,17 +49,17 @@ class _StoreListScreenState extends ConsumerState<StoreListScreen> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: TextField(
               controller: _model,
-              decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Cari model perangkat',
-                  border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: context.l10n.searchDeviceModelHint,
+                  border: const OutlineInputBorder()),
               onSubmitted: (_) => setState(() {})),
         ),
         Expanded(
             child: AsyncPage(
                 value: stores,
                 builder: (items) => items.isEmpty
-                    ? const EmptyMessage('Toko tidak ditemukan.')
+                    ? EmptyMessage(context.l10n.storeNotFound)
                     : ListView(
                         children: items
                             .map((store) => StoreCard(

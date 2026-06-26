@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
@@ -40,7 +41,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) => CustomerScaffold(
-        title: 'Ganti Password',
+        title: context.l10n.changePassword,
         child: Form(
           key: _formKey,
           child: ListView(
@@ -49,28 +50,27 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               Material(
                   color: Colors.amber.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(12),
-                  child: const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text(
-                          'Ganti password sementaramu sebelum melanjutkan.'))),
+                  child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(context.l10n.changeTempPasswordMessage))),
               const SizedBox(height: 16),
               TextFormField(
                   controller: _old,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                      labelText: 'Password Lama'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.oldPassword),
                   validator: (v) =>
-                      v == null || v.isEmpty ? 'Wajib diisi.' : null),
+                      v == null || v.isEmpty ? context.l10n.required : null),
               const SizedBox(height: 12),
               TextFormField(
                   controller: _next,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                      labelText: 'Password Baru'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.newPassword),
                   validator: (v) {
-                    if (v == null || v.length < 8) return 'Minimal 8 karakter.';
+                    if (v == null || v.length < 8) return context.l10n.minLength8;
                     if (v == _old.text) {
-                      return 'Password baru tidak boleh sama.';
+                      return context.l10n.newPasswordCannotMatch;
                     }
                     return null;
                   }),
@@ -78,17 +78,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               TextFormField(
                   controller: _confirm,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                      labelText: 'Konfirmasi Password Baru',
-                      border: OutlineInputBorder()),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.confirmPassword,
+                      border: const OutlineInputBorder()),
                   validator: (v) =>
-                      v != _next.text ? 'Konfirmasi tidak sama.' : null),
+                      v != _next.text ? context.l10n.confirmationMismatch : null),
               const SizedBox(height: 20),
               FilledButton(
                   onPressed: _loading ? null : _submit,
                   child: _loading
                       ? const CircularProgressIndicator()
-                      : const Text('Simpan Password')),
+                      : Text(context.l10n.savePassword)),
             ],
           ),
         ),

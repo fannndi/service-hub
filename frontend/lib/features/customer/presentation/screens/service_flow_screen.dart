@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
@@ -127,15 +128,15 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     if (_step >= 4) return;
     if (_step == 0 &&
         (_state.selectedBrand == null || _state.selectedModel == null)) {
-      _showFlowMessage('Pilih brand dan tipe perangkat dulu.');
+      _showFlowMessage(context.l10n.selectBrandFirst);
       return;
     }
     if (_step == 1 && _state.complaint.text.trim().length < 10) {
-      _showFlowMessage('Jelaskan keluhan minimal 10 karakter.');
+      _showFlowMessage(context.l10n.complaintMinLength);
       return;
     }
     if (_step == 2 && _state.selectedStoreId == null) {
-      _showFlowMessage('Pilih toko servis dulu.');
+      _showFlowMessage(context.l10n.selectStoreFirst);
       return;
     }
     if (_step == 3 &&
@@ -174,11 +175,11 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final steps = ['Perangkat', 'Kerusakan', 'Toko', 'Data Diri', 'Konfirmasi'];
+    final steps = [context.l10n.device, context.l10n.damage, context.l10n.store, context.l10n.personalData, context.l10n.confirmation];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Service Now'),
+        title: Text(context.l10n.serviceNow),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/welcome'),
@@ -274,7 +275,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                   child: OutlinedButton.icon(
                 onPressed: _state.loading ? null : _prevStep,
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Kembali'),
+                label: Text(context.l10n.back),
               )),
             if (_step > 0) const SizedBox(width: 12),
             if (_step < 4)
@@ -283,10 +284,10 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                 onPressed: _state.loading ? null : _nextStep,
                 icon: const Icon(Icons.arrow_forward),
                 label: Text(_step == 0
-                    ? 'Cari Toko'
+                    ? context.l10n.findStore
                     : _step == 3
-                        ? 'Review'
-                        : 'Lanjut'),
+                        ? context.l10n.review
+                        : context.l10n.continue_),
               ))
             else
               Expanded(
@@ -299,7 +300,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check),
-                label: Text(_state.loading ? 'Memproses...' : 'Booking'),
+                label: Text(_state.loading ? context.l10n.processing : context.l10n.booking),
               )),
           ]),
         ),

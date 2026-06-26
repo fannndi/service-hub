@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
@@ -46,7 +47,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _address.text = user.address ?? '';
     }
     return CustomerScaffold(
-      title: 'Profil',
+      title: context.l10n.profile,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -66,20 +67,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   TextFormField(
                       controller: _name,
-                      decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                      decoration: InputDecoration(labelText: context.l10n.fullName),
                       onChanged: (_) => setState(() => _dirty = true)),
                   const SizedBox(height: 16),
                   TextFormField(
                       initialValue: user?.phoneNumber ?? '-',
                       readOnly: true,
-                      decoration: const InputDecoration(
-                          labelText: 'Nomor HP (tidak bisa diubah)')),
+                      decoration: InputDecoration(
+                          labelText: context.l10n.phoneNumberReadOnly)),
                   const SizedBox(height: 16),
                   TextFormField(
                       controller: _address,
                       minLines: 2,
                       maxLines: 4,
-                      decoration: const InputDecoration(labelText: 'Alamat'),
+                      decoration: InputDecoration(labelText: context.l10n.address),
                       onChanged: (_) => setState(() => _dirty = true)),
                   if (_dirty) ...[
                     const SizedBox(height: 16),
@@ -87,7 +88,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       width: double.infinity,
                       height: 48,
                       child: FilledButton(
-                          onPressed: _loading ? null : _save, child: const Text('Simpan')),
+                          onPressed: _loading ? null : _save, child: Text(context.l10n.save)),
                     ),
                   ],
                 ],
@@ -100,31 +101,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 ListTile(
                     leading: const Icon(Icons.receipt_long_outlined),
-                    title: const Text('Pesanan Saya'),
+                    title: Text(context.l10n.myOrders),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/orders')),
                 const Divider(height: 1),
                 ListTile(
                     leading: const Icon(Icons.local_offer_outlined),
-                    title: const Text('Kupon Saya'),
+                    title: Text(context.l10n.myCoupons),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/coupons')),
                 const Divider(height: 1),
                 ListTile(
                     leading: const Icon(Icons.notifications_outlined),
-                    title: const Text('Preferensi Notifikasi'),
+                    title: Text(context.l10n.notificationPreferences),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/notification-preferences')),
                 const Divider(height: 1),
                 ListTile(
                     leading: const Icon(Icons.lock_outline),
-                    title: const Text('Ganti Password'),
+                    title: Text(context.l10n.changePassword),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/change-password')),
                 const Divider(height: 1),
                 ListTile(
                     leading: const Icon(Icons.devices_outlined),
-                    title: const Text('Sesi Login'),
+                    title: Text(context.l10n.loginSessions),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/sessions')),
               ],
@@ -134,7 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.logout, color: Color(0xFFEF4444)),
-              title: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444))),
+              title: Text(context.l10n.logout, style: const TextStyle(color: Color(0xFFEF4444))),
               onTap: () async {
                 await ref.read(customerAuthProvider.notifier).logout();
                 if (context.mounted) context.go('/login');

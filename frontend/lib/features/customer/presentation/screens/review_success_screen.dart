@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
 
@@ -9,10 +10,10 @@ class ReviewSuccessScreen extends StatelessWidget {
   final ReviewResult result;
   @override
   Widget build(BuildContext context) => CustomerScaffold(
-        title: 'Ulasan Berhasil',
+        title: context.l10n.reviewSuccess,
         child: ListView(padding: const EdgeInsets.all(24), children: [
           const Icon(Icons.celebration, size: 80, color: Colors.orange),
-          Text('Ulasan berhasil dikirim!',
+          Text(context.l10n.reviewSubmitted,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -21,10 +22,10 @@ class ReviewSuccessScreen extends StatelessWidget {
           if (result.coupon != null) CouponRewardBanner(coupon: result.coupon!),
           FilledButton(
               onPressed: () => context.go('/coupons'),
-              child: const Text('Lihat Kupon Saya')),
+              child: Text(context.l10n.viewMyCoupons)),
           OutlinedButton(
               onPressed: () => context.go('/orders'),
-              child: const Text('Kembali ke Pesanan')),
+              child: Text(context.l10n.backToOrders)),
         ]),
       );
 }

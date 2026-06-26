@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../ui/widgets/modern_card.dart';
 
@@ -23,7 +24,13 @@ class CustomerScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        actions: actions,
+        actions: [
+          ...?actions,
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
         leading: showBackButton
             ? Builder(
                 builder: (ctx) {

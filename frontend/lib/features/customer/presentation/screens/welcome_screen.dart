@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
@@ -49,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           Text(
-                            'ServisGadget',
+                            context.l10n.appName,
                             style: theme.textTheme.headlineMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
@@ -57,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            'Servis gadget, tracking jelas, pembayaran rapi.',
+                            context.l10n.tagline,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.85),
                             ),
@@ -71,12 +72,12 @@ class WelcomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Mulai dari sini',
+                            context.l10n.startHere,
                             style: theme.textTheme.titleMedium,
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            'Pilih cara Anda ingin melanjutkan',
+                            context.l10n.chooseHowToContinue,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -87,7 +88,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: FilledButton.icon(
                               onPressed: () => context.go('/service'),
                               icon: const Icon(Icons.add_task_rounded, size: 22),
-                              label: const Text('Ajukan Servis'),
+                              label: Text(context.l10n.submitService),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -96,7 +97,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: OutlinedButton.icon(
                               onPressed: () => context.go('/guest/track'),
                               icon: const Icon(Icons.search, size: 20),
-                              label: const Text('Cek Pesanan'),
+                              label: Text(context.l10n.checkOrder),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -107,7 +108,7 @@ class WelcomeScreen extends StatelessWidget {
                                   onPressed: () => context.push('/login'),
                                   icon: const Icon(Icons.person_outline_rounded,
                                       size: 20),
-                                  label: const Text('Pelanggan'),
+                                  label: Text(context.l10n.customer),
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
@@ -116,7 +117,7 @@ class WelcomeScreen extends StatelessWidget {
                                   onPressed: () => context.push('/store-login'),
                                   icon: const Icon(Icons.storefront_rounded,
                                       size: 20),
-                                  label: const Text('Toko'),
+                                  label: Text(context.l10n.store),
                                 ),
                               ),
                             ],
@@ -128,7 +129,7 @@ class WelcomeScreen extends StatelessWidget {
                               Icons.admin_panel_settings_outlined,
                               size: 20,
                             ),
-                            label: const Text('Admin Platform'),
+                            label: Text(context.l10n.platformAdmin),
                           ),
                         ],
                       ),
@@ -150,7 +151,7 @@ class WelcomeScreen extends StatelessWidget {
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Text(
-                              'Progress servis, estimasi biaya, dan riwayat pembayaran dalam satu tempat.',
+                              context.l10n.appDescription,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurface,
                                 height: 1.4,

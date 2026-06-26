@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../domain/customer_models.dart';
 import 'formatters.dart';
 import 'status_pill.dart';
@@ -42,7 +43,7 @@ class OrderCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              order.storeName ?? 'Toko servis',
+              order.storeName ?? context.l10n.serviceStore,
               style: TextStyle(
                 color: scheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
@@ -71,7 +72,7 @@ class OrderCard extends StatelessWidget {
                     Icon(Icons.timer_outlined, size: 14, color: scheme.error),
                     const SizedBox(width: 4),
                     Text(
-                      'Batas waktu kurang dari 6 jam',
+                      context.l10n.deadlineUnder6Hours,
                       style: TextStyle(
                         color: scheme.error,
                         fontWeight: FontWeight.w700,

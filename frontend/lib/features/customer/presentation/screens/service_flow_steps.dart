@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/customer_models.dart';
 import '../../../../shared_widgets/formatters.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../widgets/customer_widgets.dart';
 
 // ─── Shared State ───
@@ -56,9 +57,9 @@ class Step1Widget extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Pilih Perangkat', style: theme.textTheme.titleLarge),
+        Text(context.l10n.selectDevice, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('Pilih brand dan tipe smartphone kamu.',
+        Text(context.l10n.selectDeviceSubtitle,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
@@ -82,15 +83,12 @@ class Step1Widget extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         deviceModels.when(
-          loading: () => const Center(
-              child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator())),
-          error: (error, _) => Text('Gagal memuat daftar perangkat: $error',
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
+          error: (error, _) => Text(context.l10n.deviceListLoadError.replaceFirst('{error}', error.toString()),
               style: TextStyle(color: theme.colorScheme.error)),
           data: (groups) {
             if (groups.isEmpty) {
-              return const EmptyMessage('Belum ada sparepart tersedia');
+              return EmptyMessage(context.l10n.noSparepartAvailable);
             }
 
             final brands = groups.map((g) => g.brand).toSet().toList()..sort();
@@ -111,9 +109,9 @@ class Step1Widget extends ConsumerWidget {
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: brandValue,
-                    decoration: const InputDecoration(
-                        labelText: 'Brand Smartphone',
-                        prefixIcon: Icon(Icons.branding_watermark)),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.smartphoneBrand,
+                        prefixIcon: const Icon(Icons.branding_watermark)),
                     items: brands
                         .map((b) => DropdownMenuItem(value: b, child: Text(b)))
                         .toList(),
@@ -126,9 +124,9 @@ class Step1Widget extends ConsumerWidget {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: modelValue,
-                    decoration: const InputDecoration(
-                        labelText: 'Tipe Smartphone',
-                        prefixIcon: Icon(Icons.smartphone)),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.smartphoneType,
+                        prefixIcon: const Icon(Icons.smartphone)),
                     items: models
                         .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                         .toList(),
@@ -155,23 +153,22 @@ class Step2Widget extends StatelessWidget {
   final FlowState state;
   final VoidCallback onChanged;
 
-  static const labels = {
-    'screen_replacement': 'Ganti Layar',
-    'battery_replacement': 'Ganti Baterai',
-    'charging_port': 'Port Charger',
-    'camera': 'Kamera',
-    'other': 'Lainnya',
-  };
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labels = {
+      'screen_replacement': context.l10n.screenReplacement,
+      'battery_replacement': context.l10n.batteryReplacement,
+      'charging_port': context.l10n.chargingPort,
+      'camera': context.l10n.camera,
+      'other': context.l10n.other,
+    };
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Jenis Kerusakan / Layanan', style: theme.textTheme.titleLarge),
+        Text(context.l10n.damageType, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text('Pilih jenis layanan yang dibutuhkan dan jelaskan keluhannya.',
+        Text(context.l10n.selectServiceTypeSubtitle,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
@@ -196,11 +193,10 @@ class Step2Widget extends StatelessWidget {
           controller: state.complaint,
           maxLines: 4,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Keluhan / Deskripsi Kerusakan',
-            hintText:
-                'Jelaskan kerusakan yang dialami, contoh:\n- Layar retak dari pojok kiri bawah\n- Baterai cepat habis (health < 70%)\n- Bootloop, tidak bisa masuk home screen',
-            prefixIcon: Padding(
+          decoration: InputDecoration(
+            labelText: context.l10n.complaintLabel,
+            hintText: context.l10n.complaintHint,
+            prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 64),
                 child: Icon(Icons.report_problem_outlined)),
             alignLabelWithHint: true,
@@ -245,17 +241,17 @@ class _Step3WidgetState extends State<Step3Widget> {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Rekomendasi Toko Mitra', style: theme.textTheme.titleLarge),
+          Text(context.l10n.partnerStoreRecommendation, style: theme.textTheme.titleLarge),
           const SizedBox(height: 24),
           const Icon(Icons.store_outlined, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           Text(
-              'Tidak ada toko yang cocok untuk perangkat ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'} dengan layanan ini.',
+              context.l10n.noMatchingStore,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
           Text(
-              'Silakan periksa kembali brand, tipe, atau jenis layanan yang dipilih.',
+              context.l10n.checkSelectionSubtitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
@@ -263,7 +259,7 @@ class _Step3WidgetState extends State<Step3Widget> {
           FilledButton.icon(
               onPressed: widget.onBack,
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Kembali')),
+              label: Text(context.l10n.back)),
         ],
       );
     }

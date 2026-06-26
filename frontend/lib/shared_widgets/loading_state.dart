@@ -1,9 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 
-class LoadingState extends StatelessWidget {
-  const LoadingState({super.key, this.message = 'Memuat data...', this.isSkeleton = false});
+import '../core/l10n/app_localizations.dart';
 
-  final String message;
+class LoadingState extends StatelessWidget {
+  const LoadingState({super.key, this.message, this.isSkeleton = false});
+
+  final String? message;
   final bool isSkeleton;
 
   @override
@@ -32,7 +34,7 @@ class LoadingState extends StatelessWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
-            Text(message),
+            Text(message ?? context.l10n.loadingData),
           ],
         ),
       ),

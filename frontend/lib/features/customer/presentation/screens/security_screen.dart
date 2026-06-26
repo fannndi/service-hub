@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/user_session.dart';
 import '../widgets/customer_widgets.dart';
@@ -16,15 +17,15 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomerScaffold(
-      title: 'Keamanan',
+      title: context.l10n.security,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             child: ListTile(
               leading: const Icon(Icons.lock),
-              title: const Text('Ganti Password'),
-              subtitle: const Text('Perbarui password akun Anda'),
+              title: Text(context.l10n.changePassword),
+              subtitle: Text(context.l10n.updatePasswordSubtitle),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/change-password'),
             ),
@@ -40,8 +41,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 final active = sessions.where((s) => s.isActive).length;
                 return ListTile(
                   leading: const Icon(Icons.devices),
-                  title: const Text('Perangkat Aktif'),
-                  subtitle: Text('$active perangkat terhubung'),
+                  title: Text(context.l10n.activeDevices),
+                  subtitle: Text(context.l10n.devicesConnected.replaceFirst('{count}', active.toString())),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/sessions'),
                 );
@@ -49,11 +50,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Card(
+          Card(
             child: ListTile(
-              leading: Icon(Icons.phone),
-              title: Text('Nomor HP'),
-              subtitle: Text('Hubungi support untuk mengubah nomor HP'),
+              leading: const Icon(Icons.phone),
+              title: Text(context.l10n.phoneNumber),
+              subtitle: Text(context.l10n.contactSupportForPhone),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class SparepartFormScreen extends ConsumerStatefulWidget {
   const SparepartFormScreen({super.key, this.item});
@@ -42,7 +43,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
     return Scaffold(
       appBar: AppBar(
           title: Text(
-              widget.item == null ? 'Tambah Sparepart' : 'Edit Sparepart')),
+              widget.item == null ? context.l10n.addSparepart : context.l10n.editSparepart)),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         _buildBrandField(brands ?? []),
         const SizedBox(height: 12),
@@ -50,42 +51,42 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           initialValue: _selectedPartType,
-          decoration: const InputDecoration(
-              labelText: 'Jenis Sparepart',
-              prefixIcon: Icon(Icons.build_outlined)),
-          items: const [
-            DropdownMenuItem(value: 'screen_replacement', child: Text('Layar')),
+          decoration: InputDecoration(
+              labelText: context.l10n.sparepartType,
+              prefixIcon: const Icon(Icons.build_outlined)),
+          items: [
+            DropdownMenuItem(value: 'screen_replacement', child: Text(context.l10n.screen)),
             DropdownMenuItem(
-                value: 'battery_replacement', child: Text('Baterai')),
+                value: 'battery_replacement', child: Text(context.l10n.battery)),
             DropdownMenuItem(
-                value: 'charging_port', child: Text('Charging Port')),
-            DropdownMenuItem(value: 'camera', child: Text('Kamera')),
-            DropdownMenuItem(value: 'other', child: Text('Lainnya')),
+                value: 'charging_port', child: Text(context.l10n.chargingPort)),
+            DropdownMenuItem(value: 'camera', child: Text(context.l10n.camera)),
+            DropdownMenuItem(value: 'other', child: Text(context.l10n.other)),
           ],
           onChanged: (v) => setState(() => _selectedPartType = v!),
         ),
         const SizedBox(height: 12),
         TextField(
             controller: _partName,
-            decoration: const InputDecoration(
-                labelText: 'Nama Sparepart',
-                hintText: 'LCD Samsung S24',
-                border: OutlineInputBorder())),
+            decoration: InputDecoration(
+                labelText: context.l10n.sparepartName,
+                hintText: context.l10n.sparepartNameHint,
+                border: const OutlineInputBorder())),
         const SizedBox(height: 12),
         TextField(
             controller: _price,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-                labelText: 'Harga',
+            decoration: InputDecoration(
+                labelText: context.l10n.price,
                 prefixText: 'Rp ',
-                border: OutlineInputBorder())),
+                border: const OutlineInputBorder())),
         const SizedBox(height: 12),
         if (widget.item == null)
           TextField(
               controller: _qty,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                  labelText: 'Stok Awal')),
+              decoration: InputDecoration(
+                  labelText: context.l10n.initialStock)),
         const SizedBox(height: 24),
         FilledButton.icon(
           onPressed: _loading ? null : _submit,
@@ -96,7 +97,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
               : const Icon(Icons.save_outlined),
-          label: Text(widget.item == null ? 'Tambah' : 'Simpan'),
+          label: Text(widget.item == null ? context.l10n.add : context.l10n.save),
         ),
       ]),
     );
@@ -111,9 +112,9 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
       Expanded(
         child: DropdownButtonFormField<String>(
           initialValue: _selectedBrand,
-          decoration: const InputDecoration(
-              labelText: 'Brand',
-              prefixIcon: Icon(Icons.branding_watermark_outlined)),
+          decoration: InputDecoration(
+              labelText: context.l10n.brand,
+              prefixIcon: const Icon(Icons.branding_watermark_outlined)),
           items: allBrands
               .map((b) => DropdownMenuItem(value: b, child: Text(b)))
               .toList(),
@@ -126,7 +127,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
       const SizedBox(width: 8),
       IconButton(
           icon: const Icon(Icons.add_circle_outline),
-          onPressed: () => _showAddDialog('Brand', _newBrandController, (val) {
+          onPressed: () => _showAddDialog(context.l10n.brand, _newBrandController, (val) {
                 setState(() => _selectedBrand = val);
                 ref.invalidate(brandsProvider);
               })),
@@ -143,9 +144,9 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
       Expanded(
         child: DropdownButtonFormField<String>(
           initialValue: _selectedDeviceModel,
-          decoration: const InputDecoration(
-              labelText: 'Model Device',
-              prefixIcon: Icon(Icons.phone_android_outlined)),
+          decoration: InputDecoration(
+              labelText: context.l10n.deviceModel,
+              prefixIcon: const Icon(Icons.phone_android_outlined)),
           items: allModels
               .map((m) => DropdownMenuItem(value: m, child: Text(m)))
               .toList(),
@@ -158,7 +159,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
           onPressed: _selectedBrand == null
               ? null
               : () =>
-                  _showAddDialog('Model Device', _newModelController, (val) {
+                  _showAddDialog(context.l10n.deviceModel, _newModelController, (val) {
                     setState(() => _selectedDeviceModel = val);
                     ref.invalidate(deviceModelsProvider(_selectedBrand));
                   })),
@@ -171,15 +172,15 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
     showDialog(
         context: context,
         builder: (c) => AlertDialog(
-                title: Text('Tambah $title'),
+                title: Text('${context.l10n.add} $title'),
                 content: TextField(
                     controller: controller,
                     autofocus: true,
-                    decoration: InputDecoration(hintText: 'Nama $title')),
+                    decoration: InputDecoration(hintText: '${context.l10n.name} $title')),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(c),
-                      child: const Text('Batal')),
+                      child: Text(context.l10n.cancel)),
                   FilledButton(
                       onPressed: () {
                         final val = controller.text.trim();
@@ -188,7 +189,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
                           Navigator.pop(c);
                         }
                       },
-                      child: const Text('Tambah')),
+                      child: Text(context.l10n.add)),
                 ]));
   }
 
@@ -197,7 +198,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         _selectedDeviceModel == null ||
         _partName.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Brand, Model, dan Nama wajib diisi.')));
+          SnackBar(content: Text(context.l10n.sparepartValidation)));
       return;
     }
     setState(() => _loading = true);
@@ -215,7 +216,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal: $e')));
+            .showSnackBar(SnackBar(content: Text(context.l10n.failed.replaceFirst('{error}', '$e'))));
       }
     } finally {
       if (mounted) setState(() => _loading = false);

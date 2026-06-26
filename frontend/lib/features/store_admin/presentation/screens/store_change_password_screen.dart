@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class StoreChangePasswordScreen extends ConsumerStatefulWidget {
   const StoreChangePasswordScreen({super.key});
@@ -23,14 +24,14 @@ class _StoreChangePasswordScreenState
     if (newPassword.text.length < 8) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password baru minimal 8 karakter.')));
+            SnackBar(content: Text(context.l10n.minLength8)));
       }
       return;
     }
     if (newPassword.text != confirmPassword.text) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Konfirmasi password tidak cocok.')));
+            SnackBar(content: Text(context.l10n.confirmationMismatch)));
       }
       return;
     }
@@ -41,13 +42,13 @@ class _StoreChangePasswordScreenState
           .changePassword(oldPassword.text, newPassword.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password berhasil diubah.')));
+            SnackBar(content: Text(context.l10n.passwordChanged)));
         context.go('/store/dashboard');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal: $e')));
+            .showSnackBar(SnackBar(content: Text(context.l10n.failed.replaceFirst('{error}', '$e'))));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -56,7 +57,7 @@ class _StoreChangePasswordScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Ganti Password')),
+        appBar: AppBar(title: Text(context.l10n.changePassword)),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
@@ -67,20 +68,20 @@ class _StoreChangePasswordScreenState
                     controller: oldPassword,
                     obscureText: true,
                     decoration:
-                        const InputDecoration(labelText: 'Password lama')),
+                        InputDecoration(labelText: context.l10n.oldPassword)),
                 const SizedBox(height: 12),
                 TextField(
                     controller: newPassword,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                        labelText: 'Password baru',
-                        helperText: 'Minimal 8 karakter')),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.newPassword,
+                        helperText: context.l10n.minLength8)),
                 const SizedBox(height: 12),
                 TextField(
                     controller: confirmPassword,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                        labelText: 'Konfirmasi password baru')),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.confirmPassword)),
                 const SizedBox(height: 18),
                 FilledButton.icon(
                   onPressed: _loading ? null : _submit,
@@ -91,7 +92,7 @@ class _StoreChangePasswordScreenState
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
                       : const Icon(Icons.lock_reset),
-                  label: const Text('Simpan Password'),
+                  label: Text(context.l10n.savePassword),
                 ),
               ]),
             ),

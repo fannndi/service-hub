@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
@@ -11,7 +12,7 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(analyticsProvider);
     return StoreAdminScaffold(
-      title: 'Analytics',
+      title: context.l10n.analytics,
       selectedIndex: 4,
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -38,28 +39,28 @@ class AnalyticsScreen extends ConsumerWidget {
           return ListView(padding: const EdgeInsets.all(16), children: [
             MetricGrid(cards: [
               MetricCard(
-                  title: 'Revenue',
+                  title: context.l10n.revenue,
                   value: money(revenueMonth),
                   icon: Icons.payments_outlined),
               MetricCard(
-                  title: 'Orders',
+                  title: context.l10n.orders,
                   value: '${activeOrders + pendingOrders}',
                   icon: Icons.receipt_long_outlined),
               MetricCard(
-                  title: 'Completion',
+                  title: context.l10n.completion,
                   value: '${completionRate.toStringAsFixed(1)}%',
                   icon: Icons.task_alt_outlined),
               MetricCard(
-                  title: 'Rating',
+                  title: context.l10n.rating,
                   value: ratingAvg.toStringAsFixed(1),
                   icon: Icons.star_outline),
             ]),
             SimpleBarChart(
-                title: 'Order Trends', items: ordersTrend),
+                title: context.l10n.orderTrends, items: ordersTrend),
             SimpleBarChart(
-                title: 'Popular Services', items: serviceCategories),
+                title: context.l10n.popularServices, items: serviceCategories),
             SimpleBarChart(
-                title: 'Sparepart Usage', items: sparepartConsumption),
+                title: context.l10n.sparepartUsage, items: sparepartConsumption),
           ]);
         },
       ),

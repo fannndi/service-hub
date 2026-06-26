@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../ui/theme/app_spacing.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../domain/customer_models.dart';
 import 'empty_message.dart';
 
@@ -11,7 +12,7 @@ class OrderStatusTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (entries.isEmpty) return const EmptyMessage('Tracking belum tersedia.');
+    if (entries.isEmpty) return EmptyMessage(context.l10n.trackingNotAvailable);
     final sorted = [...entries]
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final scheme = Theme.of(context).colorScheme;
@@ -72,7 +73,7 @@ class OrderStatusTimeline extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        entry.note ?? 'Status diperbarui.',
+                        entry.note ?? context.l10n.statusUpdated,
                         style: TextStyle(
                           color: scheme.onSurfaceVariant,
                           fontSize: 13,

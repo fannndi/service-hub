@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/l10n/app_localizations.dart';
+
 class ErrorState extends StatelessWidget {
   const ErrorState({super.key, required this.message, this.onRetry});
 
@@ -21,7 +23,7 @@ class ErrorState extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: 12),
               OutlinedButton(
-                  onPressed: onRetry, child: const Text('Coba lagi')),
+                  onPressed: onRetry, child: Text(context.l10n.retry)),
             ],
           ],
         ),

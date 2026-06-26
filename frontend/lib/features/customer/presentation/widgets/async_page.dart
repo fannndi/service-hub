@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/shimmer_widget.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class AsyncPage<T> extends StatelessWidget {
   const AsyncPage({super.key, required this.value, required this.builder});
@@ -29,7 +30,7 @@ class AsyncPage<T> extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Gagal memuat data',
+                  context.l10n.dataLoadError,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),

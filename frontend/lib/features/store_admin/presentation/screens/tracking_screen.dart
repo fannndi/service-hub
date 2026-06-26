@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/order_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class TrackingScreen extends ConsumerStatefulWidget {
   const TrackingScreen({super.key, required this.orderId});
@@ -35,7 +36,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   Widget build(BuildContext context) {
     final repo = ref.watch(storeOrderRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tracking Timeline')),
+      appBar: AppBar(title: Text(context.l10n.trackingTimeline)),
       body: FutureBuilder<List<dynamic>>(
         future: _trackingFuture,
         builder: (context, snapshot) {
@@ -48,10 +49,12 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
             children: [
               TextField(
                   controller: title,
-                  decoration: const InputDecoration(labelText: 'Judul event')),
+                  decoration:
+                      InputDecoration(labelText: context.l10n.eventTitle)),
               TextField(
                   controller: note,
-                  decoration: const InputDecoration(labelText: 'Catatan')),
+                  decoration:
+                      InputDecoration(labelText: context.l10n.notes)),
               FilledButton.icon(
                 onPressed: () async {
                   await repo.addTracking(
@@ -61,7 +64,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                   _refresh();
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Tambah Event'),
+                label: Text(context.l10n.addEvent),
               ),
               const SizedBox(height: 16),
               if (snapshot.connectionState == ConnectionState.waiting)

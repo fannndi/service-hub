@@ -5,20 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class DisputesScreen extends ConsumerWidget {
   const DisputesScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) =>
       PagedTableScreen<DisputeCase>(
-        title: 'Dispute Queue',
+        title: context.l10n.disputeQueue,
         selectedIndex: 1,
         value: ref.watch(disputesProvider),
-        columns: const [
-          DataColumn(label: Text('Order')),
-          DataColumn(label: Text('Pelanggan')),
-          DataColumn(label: Text('Tipe')),
-          DataColumn(label: Text('Status'))
+        columns: [
+          DataColumn(label: Text(context.l10n.order)),
+          DataColumn(label: Text(context.l10n.customer)),
+          DataColumn(label: Text(context.l10n.type)),
+          DataColumn(label: Text(context.l10n.status))
         ],
         cells: (d) => [
           DataCell(Text(d.orderNumber)),
@@ -45,7 +46,7 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
   Future<void> _resolve(bool accept) async {
     if (reason.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Catatan resolusi wajib diisi.')));
+          SnackBar(content: Text(context.l10n.resolutionNoteRequired)));
       return;
     }
     setState(() => _loading = true);
@@ -57,7 +58,7 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal: $e')));
+            .showSnackBar(SnackBar(content: Text(context.l10n.failed.replaceFirst('{error}', '$e'))));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -74,18 +75,18 @@ class _DisputeDetailScreenState extends ConsumerState<DisputeDetailScreen> {
               controller: reason,
               minLines: 3,
               maxLines: 5,
-              decoration: const InputDecoration(
-                  labelText: 'Catatan resolusi')),
+              decoration: InputDecoration(
+                  labelText: context.l10n.resolutionNote)),
           const SizedBox(height: 16),
           Wrap(spacing: 8, children: [
             FilledButton.icon(
                 onPressed: _loading ? null : () => _resolve(true),
                 icon: const Icon(Icons.check),
-                label: const Text('Terima Klaim')),
+                label: Text(context.l10n.acceptClaim)),
             OutlinedButton.icon(
                 onPressed: _loading ? null : () => _resolve(false),
                 icon: const Icon(Icons.close),
-                label: const Text('Tolak Klaim')),
+                label: Text(context.l10n.rejectClaim)),
           ]),
         ]),
       );

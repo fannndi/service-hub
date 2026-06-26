@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../application/notification_provider.dart';
 import '../../domain/notification_models.dart';
@@ -13,7 +14,7 @@ class NotificationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(notificationRepositoryProvider);
     return CustomerScaffold(
-      title: 'Notifikasi',
+      title: context.l10n.notifications,
       child: AsyncPage(
         value: ref.watch(notificationsProvider),
         builder: (items) {
@@ -21,7 +22,7 @@ class NotificationsScreen extends ConsumerWidget {
               .whereType<Map<String, dynamic>>()
               .map(NotificationItem.fromJson)
               .toList();
-          if (list.isEmpty) return const EmptyMessage('Belum ada notifikasi.');
+          if (list.isEmpty) return EmptyMessage(context.l10n.noNotifications);
           return Column(children: [
             if (list.any((i) => !i.isRead))
               TextButton.icon(
@@ -31,7 +32,7 @@ class NotificationsScreen extends ConsumerWidget {
                   ref.invalidate(unreadCountProvider);
                 },
                 icon: const Icon(Icons.done_all, size: 18),
-                label: const Text('Tandai Semua Dibaca'),
+                label: Text(context.l10n.markAllRead),
               ),
             Expanded(
               child: ListView(

@@ -5,6 +5,7 @@ import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_review_models.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class ReviewsScreen extends ConsumerWidget {
   const ReviewsScreen({super.key});
@@ -12,7 +13,7 @@ class ReviewsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(reviewsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Review Monitoring')),
+      appBar: AppBar(title: Text(context.l10n.reviewMonitoring)),
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
@@ -45,7 +46,7 @@ class ReviewsScreen extends ConsumerWidget {
                           if (r.response != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
-                              child: Text('Balasan: ${r.response}',
+                              child: Text(context.l10n.reply.replaceFirst('{text}', r.response ?? ''),
                                   style: TextStyle(
                                       color:
                                           Theme.of(context).colorScheme.primary)),

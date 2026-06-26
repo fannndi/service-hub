@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../widgets/customer_widgets.dart';
 
@@ -13,11 +14,11 @@ class StoreDetailScreen extends ConsumerWidget {
     final detail = ref.watch(storeDetailProvider(storeId));
     final spareparts = ref.watch(sparepartsProvider(storeId));
     return CustomerScaffold(
-      title: 'Detail Toko',
+      title: context.l10n.storeDetail,
       floatingActionButton: FloatingActionButton.extended(
           onPressed: () => context.push('/booking/$storeId'),
           icon: const Icon(Icons.add),
-          label: const Text('Buat Order')),
+          label: Text(context.l10n.createOrder)),
       child: AsyncPage(
         value: detail,
         builder: (store) => DefaultTabController(
@@ -39,12 +40,12 @@ class StoreDetailScreen extends ConsumerWidget {
                         'Rating ${store.ratingAvg.toStringAsFixed(1)} - ${store.phoneNumber}${store.verifiedAt != null ? ' - Verified' : ''}'),
                   ]),
             ),
-            const TabBar(tabs: [Tab(text: 'Sparepart'), Tab(text: 'Ulasan')]),
+            TabBar(tabs: [Tab(text: context.l10n.sparepart), Tab(text: context.l10n.reviews)]),
             Expanded(
               child: TabBarView(children: [
                 spareparts.when(
                   data: (items) => items.isEmpty
-                      ? const EmptyMessage('Sparepart belum tersedia.')
+                      ? EmptyMessage(context.l10n.sparepartNotAvailable)
                       : ListView(
                           children: items
                               .map((part) => ListTile(
@@ -52,21 +53,21 @@ class StoreDetailScreen extends ConsumerWidget {
                                   subtitle:
                                       Text('${part.brand} ${part.deviceModel}'),
                                   trailing: Text(part.availableQty <= 0
-                                      ? 'Habis'
+                                      ? context.l10n.outOfStock
                                       : rupiah(part.price))))
                               .toList()),
                   loading: () => const SkeletonList(),
                   error: (_, __) =>
-                      const EmptyMessage('Sparepart gagal dimuat.'),
+                      EmptyMessage(context.l10n.sparepartLoadError),
                 ),
                 store.reviews.isEmpty
-                    ? const EmptyMessage('Belum ada ulasan.')
+                    ? EmptyMessage(context.l10n.noReviews)
                     : ListView(
                         children: store.reviews
                             .map((review) => ListTile(
                                 title: Text('${review.rating}/5'),
                                 subtitle:
-                                    Text(review.comment ?? 'Tanpa komentar')))
+                                    Text(review.comment ?? context.l10n.noComment)))
                             .toList()),
               ]),
             ),

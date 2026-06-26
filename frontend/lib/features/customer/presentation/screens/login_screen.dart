@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
@@ -69,12 +70,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
-                      'Masuk Pelanggan',
+                      context.l10n.customerLogin,
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Gunakan akun yang dikirim admin toko lewat WhatsApp.',
+                      context.l10n.loginSubtitle,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -90,13 +91,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             TextFormField(
                               controller: _phone,
                               keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                labelText: 'Nomor HP',
+                              decoration: InputDecoration(
+                                labelText: context.l10n.phoneNumber,
                                 prefixIcon: Icon(Icons.phone_outlined),
                               ),
                               validator: (value) =>
                                   value == null || value.trim().isEmpty
-                                      ? 'Nomor HP wajib diisi.'
+                                      ? context.l10n.phoneNumberRequired
                                       : null,
                             ),
                             const SizedBox(height: AppSpacing.md),
@@ -104,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               controller: _password,
                               obscureText: _obscure,
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: context.l10n.password,
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
                                   onPressed: () =>
@@ -118,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               validator: (value) =>
                                   value == null || value.isEmpty
-                                      ? 'Password wajib diisi.'
+                                      ? context.l10n.passwordRequired
                                       : null,
                             ),
                             const SizedBox(height: AppSpacing.xl),
@@ -135,7 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text('Masuk'),
+                                    : Text(context.l10n.login),
                               ),
                             ),
                           ],

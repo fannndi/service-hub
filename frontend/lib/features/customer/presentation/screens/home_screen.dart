@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
@@ -21,7 +22,7 @@ class HomeScreen extends ConsumerWidget {
     final scheme = theme.colorScheme;
 
     return CustomerScaffold(
-      title: 'ServisGadget',
+      title: context.l10n.appName,
       actions: [
         Badge(
           isLabelVisible: unread > 0,
@@ -66,14 +67,14 @@ class HomeScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Halo, ${user?.fullName ?? 'Pelanggan'} 👋',
+                            context.l10n.greeting.replaceFirst('{name}', user?.fullName ?? context.l10n.customer),
                             style: theme.textTheme.headlineSmall?.copyWith(
                               color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            'Pantau servis, garansi, dan kupon tanpa chat bolak-balik.',
+                            context.l10n.homeSubtitle,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.85),
                               height: 1.4,
@@ -104,21 +105,21 @@ class HomeScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     _SummaryTile(
-                      label: 'Aktif',
+                      label: context.l10n.active,
                       value: data.activeOrders.toString(),
                       icon: Icons.pending_actions_rounded,
                       color: scheme.primary,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     _SummaryTile(
-                      label: 'Kupon',
+                      label: context.l10n.coupons,
                       value: data.activeCoupons.toString(),
                       icon: Icons.local_offer_rounded,
                       color: scheme.secondary,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     _SummaryTile(
-                      label: 'Garansi',
+                      label: context.l10n.warranty,
                       value: data.activeWarranties.toString(),
                       icon: Icons.verified_rounded,
                       color: scheme.tertiary,
@@ -130,9 +131,9 @@ class HomeScreen extends ConsumerWidget {
                 height: 100,
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (_, __) => const Padding(
+              error: (_, __) => Padding(
                 padding: EdgeInsets.all(AppSpacing.lg),
-                child: Text('Ringkasan belum tersedia.'),
+                child: Text(context.l10n.summaryNotAvailable),
               ),
             ),
             Padding(
@@ -143,7 +144,7 @@ class HomeScreen extends ConsumerWidget {
                     child: FilledButton.icon(
                       onPressed: () => context.push('/stores'),
                       icon: const Icon(Icons.add_task_rounded),
-                      label: const Text('Servis'),
+                      label: Text(context.l10n.service),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -151,7 +152,7 @@ class HomeScreen extends ConsumerWidget {
                     child: OutlinedButton.icon(
                       onPressed: () => context.push('/orders'),
                       icon: const Icon(Icons.receipt_long_outlined),
-                      label: const Text('Pesanan'),
+                      label: Text(context.l10n.orders),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -159,22 +160,22 @@ class HomeScreen extends ConsumerWidget {
                     child: OutlinedButton.icon(
                       onPressed: () => context.push('/coupons'),
                       icon: const Icon(Icons.local_offer_outlined),
-                      label: const Text('Kupon'),
+                      label: Text(context.l10n.coupons),
                     ),
                   ),
                 ],
               ),
             ),
             SectionTitle(
-              'Pesanan Terbaru',
+              context.l10n.recentOrders,
               action: TextButton(
                 onPressed: () => context.push('/orders'),
-                child: const Text('Lihat Semua'),
+                child: Text(context.l10n.viewAll),
               ),
             ),
             recent.when(
               data: (orders) => orders.isEmpty
-                  ? const EmptyMessage('Belum ada pesanan.')
+                  ? EmptyMessage(context.l10n.noOrders)
                   : Column(
                       children: orders
                           .map(
@@ -189,7 +190,7 @@ class HomeScreen extends ConsumerWidget {
               loading: () =>
                   const SizedBox(height: 260, child: SkeletonList(count: 3)),
               error: (_, __) =>
-                  const EmptyMessage('Pesanan belum bisa dimuat.'),
+                  EmptyMessage(context.l10n.ordersLoadError),
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -209,7 +210,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
-                        'Promo bulan ini: cek perangkat lebih cepat dan pantau progres langsung dari aplikasi.',
+                        context.l10n.promoBanner,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/store_admin_providers.dart';
 import '../widgets/store_admin_widgets.dart';
 import '../../../../ui/theme/app_theme.dart';
@@ -15,13 +16,13 @@ class InventoryScreen extends ConsumerWidget {
     final brands = ref.watch(brandsProvider);
 
     return StoreAdminScaffold(
-      title: 'Inventori',
+      title: context.l10n.inventory,
       selectedIndex: 2,
       actions: [
         IconButton(
             onPressed: () => context.go('/store/inventory/new'),
             icon: const Icon(Icons.add),
-            tooltip: 'Tambah sparepart')
+            tooltip: context.l10n.addSparepart)
       ],
       body: Column(children: [
         SizedBox(
@@ -33,8 +34,8 @@ class InventoryScreen extends ConsumerWidget {
               SizedBox(
                 width: 200,
                 child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Cari sparepart...',
+                    decoration: InputDecoration(
+                    hintText: context.l10n.searchSparepartHint,
                     prefixIcon: Icon(Icons.search, size: 18),
                     isDense: true,
                     contentPadding:
@@ -55,12 +56,12 @@ class InventoryScreen extends ConsumerWidget {
                   ),
                   child: DropdownButton<String>(
                     value: query.brand,
-                    hint: const Text('Brand', style: TextStyle(fontSize: 13)),
+                    hint: Text(context.l10n.brand, style: TextStyle(fontSize: 13)),
                     underline: const SizedBox(),
                     isDense: true,
                     icon: const Icon(Icons.expand_more, size: 18),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('Semua Brand'))
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(context.l10n.allBrands))
                     ],
                     onChanged: (v) =>
                         ref.read(inventoryQueryProvider.notifier).state =
@@ -78,21 +79,21 @@ class InventoryScreen extends ConsumerWidget {
                 ),
                 child: DropdownButton<String>(
                   value: query.partType,
-                  hint: const Text('Tipe', style: TextStyle(fontSize: 13)),
+                    hint: Text(context.l10n.type, style: TextStyle(fontSize: 13)),
                   underline: const SizedBox(),
                   isDense: true,
                   icon: const Icon(Icons.expand_more, size: 18),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('Semua Tipe')),
-                    DropdownMenuItem(
-                        value: 'screen_replacement', child: Text('Layar')),
-                    DropdownMenuItem(
-                        value: 'battery_replacement', child: Text('Baterai')),
-                    DropdownMenuItem(
-                        value: 'charging_port', child: Text('Charging Port')),
-                    DropdownMenuItem(value: 'camera', child: Text('Kamera')),
-                    DropdownMenuItem(value: 'other', child: Text('Lainnya')),
-                  ],
+                    items: [
+                      DropdownMenuItem(value: null, child: Text(context.l10n.allTypes)),
+                      DropdownMenuItem(
+                          value: 'screen_replacement', child: Text(context.l10n.screenReplacement)),
+                      DropdownMenuItem(
+                          value: 'battery_replacement', child: Text(context.l10n.batteryReplacement)),
+                      DropdownMenuItem(
+                          value: 'charging_port', child: Text(context.l10n.chargingPort)),
+                      DropdownMenuItem(value: 'camera', child: Text(context.l10n.camera)),
+                      DropdownMenuItem(value: 'other', child: Text(context.l10n.other)),
+                    ],
                   onChanged: (v) => ref
                       .read(inventoryQueryProvider.notifier)
                       .state = query.copyWith(partType: v, page: 1),
@@ -108,7 +109,7 @@ class InventoryScreen extends ConsumerWidget {
                 message: err.toString(),
                 onRetry: () => ref.invalidate(inventoryProvider)),
             data: (page) => page.items.isEmpty
-                ? const Center(child: Text('Belum ada sparepart'))
+                ? Center(child: Text(context.l10n.noSparepartAvailable))
                 : ListView.builder(
                     itemCount: page.items.length,
                     itemBuilder: (context, index) {
@@ -129,7 +130,7 @@ class InventoryScreen extends ConsumerWidget {
                                             fontWeight: FontWeight.w600,
                                             fontSize: 14)),
                                     const SizedBox(height: 2),
-                                    Text(
+                                Text(
                                         '${s.brand} · ${s.deviceModel} · ${s.partTypeLabel}',
                                         style: TextStyle(
                                             color: Colors.grey[600],
@@ -142,7 +143,7 @@ class InventoryScreen extends ConsumerWidget {
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13)),
                                         const SizedBox(width: 12),
-                                        Text('Stok: ${s.availableStock}',
+                                        Text(context.l10n.stockCount.replaceFirst('{count}', '${s.availableStock}'),
                                             style: TextStyle(
                                                 color: s.isLowStock
                                                     ? Colors.red
@@ -152,8 +153,7 @@ class InventoryScreen extends ConsumerWidget {
                                                     ? FontWeight.w700
                                                     : FontWeight.normal)),
                                         if (s.qtyReserved > 0)
-                                          Text(
-                                              ' (${s.qtyReserved} direservasi)',
+                                          Text(context.l10n.reservedCount.replaceFirst('{count}', '${s.qtyReserved}'),
                                               style: TextStyle(
                                                   color: Colors.orange[700],
                                                   fontSize: 11)),

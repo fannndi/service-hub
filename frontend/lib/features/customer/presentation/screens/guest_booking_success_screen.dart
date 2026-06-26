@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
+
 class GuestBookingSuccessScreen extends StatelessWidget {
   const GuestBookingSuccessScreen({
     super.key,
@@ -16,7 +18,7 @@ class GuestBookingSuccessScreen extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Booking Berhasil')),
+      appBar: AppBar(title: Text(context.l10n.bookingSuccess)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -25,13 +27,13 @@ class GuestBookingSuccessScreen extends StatelessWidget {
             const Icon(Icons.check_circle_rounded, size: 80, color: Colors.green),
             const SizedBox(height: 16),
             Text(
-              'Pesanan berhasil dibuat!',
+              context.l10n.orderCreated,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
-              'Simpan nomor pesanan ini untuk cek status.',
+              context.l10n.saveOrderNumber,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
@@ -40,17 +42,17 @@ class GuestBookingSuccessScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: Column(children: [
-                  Text('Nomor Pesanan', style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                  Text(context.l10n.orderNumber, style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
                   const SizedBox(height: 8),
                   SelectableText(orderNumber, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const SizedBox(height: 12),
                   FilledButton.tonalIcon(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: orderNumber));
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nomor pesanan disalin')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.orderNumberCopied)));
                     },
                     icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Salin'),
+                    label: Text(context.l10n.copy),
                   ),
                 ]),
               ),
@@ -65,8 +67,7 @@ class GuestBookingSuccessScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Kamu bisa cek status pesanan kapan saja pakai nomor di atas. '
-                      'Setelah toko menerima perangkat, akun kamu bisa diaktifkan.',
+                      context.l10n.guestInfoMessage,
                       style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
                     ),
                   ),
@@ -77,12 +78,12 @@ class GuestBookingSuccessScreen extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => context.go('/guest/track/$orderNumber'),
               icon: const Icon(Icons.search),
-              label: const Text('Cek Status Pesanan'),
+              label: Text(context.l10n.checkOrderStatus),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => context.go('/welcome'),
-              child: const Text('Kembali ke Beranda'),
+              child: Text(context.l10n.backToHome),
             ),
           ],
         ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../widgets/store_admin_widgets.dart';
@@ -14,14 +15,14 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(dashboardSummaryProvider);
     return StoreAdminScaffold(
-      title: 'Dashboard',
+      title: context.l10n.dashboard,
       selectedIndex: 0,
       actions: [
         IconButton(
             onPressed: () =>
                 ref.read(storeAuthControllerProvider.notifier).logout(),
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout')
+            tooltip: context.l10n.logout)
       ],
       body: summary.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -57,8 +58,8 @@ class DashboardScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  StatusPill(
-                    label: 'Rating ${data.ratingAvg.toStringAsFixed(1)}',
+                    StatusPill(
+                      label: context.l10n.rating + ' ${data.ratingAvg.toStringAsFixed(1)}',
                   ),
                 ],
               ),
@@ -66,38 +67,38 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           MetricGrid(cards: [
             MetricCard(
-                title: 'Revenue',
+                title: context.l10n.revenue,
                 value: money(data.revenueMonth),
-                subtitle: 'Bulan ini',
+                subtitle: context.l10n.thisMonth,
                 icon: Icons.payments_outlined),
             MetricCard(
-                title: 'Orders',
+                title: context.l10n.orders,
                 value: '${data.todayOrders}',
-                subtitle: '${data.activeOrders} aktif',
+                subtitle: context.l10n.activeOrdersCount.replaceFirst('{count}', '${data.activeOrders}'),
                 icon: Icons.receipt_long_outlined,
                 onTap: () => context.go('/store/orders')),
             MetricCard(
-                title: 'Customers',
+                title: context.l10n.customers,
                 value: '${data.customers}',
-                subtitle: 'Profil pelanggan',
+                subtitle: context.l10n.customerProfiles,
                 icon: Icons.groups_outlined,
                 onTap: () => context.go('/store/customers')),
             MetricCard(
-                title: 'Reviews',
+                title: context.l10n.reviews,
                 value: data.ratingAvg.toStringAsFixed(1),
-                subtitle: 'Rata-rata rating',
+                subtitle: context.l10n.averageRating,
                 icon: Icons.star_border,
                 onTap: () => context.go('/store/reviews')),
             MetricCard(
-                title: 'Pending Payment',
+                title: context.l10n.pendingPayment,
                 value: '${data.pendingPayments}',
-                subtitle: 'Butuh verifikasi',
+                subtitle: context.l10n.needsVerification,
                 icon: Icons.fact_check_outlined,
                 onTap: () => context.go('/store/payments')),
             MetricCard(
-                title: 'Active Disputes',
+                title: context.l10n.activeDisputes,
                 value: '${data.activeDisputes}',
-                subtitle: 'Klaim terbuka',
+                subtitle: context.l10n.openClaims,
                 icon: Icons.gavel_outlined,
                 onTap: () => context.go('/store/disputes')),
           ]),
@@ -108,26 +109,26 @@ class DashboardScreen extends ConsumerWidget {
           ]),
           const SizedBox(height: 16),
           SimpleBarChart(
-              title: 'Revenue Trend',
+              title: context.l10n.revenueTrend,
               items: data.revenueTrend
                   .map((e) => CategoryMetric(e.label, e.value))
                   .toList()),
           const SizedBox(height: 12),
           SimpleBarChart(
-              title: 'Service Categories', items: data.serviceCategories),
+              title: context.l10n.serviceCategories, items: data.serviceCategories),
           const SizedBox(height: 12),
           SimpleBarChart(
-              title: 'Sparepart Consumption', items: data.sparepartConsumption),
+              title: context.l10n.sparepartConsumption, items: data.sparepartConsumption),
           const SizedBox(height: 16),
-          Text('Recent Orders', style: Theme.of(context).textTheme.titleMedium),
+          Text(context.l10n.recentOrdersTable, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 10),
           AdminDataTable<StoreOrder>(
             items: data.recentOrders,
-            columns: const [
-              DataColumn(label: Text('Order')),
-              DataColumn(label: Text('Pelanggan')),
+            columns: [
+              DataColumn(label: Text(context.l10n.orders)),
+              DataColumn(label: Text(context.l10n.customer)),
               DataColumn(label: Text('Status')),
-              DataColumn(label: Text('Estimasi'))
+              DataColumn(label: Text(context.l10n.estimate)),
             ],
             cells: (o) => [
               DataCell(Text(o.orderNumber)),

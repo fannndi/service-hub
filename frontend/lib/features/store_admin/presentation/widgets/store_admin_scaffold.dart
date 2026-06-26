@@ -50,6 +50,10 @@ class StoreAdminScaffold extends ConsumerWidget {
             icon: notifIcon,
             onPressed: () => context.push('/store/notifications'),
           ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
         ],
         leading: showBackButton
             ? IconButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
@@ -42,29 +43,29 @@ class _DiagnosisApprovalCardState extends ConsumerState<DiagnosisApprovalCard> {
           padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Hasil Diagnosa',
-                style: TextStyle(fontWeight: FontWeight.w900)),
+            Text(context.l10n.diagnosisResult,
+                style: const TextStyle(fontWeight: FontWeight.w900)),
             if (widget.order.diagnosisNote != null)
               Text(widget.order.diagnosisNote!),
             const SizedBox(height: 8),
             ...widget.order.items.map((item) => Text(
                 '${item.serviceType}: ${rupiah(item.finalItemPrice ?? item.itemPrice)}')),
             if (widget.order.serviceFee != null)
-              Text('Service Fee: ${rupiah(widget.order.serviceFee!)}'),
+              Text(context.l10n.serviceFee.replaceFirst('{price}', rupiah(widget.order.serviceFee!))),
             const Divider(),
-            Text('Total: ${rupiah(widget.order.finalPrice ?? 0)}',
+            Text(context.l10n.total.replaceFirst('{price}', rupiah(widget.order.finalPrice ?? 0)),
                 style: const TextStyle(fontWeight: FontWeight.w900)),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
                   child: FilledButton(
                       onPressed: _loading ? null : () => _approve(true),
-                      child: const Text('Setuju'))),
+                      child: Text(context.l10n.approve))),
               const SizedBox(width: 8),
               Expanded(
                   child: OutlinedButton(
                       onPressed: _loading ? null : () => _approve(false),
-                      child: const Text('Tolak'))),
+                      child: Text(context.l10n.reject))),
             ]),
           ]),
         ),

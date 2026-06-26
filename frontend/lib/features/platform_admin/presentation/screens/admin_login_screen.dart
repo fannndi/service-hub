@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/platform_admin_providers.dart';
 import '../../../../ui/theme/app_decorations.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_theme.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../../../ui/widgets/servis_snackbar.dart';
@@ -31,7 +32,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       context.go('/admin/dashboard');
     } catch (_) {
       if (mounted) {
-        showServisSnackbar(context, 'Username atau password salah.', type: SnackbarType.error);
+        showServisSnackbar(context, context.l10n.invalidCredentials, type: SnackbarType.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -59,23 +60,23 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           size: 40, color: AppColors.primary),
                     ),
                     const SizedBox(height: 16),
-                    Text('Admin Platform',
+                    Text(context.l10n.platformAdmin,
                         style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 4),
-                    Text('Kelola toko dan pelanggan',
+                    Text(context.l10n.adminLoginSubtitle,
                         style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 24),
                   TextField(
                     controller: _username,
-                    decoration: const InputDecoration(
-                        labelText: 'Username', prefixIcon: Icon(Icons.person)),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.username, prefixIcon: const Icon(Icons.person)),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _password,
                     obscureText: _obscure,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: context.l10n.password,
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -95,7 +96,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
-                          : const Text('Masuk'),
+                          : Text(context.l10n.login),
                     ),
                   ),
                 ]),

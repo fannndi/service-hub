@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
@@ -15,7 +16,7 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final orderValue = ref.watch(orderDetailProvider(orderId));
     return CustomerScaffold(
-      title: 'Detail Pesanan',
+      title: context.l10n.orderDetail,
       child: AsyncPage(
         value: orderValue,
         builder: (order) => RefreshIndicator(
@@ -31,26 +32,26 @@ class OrderDetailScreen extends ConsumerWidget {
               StatusPill(order.status)
             ]),
             const SizedBox(height: 16),
-            _InfoCard(title: 'Perangkat', rows: {
-              'Brand': order.brand,
-              'Model': order.deviceModel,
-              'Jenis': order.deviceType,
-              'Pengiriman': order.deliveryMethod,
+            _InfoCard(title: context.l10n.device, rows: {
+              context.l10n.brand: order.brand,
+              context.l10n.model: order.deviceModel,
+              context.l10n.type: order.deviceType,
+              context.l10n.delivery: order.deliveryMethod,
               if (order.deliveryAddress != null)
-                'Alamat': order.deliveryAddress!
+                context.l10n.address: order.deliveryAddress!
             }),
-            _InfoCard(title: 'Toko', rows: {
-              'Nama': order.storeName ?? '-',
-              'Alamat': order.storeAddress ?? '-',
-              'Telepon': order.storePhone ?? '-'
+            _InfoCard(title: context.l10n.store, rows: {
+              context.l10n.name: order.storeName ?? '-',
+              context.l10n.address: order.storeAddress ?? '-',
+              context.l10n.phone: order.storePhone ?? '-'
             }),
-            _InfoCard(title: 'Harga', rows: {
-              'Estimasi': rupiah(order.totalEstimasi),
+            _InfoCard(title: context.l10n.price, rows: {
+              context.l10n.estimate: rupiah(order.totalEstimasi),
               if (order.discountAmount > 0)
-                'Diskon': '-${rupiah(order.discountAmount)}',
-              if (order.finalPrice != null) 'Final': rupiah(order.finalPrice!)
+                context.l10n.discount: '-${rupiah(order.discountAmount)}',
+              if (order.finalPrice != null) context.l10n.finalPrice: rupiah(order.finalPrice!)
             }),
-            const SectionTitle('Item Order'),
+            SectionTitle(context.l10n.orderItem),
             ...order.items.map((item) => ListTile(
                 title: Text(item.serviceType),
                 subtitle: Text(item.complaint),
@@ -59,18 +60,18 @@ class OrderDetailScreen extends ConsumerWidget {
               Card(
                   child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text(
-                          'Batas waktu: ${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(order.slaDeadline!)}'))),
+                      child: Text(context.l10n.deadline.replaceFirst('{date}',
+                          DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(order.slaDeadline!))))),
             if (order.status == OrderStatus.waitingApproval)
               DiagnosisApprovalCard(order: order),
-            const SectionTitle('Tracking', action: null),
+            SectionTitle(context.l10n.tracking, action: null),
             OrderStatusTimeline(entries: order.tracking.take(3).toList()),
             TextButton(
                 onPressed: () => context.push('/orders/$orderId/tracking'),
-                child: const Text('Lihat Semua Tracking')),
-            const SectionTitle('Pembayaran'),
+                child: Text(context.l10n.viewAllTracking)),
+            SectionTitle(context.l10n.payment),
             if (order.payments.isEmpty)
-              const Text('Belum ada pembayaran.')
+              Text(context.l10n.noPayment)
             else
               ...order.payments.map((p) => ListTile(
                   title: Text(rupiah(p.amount)),
@@ -92,12 +93,12 @@ class _OrderActions extends StatelessWidget {
           FilledButton.icon(
               onPressed: () => context.push('/orders/${order.id}/payment'),
               icon: const Icon(Icons.payment),
-              label: const Text('Upload Bukti Bayar')),
+              label: Text(context.l10n.uploadPaymentProof)),
         if (order.status == OrderStatus.completed && !order.reviewed)
           FilledButton.icon(
               onPressed: () => context.push('/orders/${order.id}/review'),
               icon: const Icon(Icons.star),
-              label: const Text('Beri Ulasan')),
+              label: Text(context.l10n.giveReview)),
         if (order.status == OrderStatus.completed &&
             order.warrantyExpiredAt != null &&
             DateTime.now().isBefore(order.warrantyExpiredAt!))
@@ -105,7 +106,7 @@ class _OrderActions extends StatelessWidget {
               onPressed: () =>
                   context.push('/orders/${order.id}/warranty-claim'),
               icon: const Icon(Icons.shield),
-              label: const Text('Klaim Garansi')),
+              label: Text(context.l10n.claimWarranty)),
       ]);
 }
 
