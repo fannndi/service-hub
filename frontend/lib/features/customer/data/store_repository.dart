@@ -20,7 +20,30 @@ class StoreDiscoveryRepository {
       id, store_name, address, phone_number, rating_avg,
       spareparts!inner(brand, device_model, part_type, part_name, price, qty, qty_reserved)
     ''').eq('is_active', true).eq('spareparts.brand', brand).eq('spareparts.device_model', deviceModel).eq('spareparts.part_type', partType);
-    return data.map((json) => StoreMatchResult.fromJson(json)).toList();
+    final results = data.map((json) => StoreMatchResult.fromJson(json)).toList();
+    return _dedupeStores(results);
+  }
+
+  List<StoreMatchResult> _dedupeStores(List<StoreMatchResult> stores) {
+    final map = <String, StoreMatchResult>{};
+    for (final store in stores) {
+      final existing = map[store.storeId];
+      if (existing != null) {
+        map[store.storeId] = StoreMatchResult(
+          storeId: store.storeId,
+          storeName: store.storeName,
+          address: store.address,
+          phoneNumber: store.phoneNumber,
+          ratingAvg: store.ratingAvg,
+          totalCompleted: store.totalCompleted,
+          spareparts: [...existing.spareparts, ...store.spareparts],
+          estimatedCost: store.estimatedCost,
+        );
+      } else {
+        map[store.storeId] = store;
+      }
+    }
+    return map.values.toList();
   }
 
   Future<ServiceStore> getDetail(String storeId) async {

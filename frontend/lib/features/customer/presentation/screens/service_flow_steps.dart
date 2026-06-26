@@ -64,15 +64,15 @@ class Step1Widget extends ConsumerWidget {
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 24),
         SegmentedButton<String>(
-          segments: const [
+          segments: [
             ButtonSegment(
                 value: 'android',
-                label: Text('Android'),
-                icon: Icon(Icons.android)),
+                label: Text(context.l10n.android),
+                icon: const Icon(Icons.android)),
             ButtonSegment(
                 value: 'ios',
-                label: Text('iPhone / iOS'),
-                icon: Icon(Icons.phone_iphone)),
+                label: Text(context.l10n.iphoneIos),
+                icon: const Icon(Icons.phone_iphone)),
           ],
           selected: {state.deviceType},
           onSelectionChanged: (v) {
@@ -266,7 +266,7 @@ class _Step3WidgetState extends State<Step3Widget> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Pilih Toko Mitra', style: theme.textTheme.titleLarge),
+        Text(context.l10n.selectPartnerStore, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
         Text(
             '${state.matchedStores.length} toko tersedia untuk perangkat kamu.',
@@ -283,7 +283,7 @@ class _Step3WidgetState extends State<Step3Widget> {
                   Icon(Icons.check_circle, color: theme.colorScheme.primary),
               title: Text(state.selectedPartName ?? 'Sparepart dipilih',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text('Harga: ${formatRupiah(state.selectedPartPrice)}'),
+              subtitle: Text(context.l10n.priceEstimate.replaceFirst('{price}', formatRupiah(state.selectedPartPrice))),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
@@ -342,14 +342,14 @@ class _Step3WidgetState extends State<Step3Widget> {
                                 overflow: TextOverflow.ellipsis)),
                       ]),
                       const SizedBox(height: 8),
-                      Text('${store.totalCompleted} servis selesai',
+                      Text(context.l10n.completedServicesCount.replaceFirst('{count}', store.totalCompleted.toString()),
                           style: theme.textTheme.labelSmall
                               ?.copyWith(color: theme.colorScheme.tertiary)),
 
                       // Spareparts — tappable
                       if (store.spareparts.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        Text('Sparepart Tersedia',
+                        Text(context.l10n.availableSparepart,
                             style: theme.textTheme.labelMedium
                                 ?.copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
@@ -359,11 +359,11 @@ class _Step3WidgetState extends State<Step3Widget> {
                             onTap: sp.status != 'available'
                                 ? null
                                 : () {
+                                    widget.onSelectStore(store);
                                     setState(() {
                                       state.selectedPartId = sp.id;
                                       state.selectedPartName = sp.partName;
                                       state.selectedPartPrice = sp.price;
-                                      // Set estimate cost to sparepart price
                                       state.estimateCost = sp.price;
                                     });
                                   },
@@ -454,18 +454,18 @@ class Step4Widget extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Data Diri & Pengiriman', style: theme.textTheme.titleLarge),
+        Text(context.l10n.personalDataAndDelivery, style: theme.textTheme.titleLarge),
         const SizedBox(height: 24),
         SegmentedButton<String>(
-          segments: const [
+          segments: [
             ButtonSegment(
                 value: 'walk_in',
-                label: Text('Antar ke Toko'),
-                icon: Icon(Icons.store)),
+                label: Text(context.l10n.dropOffToStore),
+                icon: const Icon(Icons.store)),
             ButtonSegment(
                 value: 'courier_pickup',
-                label: Text('Pickup Kurir'),
-                icon: Icon(Icons.local_shipping)),
+                label: Text(context.l10n.courierPickup),
+                icon: const Icon(Icons.local_shipping)),
           ],
           selected: {state.delivery},
           onSelectionChanged: (v) {
@@ -551,7 +551,7 @@ class Step5Widget extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Konfirmasi Booking', style: theme.textTheme.titleLarge),
+        Text(context.l10n.bookingConfirmation, style: theme.textTheme.titleLarge),
         const SizedBox(height: 16),
         Card(
           child: Padding(
@@ -590,7 +590,7 @@ class Step5Widget extends StatelessWidget {
                       : 'Pickup Kurir'),
               const Divider(height: 24),
               Row(children: [
-                Text('Estimasi Biaya',
+                Text(context.l10n.costEstimate,
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold)),
                 const Spacer(),
