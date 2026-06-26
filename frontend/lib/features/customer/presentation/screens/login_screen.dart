@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -47,104 +47,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      body: GradientBackground(
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: AppDecorations.iconBadge(
-                        scheme.primaryContainer,
-                      ),
-                      child: Icon(
-                        Icons.handyman_rounded,
-                        size: 32,
-                        color: scheme.primary,
-                      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: AppSpacing.xxl),
+                  Container(
+                    width: 80, height: 80,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      context.l10n.customerLogin,
-                      style: theme.textTheme.headlineSmall,
+                    child: Icon(Icons.handyman_rounded, size: 40, color: scheme.primary),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    context.l10n.customerLogin,
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    context.l10n.loginSubtitle,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      context.l10n.loginSubtitle,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    ModernCard(
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextFormField(
-                              controller: _phone,
-                              keyboardType: TextInputType.phone,
-                              decoration: InputDecoration(
-                                labelText: context.l10n.phoneNumber,
-                                prefixIcon: Icon(Icons.phone_outlined),
-                              ),
-                              validator: (value) =>
-                                  value == null || value.trim().isEmpty
-                                      ? context.l10n.phoneNumberRequired
-                                      : null,
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  ModernCard(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextFormField(
+                            controller: _phone,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.phoneNumber,
+                              prefixIcon: Icon(Icons.phone_outlined),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            TextFormField(
-                              controller: _password,
-                              obscureText: _obscure,
-                              decoration: InputDecoration(
-                                labelText: context.l10n.password,
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  onPressed: () =>
-                                      setState(() => _obscure = !_obscure),
-                                  icon: Icon(
-                                    _obscure
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? context.l10n.phoneNumberRequired
+                                    : null,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          TextFormField(
+                            controller: _password,
+                            obscureText: _obscure,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.password,
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
                                 ),
                               ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? context.l10n.passwordRequired
-                                      : null,
                             ),
-                            const SizedBox(height: AppSpacing.xl),
-                            SizedBox(
-                              height: 50,
-                              child: FilledButton(
-                                onPressed: _loading ? null : _submit,
-                                child: _loading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(context.l10n.login),
-                              ),
+                            validator: (value) =>
+                                value == null || value.isEmpty
+                                    ? context.l10n.passwordRequired
+                                    : null,
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          SizedBox(
+                            height: 56,
+                            child: FilledButton(
+                              onPressed: _loading ? null : _submit,
+                              child: _loading
+                                ? M3LoadingIndicator(size: 20, color: Colors.white)
+                                : Text(context.l10n.login, style: theme.textTheme.labelLarge),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                ],
               ),
             ),
           ),

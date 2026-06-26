@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../ui/widgets/modern_card.dart';
-
 class CustomerScaffold extends StatelessWidget {
   const CustomerScaffold({
     super.key,
@@ -46,7 +44,7 @@ class CustomerScaffold extends StatelessWidget {
             : null,
         leadingWidth: showBackButton ? 56 : null,
       ),
-      body: GradientBackground(child: child),
+      body: child,
       floatingActionButton: floatingActionButton,
     );
   }

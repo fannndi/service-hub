@@ -5,6 +5,7 @@ import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class CustomersScreen extends ConsumerWidget {
   const CustomersScreen({super.key});
@@ -14,7 +15,7 @@ class CustomersScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.customerManagement)),
       body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
         data: (items) {
           final profiles = items

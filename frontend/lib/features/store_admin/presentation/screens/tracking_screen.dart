@@ -5,6 +5,7 @@ import '../../application/order_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class TrackingScreen extends ConsumerStatefulWidget {
   const TrackingScreen({super.key, required this.orderId});
@@ -68,7 +69,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
               ),
               const SizedBox(height: 16),
               if (snapshot.connectionState == ConnectionState.waiting)
-                const Center(child: CircularProgressIndicator()),
+                const Center(child: M3LoadingIndicator()),
               for (final event in events)
                 ListTile(
                     leading: const Icon(Icons.check_circle_outline),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'empty_panel.dart';
 import 'error_panel.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class AsyncPage<T> extends StatelessWidget {
   const AsyncPage({super.key, required this.value, required this.builder});
@@ -10,7 +11,7 @@ class AsyncPage<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (value.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: M3LoadingIndicator());
     }
     if (value.hasError) return ErrorPanel(message: value.error.toString());
     final data = value.data;

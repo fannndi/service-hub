@@ -5,6 +5,7 @@ import '../../domain/store_admin_models.dart';
 import 'admin_data_table.dart';
 import 'error_panel.dart';
 import 'store_admin_scaffold.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class PagedTableScreen<T> extends StatelessWidget {
   const PagedTableScreen(
@@ -26,7 +27,7 @@ class PagedTableScreen<T> extends StatelessWidget {
         title: title,
         selectedIndex: selectedIndex,
         body: value.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: M3LoadingIndicator()),
             error: (e, _) => ErrorPanel(message: e.toString()),
             data: (page) => AdminDataTable<T>(
                 items: page.items,

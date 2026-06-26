@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class StoreRegisterScreen extends StatefulWidget {
   const StoreRegisterScreen({super.key});
@@ -61,17 +63,17 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
         const SizedBox(height: 12),
         TextField(controller: _address, maxLines: 2, decoration: const InputDecoration(labelText: 'Alamat', prefixIcon: Icon(Icons.location_on), alignLabelWithHint: true)),
         const SizedBox(height: 12),
-        TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP Toko', prefixIcon: Icon(Icons.phone), prefixText: '08')),
+        TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'No HP Toko', prefixIcon: Icon(Icons.phone))),
         const SizedBox(height: 12),
         TextField(controller: _adminName, decoration: const InputDecoration(labelText: 'Nama Admin', prefixIcon: Icon(Icons.person))),
         const SizedBox(height: 12),
-        TextField(controller: _adminPhone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'No HP Admin (login)', prefixIcon: Icon(Icons.phone_android), prefixText: '08')),
+        TextField(controller: _adminPhone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'No HP Admin (login)', prefixIcon: Icon(Icons.phone_android))),
         const SizedBox(height: 24),
         if (_message != null)
           Padding(padding: const EdgeInsets.only(bottom: 16), child: Text(_message!, style: TextStyle(color: _message!.contains('berhasil') ? Colors.green : Colors.red, fontWeight: FontWeight.w600))),
         FilledButton.icon(
           onPressed: _loading ? null : _submit,
-          icon: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send),
+          icon: _loading ? SizedBox(width: 18, height: 18, child: M3LoadingIndicator(size: 20, color: Colors.white)) : const Icon(Icons.send),
           label: Text(_loading ? 'Mengirim...' : 'Kirim Pendaftaran'),
         ),
       ]),

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../widgets/customer_widgets.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 class BookingSuccessScreen extends StatelessWidget {
   const BookingSuccessScreen(
@@ -28,11 +30,10 @@ class BookingSuccessScreen extends StatelessWidget {
               textAlign: TextAlign.center),
           if (isNewCustomer)
             Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Card(
-                    child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(context.l10n.whatsappInfoMessage)))),
+                padding: EdgeInsets.only(top: AppSpacing.md),
+                child: ModernCard(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Text(context.l10n.whatsappInfoMessage))),
           const SizedBox(height: 24),
           FilledButton(
               onPressed: () => context.go('/orders'),

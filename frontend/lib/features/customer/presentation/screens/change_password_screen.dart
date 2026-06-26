@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -45,13 +48,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.md),
             children: [
               Material(
-                  color: Colors.amber.withValues(alpha: 0.18),
+                  color: Theme.of(context).colorScheme.tertiaryContainer,
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(AppSpacing.md),
                       child: Text(context.l10n.changeTempPasswordMessage))),
               const SizedBox(height: 16),
               TextFormField(
@@ -87,7 +90,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               FilledButton(
                   onPressed: _loading ? null : _submit,
                   child: _loading
-                      ? const CircularProgressIndicator()
+                        ? M3LoadingIndicator(size: 20, color: Colors.white)
                       : Text(context.l10n.savePassword)),
             ],
           ),

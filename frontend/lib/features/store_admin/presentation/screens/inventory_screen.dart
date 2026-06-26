@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/store_admin_providers.dart';
 import '../widgets/store_admin_widgets.dart';
-import '../../../../ui/theme/app_theme.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
@@ -14,6 +16,7 @@ class InventoryScreen extends ConsumerWidget {
     final data = ref.watch(inventoryProvider);
     final query = ref.watch(inventoryQueryProvider);
     final brands = ref.watch(brandsProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return StoreAdminScaffold(
       title: context.l10n.inventory,
@@ -51,7 +54,7 @@ class InventoryScreen extends ConsumerWidget {
                 data: (list) => Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: scheme.outlineVariant),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButton<String>(
@@ -74,7 +77,7 @@ class InventoryScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: scheme.outlineVariant),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButton<String>(
@@ -104,7 +107,7 @@ class InventoryScreen extends ConsumerWidget {
         ),
         Expanded(
           child: data.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: M3LoadingIndicator()),
             error: (err, _) => ErrorPanel(
                 message: err.toString(),
                 onRetry: () => ref.invalidate(inventoryProvider)),
@@ -114,10 +117,9 @@ class InventoryScreen extends ConsumerWidget {
                     itemCount: page.items.length,
                     itemBuilder: (context, index) {
                       final s = page.items[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        child: Padding(
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: ModernCard(
                           padding: const EdgeInsets.all(12),
                           child: Row(
                             children: [

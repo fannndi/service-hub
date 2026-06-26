@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import 'empty_panel.dart';
 
 class AdminDataTable<T> extends StatelessWidget {
@@ -19,7 +20,8 @@ class AdminDataTable<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) return EmptyPanel(message: emptyText);
-    return Card(
+    return ModernCard(
+      padding: EdgeInsets.zero,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(

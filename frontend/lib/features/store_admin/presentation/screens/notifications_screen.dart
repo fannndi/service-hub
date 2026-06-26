@@ -6,6 +6,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_notification_models.dart';
 import '../widgets/store_admin_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -29,7 +30,7 @@ class NotificationsScreen extends ConsumerWidget {
         ],
       ),
       body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
         data: (page) {
           final items = page

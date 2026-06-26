@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../application/customer_providers.dart';
 import '../widgets/customer_widgets.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class StoreListScreen extends ConsumerStatefulWidget {
   const StoreListScreen({super.key});
@@ -15,58 +17,73 @@ class StoreListScreen extends ConsumerStatefulWidget {
 class _StoreListScreenState extends ConsumerState<StoreListScreen> {
   String _brand = 'All';
   final _model = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final deviceModels = ref.watch(deviceModelsProvider);
     final brands = deviceModels.valueOrNull
-            ?.map((group) => group.brand)
-            .toSet()
-            .toList() ??
+        ?.map((group) => group.brand)
+        .toSet()
+        .toList() ??
         const <String>[];
     brands.sort();
-    final stores =
-        ref.watch(storeListProvider((brand: _brand, model: _model.text)));
+    final stores = ref.watch(storeListProvider((brand: _brand, model: _model.text)));
+
     return CustomerScaffold(
       title: context.l10n.selectStore,
       child: Column(children: [
-        SizedBox(
-          height: 54,
-          child: ListView(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+          child: SizedBox(
+            height: 48,
+            child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: ['All', ...brands]
-                  .map((brand) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 8),
-                        child: FilterChip(
-                            label: Text(brand),
-                            selected: _brand == brand,
-                            onSelected: (_) => setState(() => _brand = brand)),
-                      ))
-                  .toList()),
+              padding: EdgeInsets.zero,
+              children: [
+                SegmentedButton<String>(
+                  segments: ['All', ...brands].map((brand) =>
+                    ButtonSegment(value: brand, label: Text(brand, style: const TextStyle(fontSize: 12)))
+                  ).toList(),
+                  selected: {_brand},
+                  onSelectionChanged: (v) => setState(() => _brand = v.first),
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
           child: TextField(
-              controller: _model,
-                  decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: context.l10n.searchDeviceModelHint,
-                  border: const OutlineInputBorder()),
-              onSubmitted: (_) => setState(() {})),
+            controller: _model,
+            decoration: InputDecoration(
+              hintText: context.l10n.searchDeviceModelHint,
+              prefixIcon: Icon(Icons.search, size: 20),
+              isDense: true,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
         ),
         Expanded(
-            child: AsyncPage(
-                value: stores,
-                builder: (items) => items.isEmpty
-                    ? EmptyMessage(context.l10n.storeNotFound)
-                    : ListView(
-                        children: items
-                            .map((store) => StoreCard(
-                                store: store,
-                                onTap: () =>
-                                    context.push('/stores/${store.id}')))
-                            .toList()))),
+          child: stores.when(
+            data: (list) => list.isEmpty
+                ? EmptyMessage(context.l10n.noStores)
+                : ListView(
+                    children: list
+                        .map((store) => StoreCard(
+                              store: store,
+                              onTap: () => context.push('/stores/${store.id}'),
+                            ))
+                        .toList(),
+                  ),
+            loading: () => const Center(child: M3LoadingIndicator()),
+            error: (_, __) => EmptyMessage(context.l10n.noStores),
+          ),
+        ),
       ]),
     );
   }

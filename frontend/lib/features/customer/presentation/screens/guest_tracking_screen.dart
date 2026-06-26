@@ -6,7 +6,10 @@ import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../shared_widgets/status_badge.dart';
 import '../../domain/models/tracking_entry.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../widgets/customer_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class GuestTrackingScreen extends StatefulWidget {
   const GuestTrackingScreen({super.key, this.initialOrderNumber});
@@ -85,17 +88,16 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
                 labelText: context.l10n.whatsappNumber,
-                prefixText: '08',
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 48,
+              height: 56,
               child: FilledButton.icon(
                 onPressed: _loading ? null : _track,
                 icon: _loading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? SizedBox(width: 18, height: 18, child: M3LoadingIndicator(size: 20, color: Colors.white))
                     : const Icon(Icons.search),
                 label: Text(_loading ? context.l10n.searching : context.l10n.checkOrderButton),
               ),
@@ -125,19 +127,17 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     final rawTracking = (_result!['tracking'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(child: Text('Nomor Pesanan ${_result!['order_number'] as String? ?? ''}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
-                StatusBadge(label: status.label),
-              ]),
-              const SizedBox(height: 8),
-              Text('${_result!['brand']} ${_result!['device_model']}', style: theme.textTheme.bodyMedium),
-              Text(_result!['store_name'] as String? ?? '', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        ModernCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text('Nomor Pesanan ${_result!['order_number'] as String? ?? ''}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
+              StatusBadge(label: status.label),
             ]),
-          ),
+            const SizedBox(height: 8),
+            Text('${_result!['brand']} ${_result!['device_model']}', style: theme.textTheme.bodyMedium),
+            Text(_result!['store_name'] as String? ?? '', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ]),
         ),
       if (rawTracking.isNotEmpty) ...[
         const SizedBox(height: 16),
@@ -172,22 +172,20 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
       ],
       if (isActivated) ...[
         const SizedBox(height: 24),
-        Card(
+        ModernCard(
+          padding: const EdgeInsets.all(16),
           color: Colors.green.shade50,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.green),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(context.l10n.accountActive, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: Colors.green.shade800)),
-                  const SizedBox(height: 4),
-                  Text(context.l10n.accountActiveMessage, style: theme.textTheme.bodySmall),
-                ]),
-              ),
-            ]),
-          ),
+          child: Row(children: [
+            const Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(context.l10n.accountActive, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: Colors.green.shade800)),
+                const SizedBox(height: 4),
+                Text(context.l10n.accountActiveMessage, style: theme.textTheme.bodySmall),
+              ]),
+            ),
+          ]),
         ),
         const SizedBox(height: 12),
         FilledButton(onPressed: () => context.go('/login'), child: Text(context.l10n.loginNow)),
@@ -218,36 +216,34 @@ class _CredentialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
-    return Card(
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
       color: canActivate ? Colors.green.shade50 : null,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(canActivate ? Icons.check_circle : Icons.access_time, color: canActivate ? Colors.green : Colors.orange, size: 22),
-            const SizedBox(width: 8),
-            Text(context.l10n.servisGadgetAccount, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-          ]),
-          const SizedBox(height: 16),
-                  _row(context.l10n.name, fullName),
-          _row(context.l10n.username, phoneNumber),
-          _row(context.l10n.password, maskedPassword),
-          const SizedBox(height: 16),
-          if (canActivate)
-            FilledButton.icon(
-              onPressed: onActivate,
-              icon: const Icon(Icons.login, size: 18),
-              label: Text(context.l10n.linkAccount),
-              style: FilledButton.styleFrom(backgroundColor: Colors.green.shade700),
-            )
-          else
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(context.l10n.waitingForStore, style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade700)),
-                const SizedBox(height: 4),
-                Text(context.l10n.waitingForActivationMessage, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
-              ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(canActivate ? Icons.check_circle : Icons.access_time, color: canActivate ? Colors.green : Colors.orange, size: 22),
+          const SizedBox(width: 8),
+          Text(context.l10n.servisGadgetAccount, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
         ]),
-      ),
+        const SizedBox(height: 16),
+        _row(context.l10n.name, fullName),
+        _row(context.l10n.username, phoneNumber),
+        _row(context.l10n.password, maskedPassword),
+        const SizedBox(height: 16),
+        if (canActivate)
+          FilledButton.icon(
+            onPressed: onActivate,
+            icon: const Icon(Icons.login, size: 18),
+            label: Text(context.l10n.linkAccount),
+            style: FilledButton.styleFrom(backgroundColor: Colors.green.shade700),
+          )
+        else
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(context.l10n.waitingForStore, style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade700)),
+            const SizedBox(height: 4),
+            Text(context.l10n.waitingForActivationMessage, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+          ]),
+      ]),
     );
   }
 

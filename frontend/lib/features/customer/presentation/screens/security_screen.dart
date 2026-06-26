@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/user_session.dart';
 import '../widgets/customer_widgets.dart';
@@ -19,9 +21,9 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     return CustomerScaffold(
       title: context.l10n.security,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.md),
         children: [
-          Card(
+          ModernCard(
             child: ListTile(
               leading: const Icon(Icons.lock),
               title: Text(context.l10n.changePassword),
@@ -31,7 +33,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Card(
+          ModernCard(
             child: FutureBuilder<List<dynamic>>(
               future: ref.read(sessionRepositoryProvider).getSessions(),
               builder: (context, snapshot) {
@@ -50,7 +52,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Card(
+          ModernCard(
             child: ListTile(
               leading: const Icon(Icons.phone),
               title: Text(context.l10n.phoneNumber),

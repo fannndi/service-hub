@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
@@ -48,7 +49,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                       onPressed: () => setState(() => _rating = index + 1),
                       icon: Icon(
                           index < _rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber)))),
+                          color: Theme.of(context).colorScheme.tertiary)))),
           Text(
               [
                 '',

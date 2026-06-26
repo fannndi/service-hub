@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../domain/address_models.dart';
 import '../data/address_repository.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class AddressDropdowns extends StatefulWidget {
   final bool enabled;
@@ -121,7 +122,7 @@ class AddressDropdownsState extends State<AddressDropdowns> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: M3LoadingIndicator());
     }
 
     return Column(

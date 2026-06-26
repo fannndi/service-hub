@@ -6,10 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/supabase_service.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class PaymentUploadScreen extends ConsumerStatefulWidget {
   const PaymentUploadScreen({super.key, required this.orderId});
@@ -111,7 +114,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
           if (_amount.text.isEmpty) {
             _amount.text = due.clamp(0, double.infinity).toStringAsFixed(0);
           }
-          return ListView(padding: const EdgeInsets.all(16), children: [
+          return ListView(padding: EdgeInsets.all(AppSpacing.md), children: [
             _InfoCard(title: context.l10n.invoice, rows: {
               'Order': order.orderNumber,
               'Final': rupiah(order.finalPrice ?? order.totalEstimasi),
@@ -151,7 +154,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
                   keyboardType: TextInputType.number,
                   decoration:
                       InputDecoration(labelText: context.l10n.amount)),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
               OutlinedButton.icon(
                   onPressed: () async => setState(() => _file = null),
                   icon: const Icon(Icons.delete_outline),
@@ -169,40 +172,38 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
               if (_file != null) Text(context.l10n.selectedFile.replaceFirst('{file}', _file!.name)),
               if (_progress > 0 && _progress < 1)
                 LinearProgressIndicator(value: _progress),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               FilledButton(
                   onPressed: _loading ? null : () => _submit(order),
                   child: Text(_loading ? context.l10n.sending : context.l10n.submitPayment)),
             ] else ...[
               const SizedBox(height: 20),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(children: [
-                    const Icon(Icons.payment, size: 48),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.l10n.payWithMidtrans,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.l10n.midtransMethods,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _loading ? null : () => _payWithMidtrans(order),
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.open_in_browser),
-                      label: Text(_loading ? context.l10n.processing : context.l10n.payViaMidtrans),
-                    ),
-                  ]),
-                ),
+              ModernCard(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Column(children: [
+                  const Icon(Icons.payment, size: 48),
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    context.l10n.payWithMidtrans,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.l10n.midtransMethods,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _loading ? null : () => _payWithMidtrans(order),
+                    icon: _loading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: M3LoadingIndicator(size: 20))
+                        : const Icon(Icons.open_in_browser),
+                    label: Text(_loading ? context.l10n.processing : context.l10n.payViaMidtrans),
+                  ),
+                ]),
               ),
             ],
           ]);
@@ -216,26 +217,29 @@ class _InfoCard extends StatelessWidget {
   const _InfoCard({required this.title, required this.rows});
   final String title;
   final Map<String, String> rows;
+
   @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            ...rows.entries.map((row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 94, child: Text(row.key)),
-                      Expanded(
-                          child: Text(row.value,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600)))
-                    ]))),
-          ]),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ModernCard(
+      padding: EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+          SizedBox(height: AppSpacing.xs),
+          ...rows.entries.map((row) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 94, child: Text(row.key)),
+                Expanded(child: Text(row.value, style: const TextStyle(fontWeight: FontWeight.w600))),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
 }

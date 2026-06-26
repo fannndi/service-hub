@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
-import '../../../../ui/widgets/modern_card.dart';
 import '../../application/store_admin_providers.dart';
 
 class StoreAdminScaffold extends ConsumerWidget {
@@ -68,32 +66,29 @@ class StoreAdminScaffold extends ConsumerWidget {
           : Drawer(
               child: SafeArea(child: _NavList(selectedIndex: selectedIndex)),
             ),
-      body: GradientBackground(
-        child: Row(
-          children: [
-            if (wide)
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  boxShadow: AppShadows.card(context),
-                ),
-                child: NavigationRail(
-                  extended: MediaQuery.sizeOf(context).width >= 1200,
-                  selectedIndex: selectedIndex,
-                  destinations: [
-                    for (final item in destinations)
-                      NavigationRailDestination(
-                        icon: Icon(item.$2),
-                        label: Text(item.$1),
-                      )
-                  ],
-                  onDestinationSelected: (index) =>
-                      context.go(destinations[index].$3),
-                ),
+      body: Row(
+        children: [
+          if (wide)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surface,
               ),
-            Expanded(child: body),
-          ],
-        ),
+              child: NavigationRail(
+                extended: MediaQuery.sizeOf(context).width >= 1200,
+                selectedIndex: selectedIndex,
+                destinations: [
+                  for (final item in destinations)
+                    NavigationRailDestination(
+                      icon: Icon(item.$2),
+                      label: Text(item.$1),
+                    )
+                ],
+                onDestinationSelected: (index) =>
+                    context.go(destinations[index].$3),
+              ),
+            ),
+          Expanded(child: body),
+        ],
       ),
       bottomNavigationBar: wide
           ? null

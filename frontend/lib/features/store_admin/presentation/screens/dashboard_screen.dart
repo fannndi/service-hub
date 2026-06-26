@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:m3_expressive/m3_expressive.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../widgets/store_admin_widgets.dart';
 
@@ -13,6 +13,7 @@ class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     final summary = ref.watch(dashboardSummaryProvider);
     return StoreAdminScaffold(
       title: context.l10n.dashboard,
@@ -25,7 +26,7 @@ class DashboardScreen extends ConsumerWidget {
             tooltip: context.l10n.logout)
       ],
       body: summary.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: M3LoadingIndicator()),
         error: (err, _) => ErrorPanel(
             message: err.toString(),
             onRetry: () => ref.invalidate(dashboardSummaryProvider)),
@@ -33,7 +34,10 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             Container(
-              decoration: AppDecorations.heroBanner(context),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 children: [
@@ -46,13 +50,13 @@ class DashboardScreen extends ConsumerWidget {
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
-                              ?.copyWith(color: Colors.white),
+                              ?.copyWith(color: scheme.onPrimaryContainer),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           data.storeName,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
                           ),
                         ),
                       ],

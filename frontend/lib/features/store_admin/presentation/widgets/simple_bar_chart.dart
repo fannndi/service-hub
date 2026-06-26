@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../domain/store_admin_models.dart';
 
 class SimpleBarChart extends StatelessWidget {
@@ -10,10 +11,9 @@ class SimpleBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final max = items.fold<num>(
         1, (value, item) => item.value > value ? item.value : value);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return ModernCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           if (items.isEmpty) const Text('Data grafik belum tersedia dari API'),
@@ -35,8 +35,7 @@ class SimpleBarChart extends StatelessWidget {
                 Text(item.value.toString()),
               ]),
             ),
-        ]),
-      ),
-    );
+          ]),
+        );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../domain/customer_models.dart';
@@ -25,9 +24,9 @@ class StoreCard extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: AppDecorations.iconBadge(
-                scheme.primaryContainer.withValues(alpha: 0.8),
-                size: 48,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(Icons.storefront_rounded, color: scheme.primary),
             ),

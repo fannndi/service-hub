@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:m3_expressive/m3_expressive.dart';
 import '../../application/platform_admin_providers.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_theme.dart';
 import '../../../../ui/widgets/servis_snackbar.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -132,26 +134,30 @@ class _ApplicationsTabState extends ConsumerState<_ApplicationsTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    final scheme = Theme.of(context).colorScheme;
+    if (_loading) return const Center(child: M3LoadingIndicator());
     if (_apps == null || _apps!.isEmpty) return const Center(child: Text('Belum ada aplikasi masuk.'));
-    return RefreshIndicator(
+    return M3RefreshIndicator(
       onRefresh: _fetch,
-      child: ListView(padding: const EdgeInsets.all(12), children: _apps!.where((a) => a['status'] == 'pending').map((app) => Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(app['store_name'] as String? ?? '', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(app['address'] as String? ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          Text('${app['phone_number']}', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text('Admin: ${app['applicant_name']}', style: const TextStyle(fontSize: 13)),
-          const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            OutlinedButton.icon(onPressed: () => _reject(app['id'] as String), icon: const Icon(Icons.close, size: 16), label: const Text('Tolak')),
-            const SizedBox(width: 8),
-            FilledButton.icon(onPressed: () => _approve(app), icon: const Icon(Icons.check, size: 16), label: const Text('Setujui')),
+      child: ListView(padding: const EdgeInsets.all(12), children: _apps!.where((a) => a['status'] == 'pending').map((app) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: ModernCard(
+          padding: const EdgeInsets.all(12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(app['store_name'] as String? ?? '', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(app['address'] as String? ?? '', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+            Text('${app['phone_number']}', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Admin: ${app['applicant_name']}', style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              OutlinedButton.icon(onPressed: () => _reject(app['id'] as String), icon: const Icon(Icons.close, size: 16), label: const Text('Tolak')),
+              const SizedBox(width: 8),
+              FilledButton.icon(onPressed: () => _approve(app), icon: const Icon(Icons.check, size: 16), label: const Text('Setujui')),
+            ]),
           ]),
-        ])),
+        ),
       )).toList()),
     );
   }
@@ -167,25 +173,29 @@ class _StoresTabState extends ConsumerState<_StoresTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final stores = ref.watch(storeListProvider);
     return ListView(padding: const EdgeInsets.all(16), children: [
       Text(context.l10n.storeList, style: theme.textTheme.titleMedium),
       const SizedBox(height: 8),
-      stores.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        stores.when(
+          loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => Text('Gagal: $e'),
         data: (list) => list.isEmpty
             ? const Padding(padding: EdgeInsets.all(16), child: Text('Belum ada toko.'))
-            : Column(children: list.map((store) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(store.storeName, style: theme.textTheme.titleSmall)),
-                    IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editStore(store)),
+            : Column(children: list.map((store) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ModernCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Text(store.storeName, style: theme.textTheme.titleSmall)),
+                      IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editStore(store)),
+                    ]),
+                    Text(store.address, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+                    Text(store.phoneNumber, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
                   ]),
-                  Text(store.address, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  Text(store.phoneNumber, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                ])),
+                ),
               )).toList()),
       ),
     ]);
@@ -242,25 +252,29 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final users = ref.watch(userListProvider);
     return ListView(padding: const EdgeInsets.all(16), children: [
       Text(context.l10n.customerList, style: theme.textTheme.titleMedium),
       const SizedBox(height: 8),
-      users.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        users.when(
+          loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => Text('Gagal: $e'),
         data: (list) => list.isEmpty
             ? Padding(padding: const EdgeInsets.all(16), child: Text(context.l10n.noCustomers))
-            : Column(children: list.map((u) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Expanded(child: Text(u.fullName, style: theme.textTheme.titleSmall)),
-                    IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editUser(u)),
+            : Column(children: list.map((u) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ModernCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Text(u.fullName, style: theme.textTheme.titleSmall)),
+                      IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _editUser(u)),
+                    ]),
+                    Text(u.phoneNumber, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+                    if (u.address != null && u.address!.isNotEmpty) Text(u.address!, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
                   ]),
-                  Text(u.phoneNumber, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  if (u.address != null && u.address!.isNotEmpty) Text(u.address!, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                ])),
+                ),
               )).toList()),
       ),
     ]);

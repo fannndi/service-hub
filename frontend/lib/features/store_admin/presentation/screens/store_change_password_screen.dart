@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class StoreChangePasswordScreen extends ConsumerStatefulWidget {
   const StoreChangePasswordScreen({super.key});
@@ -86,11 +87,10 @@ class _StoreChangePasswordScreenState
                 FilledButton.icon(
                   onPressed: _loading ? null : _submit,
                   icon: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                          child: M3LoadingIndicator(size: 20, color: Colors.white))
                       : const Icon(Icons.lock_reset),
                   label: Text(context.l10n.savePassword),
                 ),

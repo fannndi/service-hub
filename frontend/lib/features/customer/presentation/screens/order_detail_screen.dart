@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
@@ -21,7 +23,7 @@ class OrderDetailScreen extends ConsumerWidget {
         value: orderValue,
         builder: (order) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(orderDetailProvider(orderId)),
-          child: ListView(padding: const EdgeInsets.all(16), children: [
+          child: ListView(padding: EdgeInsets.all(AppSpacing.md), children: [
             Row(children: [
               Expanded(
                   child: SelectableText(order.orderNumber,
@@ -57,11 +59,10 @@ class OrderDetailScreen extends ConsumerWidget {
                 subtitle: Text(item.complaint),
                 trailing: Text(rupiah(item.finalItemPrice ?? item.itemPrice)))),
             if (order.slaDeadline != null)
-              Card(
-                  child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(context.l10n.deadline.replaceFirst('{date}',
-                          DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(order.slaDeadline!))))),
+              ModernCard(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: Text(context.l10n.deadline.replaceFirst('{date}',
+                      DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(order.slaDeadline!)))),
             if (order.status == OrderStatus.waitingApproval)
               DiagnosisApprovalCard(order: order),
             SectionTitle(context.l10n.tracking, action: null),
@@ -114,26 +115,29 @@ class _InfoCard extends StatelessWidget {
   const _InfoCard({required this.title, required this.rows});
   final String title;
   final Map<String, String> rows;
+
   @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            ...rows.entries.map((row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 94, child: Text(row.key)),
-                      Expanded(
-                          child: Text(row.value,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600)))
-                    ]))),
-          ]),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ModernCard(
+      padding: EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+          SizedBox(height: AppSpacing.xs),
+          ...rows.entries.map((row) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 94, child: Text(row.key)),
+                Expanded(child: Text(row.value, style: const TextStyle(fontWeight: FontWeight.w600))),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
@@ -33,15 +33,11 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         IconButton(
-          onPressed: () => context.push('/settings'),
-          icon: const Icon(Icons.settings_outlined),
-        ),
-        IconButton(
           onPressed: () => context.push('/profile'),
           icon: const Icon(Icons.person_outline_rounded),
         ),
       ],
-      child: RefreshIndicator(
+      child: M3RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(homeSummaryProvider);
           ref.invalidate(customerOrdersProvider('recent'));
@@ -51,50 +47,66 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: AppSpacing.xl),
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
               child: Container(
-                decoration: AppDecorations.heroBanner(context),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.l10n.greeting.replaceFirst('{name}', user?.fullName ?? context.l10n.customer),
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              color: Colors.white,
+                    Row(children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.l10n.greeting.replaceFirst('{name}', user?.fullName ?? context.l10n.customer),
+                              style: theme.textTheme.headlineSmall?.copyWith(color: scheme.onPrimaryContainer),
                             ),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            context.l10n.homeSubtitle,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              height: 1.4,
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Ada yang bisa kami bantu?',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer.withValues(alpha: 0.85)),
                             ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 48, height: 48,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        child: Icon(Icons.phone_iphone_rounded, color: scheme.onPrimaryContainer),
+                      ),
+                    ]),
+                    const SizedBox(height: AppSpacing.lg),
+                    Row(children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: FilledButton.icon(
+                            onPressed: () => context.push('/stores'),
+                            icon: const Icon(Icons.add_task_rounded, size: 18),
+                            label: const Text('Ajukan Servis', style: TextStyle(fontSize: 14)),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () => context.push('/orders'),
+                            icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                            label: const Text('Pesanan Saya', style: TextStyle(fontSize: 14)),
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.phone_iphone_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
+                    ]),
                   ],
                 ),
               ),
@@ -127,92 +139,62 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              loading: () => const SizedBox(
-                height: 100,
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const SizedBox(height: 100, child: Center(child: M3LoadingIndicator())),
               error: (_, __) => Padding(
                 padding: EdgeInsets.all(AppSpacing.lg),
                 child: Text(context.l10n.summaryNotAvailable),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => context.push('/stores'),
-                      icon: const Icon(Icons.add_task_rounded),
-                      label: Text(context.l10n.service),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/orders'),
-                      icon: const Icon(Icons.receipt_long_outlined),
-                      label: Text(context.l10n.orders),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/coupons'),
-                      icon: const Icon(Icons.local_offer_outlined),
-                      label: Text(context.l10n.coupons),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SectionTitle(
-              context.l10n.recentOrders,
-              action: TextButton(
-                onPressed: () => context.push('/orders'),
-                child: Text(context.l10n.viewAll),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              child: SectionTitle(
+                context.l10n.recentOrders,
+                action: TextButton(
+                  onPressed: () => context.push('/orders'),
+                  child: Text(context.l10n.viewAll),
+                ),
               ),
             ),
             recent.when(
               data: (orders) => orders.isEmpty
-                  ? EmptyMessage(context.l10n.noOrders)
+                  ? Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: EmptyMessage(context.l10n.noOrders),
+                    )
                   : Column(
                       children: orders
-                          .map(
-                            (order) => OrderCard(
-                              order: order,
-                              onTap: () =>
-                                  context.push('/orders/${order.id}'),
-                            ),
-                          )
+                          .map((order) => OrderCard(
+                                order: order,
+                                onTap: () => context.push('/orders/${order.id}'),
+                              ))
                           .toList(),
                     ),
-              loading: () =>
-                  const SizedBox(height: 260, child: SkeletonList(count: 3)),
-              error: (_, __) =>
-                  EmptyMessage(context.l10n.ordersLoadError),
+              loading: () => const SizedBox(height: 220, child: SkeletonList(count: 3)),
+              error: (_, __) => Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: EmptyMessage(context.l10n.ordersLoadError),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: ModernCard(
-                gradient: AppGradients.accent,
+                color: scheme.tertiaryContainer,
                 child: Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
+                        color: scheme.tertiary.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      child: const Icon(Icons.bolt_rounded, color: Colors.white),
+                      child: Icon(Icons.bolt_rounded, color: scheme.onTertiaryContainer),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
                         context.l10n.promoBanner,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
+                          color: scheme.onTertiaryContainer,
                           fontWeight: FontWeight.w700,
                           height: 1.4,
                         ),
@@ -230,13 +212,7 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
+  const _SummaryTile({required this.label, required this.value, required this.icon, required this.color});
   final String label;
   final String value;
   final IconData icon;
@@ -252,27 +228,16 @@ class _SummaryTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 36, height: 36,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(icon, size: 18, color: color),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+            Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+            Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ],
         ),
       ),

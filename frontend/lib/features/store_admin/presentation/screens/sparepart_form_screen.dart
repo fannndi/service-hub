@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class SparepartFormScreen extends ConsumerStatefulWidget {
   const SparepartFormScreen({super.key, this.item});
@@ -91,11 +92,10 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         FilledButton.icon(
           onPressed: _loading ? null : _submit,
           icon: _loading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
+                  child: M3LoadingIndicator(size: 20, color: Colors.white))
               : const Icon(Icons.save_outlined),
           label: Text(widget.item == null ? context.l10n.add : context.l10n.save),
         ),

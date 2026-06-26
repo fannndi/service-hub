@@ -6,6 +6,9 @@ import '../../domain/customer_models.dart';
 import '../../../../shared_widgets/formatters.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../widgets/customer_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 // ─── Shared State ───
 
@@ -83,7 +86,7 @@ class Step1Widget extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         deviceModels.when(
-          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator())),
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(16), child: M3LoadingIndicator())),
           error: (error, _) => Text(context.l10n.deviceListLoadError.replaceFirst('{error}', error.toString()),
               style: TextStyle(color: theme.colorScheme.error)),
           data: (groups) {
@@ -235,7 +238,7 @@ class _Step3WidgetState extends State<Step3Widget> {
     final state = widget.state;
 
     if (state.loading && state.matchedStores.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: M3LoadingIndicator());
     }
     if (state.matchedStores.isEmpty) {
       return ListView(
@@ -268,19 +271,13 @@ class _Step3WidgetState extends State<Step3Widget> {
         // Store list — radio style
         ...state.matchedStores.map((store) {
           final selected = store.storeId == state.selectedStoreId;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            color: selected ? theme.colorScheme.primaryContainer : null,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: selected ? BorderSide(color: theme.colorScheme.primary, width: 1.5) : BorderSide.none,
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ModernCard(
+              color: selected ? theme.colorScheme.primaryContainer : null,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               onTap: () => widget.onSelectStore(store),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(children: [
+              child: Row(children: [
                   Icon(selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                       color: selected ? theme.colorScheme.primary : Colors.grey, size: 22),
                   const SizedBox(width: 12),
@@ -300,7 +297,6 @@ class _Step3WidgetState extends State<Step3Widget> {
                   Text(context.l10n.completedServicesCount.replaceFirst('{count}', store.totalCompleted.toString()),
                       style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.tertiary)),
                 ]),
-              ),
             ),
           );
         }),
@@ -314,50 +310,42 @@ class _Step3WidgetState extends State<Step3Widget> {
           const SizedBox(height: 12),
           ...selectedStore.spareparts.map((sp) {
             final isPartSelected = sp.id == state.selectedPartId;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              color: isPartSelected ? theme.colorScheme.primaryContainer : null,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: isPartSelected ? BorderSide(color: theme.colorScheme.primary) : BorderSide.none,
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: sp.status != 'available' ? null : () => setState(() {
-                  widget.onSelectStore(selectedStore);
-                  state.selectedPartId = sp.id;
-                  state.selectedPartName = sp.partName;
-                  state.selectedPartPrice = sp.price;
-                  state.estimateCost = sp.price;
-                }),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(children: [
-                    Icon(isPartSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                        size: 20, color: isPartSelected ? theme.colorScheme.primary : Colors.grey),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(sp.partName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isPartSelected ? FontWeight.w600 : FontWeight.normal)),
-                        Text(sp.status == 'available' ? context.l10n.available : context.l10n.preorder,
-                            style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
-                      ]),
-                    ),
-                    Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  ]),
-                ),
-              ),
-            );
+return Padding(
+             padding: const EdgeInsets.only(bottom: 8),
+             child: ModernCard(
+               color: isPartSelected ? theme.colorScheme.primaryContainer : null,
+               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+               onTap: sp.status != 'available' ? null : () => setState(() {
+                   widget.onSelectStore(selectedStore);
+                   state.selectedPartId = sp.id;
+                   state.selectedPartName = sp.partName;
+                   state.selectedPartPrice = sp.price;
+                   state.estimateCost = sp.price;
+                 }),
+               child: Row(children: [
+                   Icon(isPartSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                       size: 20, color: isPartSelected ? theme.colorScheme.primary : Colors.grey),
+                   const SizedBox(width: 12),
+                   Expanded(
+                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                       Text(sp.partName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isPartSelected ? FontWeight.w600 : FontWeight.normal)),
+                       Text(sp.status == 'available' ? context.l10n.available : context.l10n.preorder,
+                           style: TextStyle(fontSize: 11, color: sp.status == 'available' ? Colors.green : Colors.orange)),
+                     ]),
+                   ),
+                   Text(formatRupiah(sp.price), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                 ]),
+             ),
+           );
           }),
         ],
 
         // Selected part indicator
-        if (state.selectedPartId != null) ...[
-          const SizedBox(height: 16),
-          Card(
-            color: Colors.green.shade50,
-            child: Padding(
+          if (state.selectedPartId != null) ...[
+            const SizedBox(height: 16),
+            ModernCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: Colors.green.shade50,
               child: Row(children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 20),
                 const SizedBox(width: 8),
@@ -373,8 +361,7 @@ class _Step3WidgetState extends State<Step3Widget> {
                 ),
               ]),
             ),
-          ),
-        ],
+          ],
       ],
     );
   }
@@ -428,7 +415,6 @@ class Step4Widget extends StatelessWidget {
           keyboardType: TextInputType.phone,
           decoration: const InputDecoration(
               labelText: 'Nomor WhatsApp',
-              prefixText: '08',
               prefixIcon: Icon(Icons.phone_outlined)),
         ),
         if (state.delivery == 'courier_pickup') ...[
@@ -493,59 +479,57 @@ class Step5Widget extends StatelessWidget {
       children: [
         Text(context.l10n.bookingConfirmation, style: theme.textTheme.titleLarge),
         const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ModernCard(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _ConfirmRow(
+                label: 'Perangkat',
+                value:
+                    '${state.deviceType.toUpperCase()} - ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'}'),
+            const Divider(),
+            _ConfirmRow(
+                label: 'Layanan', value: typeLabels[state.serviceType]!),
+            if (state.selectedPartId != null) ...[
+              const Divider(),
               _ConfirmRow(
-                  label: 'Perangkat',
+                  label: 'Sparepart',
                   value:
-                      '${state.deviceType.toUpperCase()} - ${state.selectedBrand ?? '-'} ${state.selectedModel ?? '-'}'),
+                      '${state.selectedPartName ?? '-'} — ${formatRupiah(state.selectedPartPrice)}'),
+            ],
+            const Divider(),
+            _ConfirmRow(label: 'Keluhan', value: state.complaint.text),
+            const Divider(),
+            _ConfirmRow(label: 'Nama', value: state.name.text),
+            const Divider(),
+            _ConfirmRow(label: 'WhatsApp', value: state.phone.text),
+            if (state.delivery == 'courier_pickup') ...[
               const Divider(),
-              _ConfirmRow(
-                  label: 'Layanan', value: typeLabels[state.serviceType]!),
-              if (state.selectedPartId != null) ...[
-                const Divider(),
-                _ConfirmRow(
-                    label: 'Sparepart',
-                    value:
-                        '${state.selectedPartName ?? '-'} — ${formatRupiah(state.selectedPartPrice)}'),
-              ],
-              const Divider(),
-              _ConfirmRow(label: 'Keluhan', value: state.complaint.text),
-              const Divider(),
-              _ConfirmRow(label: 'Nama', value: state.name.text),
-              const Divider(),
-              _ConfirmRow(label: 'WhatsApp', value: state.phone.text),
-              if (state.delivery == 'courier_pickup') ...[
-                const Divider(),
-                _ConfirmRow(label: 'Alamat', value: state.address.text),
-              ],
-              const Divider(),
-              _ConfirmRow(
-                  label: 'Pengiriman',
-                  value: state.delivery == 'walk_in'
-                      ? 'Antar ke Toko'
-                      : 'Pickup Kurir'),
-              const Divider(height: 24),
-              Row(children: [
-                Text(context.l10n.costEstimate,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                const Spacer(),
-                Text(formatRupiah(state.estimateCost),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary)),
-              ]),
-              const SizedBox(height: 4),
-              Text(
-                  '* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.',
-                  style:
-                      theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              _ConfirmRow(label: 'Alamat', value: state.address.text),
+            ],
+            const Divider(),
+            _ConfirmRow(
+                label: 'Pengiriman',
+                value: state.delivery == 'walk_in'
+                    ? 'Antar ke Toko'
+                    : 'Pickup Kurir'),
+            const Divider(height: 24),
+            Row(children: [
+              Text(context.l10n.costEstimate,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Text(formatRupiah(state.estimateCost),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary)),
             ]),
-          ),
+            const SizedBox(height: 4),
+            Text(
+                '* Estimasi bersifat sementara, dapat berubah setelah diagnosis teknisi.',
+                style:
+                    theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+          ]),
         ),
         const SizedBox(height: 16),
         TextField(

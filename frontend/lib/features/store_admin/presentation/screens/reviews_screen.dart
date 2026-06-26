@@ -8,6 +8,9 @@ import '../widgets/store_admin_widgets.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/supabase_service.dart';
 import '../../../../../shared_widgets/formatters.dart';
+import '../../../../../ui/theme/app_spacing.dart';
+import '../../../../../ui/widgets/modern_card.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class ReviewsScreen extends ConsumerWidget {
   const ReviewsScreen({super.key});
@@ -17,7 +20,7 @@ class ReviewsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.reviewMonitoring)),
       body: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
         data: (page) {
           final reviews = page
@@ -68,9 +71,9 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
   @override
   Widget build(BuildContext context) {
     final r = widget.review;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ModernCard(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [

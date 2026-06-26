@@ -8,6 +8,8 @@ import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
+import '../../../../ui/widgets/modern_card.dart';
 
 class BookingFormScreen extends ConsumerStatefulWidget {
   const BookingFormScreen({super.key, required this.storeId});
@@ -67,7 +69,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
               child: Row(
                 children: [
                   Text('Pilih Sparepart', style: Theme.of(context).textTheme.titleMedium),
@@ -79,22 +81,24 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1),
             Expanded(
               child: ListView.builder(
                 controller: controller,
                 itemCount: parts.length,
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(AppSpacing.md),
                 itemBuilder: (_, i) {
                   final p = parts[i];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      enabled: p.availableQty > 0,
-                      title: Text(p.partName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text('${p.availableQty} tersedia'),
-                      trailing: Text(rupiah(p.price), style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
-                      onTap: p.availableQty <= 0 ? null : () => Navigator.pop(context, p),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ModernCard(
+                      child: ListTile(
+                        enabled: p.availableQty > 0,
+                        title: Text(p.partName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text('${p.availableQty} tersedia'),
+                        trailing: Text(rupiah(p.price), style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
+                        onTap: p.availableQty <= 0 ? null : () => Navigator.pop(context, p),
+                      ),
                     ),
                   );
                 },
@@ -162,8 +166,8 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       ),
       child: Form(
         key: _form,
-        child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+child: ListView(
+                padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, 110),
             children: [
               SectionTitle(context.l10n.customerInfo),
               TextFormField(

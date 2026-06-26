@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../ui/theme/app_spacing.dart';
 
 class QueryToolbar extends StatelessWidget {
   const QueryToolbar(
@@ -10,25 +12,34 @@ class QueryToolbar extends StatelessWidget {
   final ValueChanged<String> onSearch;
   final List<Widget> filters;
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(12),
-        child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                  width: 320,
-                  child: SearchBar(
-                      hintText: hint,
-                      leading: const Icon(Icons.search),
-                      elevation: const WidgetStatePropertyAll(0),
-                      onSubmitted: onSearch)),
-              ...filters,
-              OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.download_outlined),
-                  label: const Text('Export')),
-            ]),
-      );
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+      decoration: BoxDecoration(color: scheme.surface),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        TextField(
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(Icons.search, size: 20),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          inputFormatters: [LengthLimitingTextInputFormatter(50)],
+          onSubmitted: onSearch,
+        ),
+        if (filters.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 42,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              children: filters,
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
 }

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 import '../core/l10n/app_localizations.dart';
 
@@ -32,7 +33,7 @@ class LoadingState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            const M3LoadingIndicator(),
             const SizedBox(height: 12),
             Text(message ?? context.l10n.loadingData),
           ],

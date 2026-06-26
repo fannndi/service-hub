@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
@@ -9,6 +10,7 @@ import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
 import '../../../../core/supabase_service.dart';
 import 'service_flow_steps.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class ServiceFlowScreen extends ConsumerStatefulWidget {
   const ServiceFlowScreen({super.key});
@@ -189,7 +191,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
               child: Row(
                 children: List.generate(steps.length, (i) {
                   final active = i == _step;
@@ -294,11 +296,10 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
                   child: FilledButton.icon(
                 onPressed: _state.loading ? null : _createBooking,
                 icon: _state.loading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
+                        child: M3LoadingIndicator(size: 20, color: Colors.white))
                     : const Icon(Icons.check),
                 label: Text(_state.loading ? context.l10n.processing : context.l10n.booking),
               )),

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/theme/app_spacing.dart';
 import '../../application/customer_providers.dart';
 import '../../domain/user_session.dart';
 import '../../../../ui/widgets/servis_dialog.dart';
 import '../../../../shared_widgets/error_state.dart';
 import '../widgets/customer_widgets.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
 class SessionsScreen extends ConsumerStatefulWidget {
   const SessionsScreen({super.key});
@@ -72,7 +74,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
         future: _sessionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: M3LoadingIndicator());
           }
           if (snapshot.hasError) {
             return ErrorState(
@@ -87,9 +89,9 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
               .map((j) => UserSession.fromJson(j as Map<String, dynamic>))
               .toList();
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.md),
             itemCount: sessions.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (_, __) => Divider(),
             itemBuilder: (context, index) {
               final s = sessions[index];
               final deviceName = s.deviceInfo?['device'] as String? ??
@@ -97,7 +99,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
               return ListTile(
                 leading: Icon(
                     s.isActive ? Icons.phone_android : Icons.phone_android,
-                    color: s.isActive ? Colors.green : Colors.grey),
+                    color: s.isActive ? theme.colorScheme.tertiary : theme.colorScheme.onSurfaceVariant),
                 title: Text(deviceName, style: theme.textTheme.bodyLarge),
                 subtitle: Text(
                   '${s.ipAddress ?? '-'} \u2022 ${_formatDate(context, s.lastActiveAt)}',
@@ -108,8 +110,8 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                     ? TextButton(
                         onPressed: () => _revoke(s.id),
                         child: Text(context.l10n.revoke))
-                    : const Icon(Icons.check_circle,
-                        size: 18, color: Colors.grey),
+                    : Icon(Icons.check_circle,
+                        size: 18, color: theme.colorScheme.onSurfaceVariant),
               );
             },
           );
