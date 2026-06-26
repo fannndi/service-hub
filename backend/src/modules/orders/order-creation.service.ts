@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CredentialService } from '../auth/credential.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import {
   DeliveryAddressRequiredException,
   StoreNotActiveException,
@@ -19,6 +20,7 @@ export class OrderCreationService {
     private prisma: PrismaService,
     private credentialService: CredentialService,
     private notif: NotificationsService,
+    private appNotif: InAppNotificationsService,
   ) {}
 
   async createOrder(dto: CreateOrderDto) {
@@ -148,6 +150,14 @@ export class OrderCreationService {
     });
 
     await this.notif.sendNewOrderToStore(store, order, user, isNew, rawPass);
+    await this.appNotif.create({
+      storeId: store.id,
+      role: 'store_admin',
+      title: 'Pesanan Baru',
+      message: `Pesanan #${order.orderNumber} dari ${user.fullName}. ${order.deviceType} ${order.brand} ${order.deviceModel}.`,
+      type: 'new_order',
+      linkTo: `/store/orders/${order.id}`,
+    });
 
     return {
       id: order.id,

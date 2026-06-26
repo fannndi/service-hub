@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
+import '../../application/store_admin_providers.dart';
 
-class StoreAdminScaffold extends StatelessWidget {
+class StoreAdminScaffold extends ConsumerWidget {
   const StoreAdminScaffold(
       {super.key,
       required this.title,
@@ -28,13 +30,27 @@ class StoreAdminScaffold extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final scheme = Theme.of(context).colorScheme;
+    final unread = ref.watch(storeUnreadCountProvider).valueOrNull ?? 0;
+
+    final notifIcon = Badge(
+      isLabelVisible: unread > 0,
+      label: Text(unread.toString()),
+      child: const Icon(Icons.notifications_outlined),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        actions: actions,
+        actions: [
+          ...?actions,
+          IconButton(
+            icon: notifIcon,
+            onPressed: () => context.push('/store/notifications'),
+          ),
+        ],
         leading: showBackButton
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),

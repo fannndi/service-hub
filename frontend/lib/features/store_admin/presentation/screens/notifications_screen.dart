@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_notification_models.dart';
@@ -9,9 +10,23 @@ class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(storeNotificationRepositoryProvider);
     final value = ref.watch(notificationsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Notification Center')),
+      appBar: AppBar(
+        title: const Text('Notification Center'),
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              await repo.markAllRead();
+              ref.invalidate(notificationsProvider);
+              ref.invalidate(storeUnreadCountProvider);
+            },
+            icon: const Icon(Icons.done_all, size: 18),
+            label: const Text('Baca Semua'),
+          ),
+        ],
+      ),
       body: value.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),
@@ -20,14 +35,28 @@ class NotificationsScreen extends ConsumerWidget {
               .whereType<Map<String, dynamic>>()
               .map(NotificationItem.fromJson)
               .toList();
+          if (items.isEmpty) return const Center(child: Text('Belum ada notifikasi.'));
           return ListView(children: [
             for (final item in items)
               ListTile(
-                leading: Icon(item.isRead
-                    ? Icons.mark_email_read_outlined
-                    : Icons.notifications_active_outlined),
-                title: Text(item.title),
-                subtitle: Text('${item.message}\n${dateText(item.createdAt)}'),
+                leading: Icon(
+                  item.isRead
+                      ? Icons.mark_email_read_outlined
+                      : Icons.notifications_active_outlined,
+                  color: item.isRead ? Colors.grey : null,
+                ),
+                title: Text(item.title,
+                    style: TextStyle(
+                        fontWeight: item.isRead ? FontWeight.normal : FontWeight.w600)),
+                subtitle: Text('${item.message}\n${dateText(item.createdAt)}',
+                    maxLines: 3, overflow: TextOverflow.ellipsis),
+                onTap: () async {
+                  if (!item.isRead) {
+                    await repo.markAsRead(item.id);
+                    ref.invalidate(notificationsProvider);
+                    ref.invalidate(storeUnreadCountProvider);
+                  }
+                },
               ),
           ]);
         },

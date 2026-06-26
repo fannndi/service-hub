@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CredentialService } from '../auth/credential.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { OrderNotFoundException, ForbiddenException } from '../../common/exceptions';
 import { AppConfig } from '../../config/configuration';
 import axios from 'axios';
@@ -17,6 +18,7 @@ export class GuestOrdersService {
     private credentialService: CredentialService,
     private config: ConfigService<AppConfig>,
     private notif: NotificationsService,
+    private appNotif: InAppNotificationsService,
   ) {}
 
   async verifyAndTrack(orderNumber: string, rawPhone: string) {
@@ -108,6 +110,13 @@ export class GuestOrdersService {
       ].join('\n'),
       'account_activated',
     );
+    await this.appNotif.create({
+      userId: user.id,
+      role: 'customer',
+      title: 'Akun Aktif',
+      message: 'Akun ServisGadget kamu sudah aktif! Kamu bisa login menggunakan nomor WhatsApp dan password.',
+      type: 'account_activated',
+    });
 
     return { message: 'Akun berhasil diaktifkan. Cek WhatsApp untuk info login.' };
   }
@@ -125,7 +134,7 @@ export class GuestOrdersService {
   private async _createSupabaseAuthUser(
     user: { id: string; phoneNumber: string; fullName: string },
     password: string,
-  ) {
+  ): Promise<string | undefined> {
     const projectRef = this.config.get('supabase.projectRef', { infer: true });
     const serviceRoleKey = this.config.get('supabase.serviceRoleKey', { infer: true });
     if (!projectRef || !serviceRoleKey) {
@@ -135,7 +144,7 @@ export class GuestOrdersService {
 
     const email = `${user.phoneNumber}@customer.servisgadget.com`;
     try {
-      await axios.post(
+      const res = await axios.post(
         `https://${projectRef}.supabase.co/auth/v1/admin/users`,
         {
           email,
@@ -157,7 +166,15 @@ export class GuestOrdersService {
           timeout: 15_000,
         },
       );
-      this.logger.log(`Supabase Auth user created for ${email}`);
+      const supabaseUserId = res.data?.id as string | undefined;
+      if (supabaseUserId) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { supabaseUserId },
+        });
+        this.logger.log(`Supabase Auth user created for ${email} (id: ${supabaseUserId})`);
+        return supabaseUserId;
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Failed to create Supabase Auth user for ${email}: ${msg}`);

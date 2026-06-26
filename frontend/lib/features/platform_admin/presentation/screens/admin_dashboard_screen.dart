@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/platform_admin_providers.dart';
 import '../../../../core/widgets/address_dropdowns.dart';
+import '../../../../core/api_client.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../ui/theme/app_theme.dart';
 import '../../../../ui/widgets/servis_snackbar.dart';
@@ -31,12 +32,78 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     super.dispose();
   }
 
+  void _showBroadcastDialog(BuildContext context) {
+    final roleCtrl = TextEditingController(text: 'customer');
+    final titleCtrl = TextEditingController();
+    final msgCtrl = TextEditingController();
+    bool loading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          title: const Text('Broadcast Notifikasi'),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              DropdownButtonFormField<String>(
+                initialValue: 'customer',
+                decoration: const InputDecoration(labelText: 'Target', isDense: true),
+                items: const [
+                  DropdownMenuItem(value: 'customer', child: Text('Semua Pelanggan')),
+                  DropdownMenuItem(value: 'store_admin', child: Text('Semua Admin Toko')),
+                ],
+                onChanged: (v) => setD(() => roleCtrl.text = v ?? 'customer'),
+              ),
+              const SizedBox(height: 12),
+              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Judul', isDense: true)),
+              const SizedBox(height: 12),
+              TextField(controller: msgCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Pesan', isDense: true, alignLabelWithHint: true)),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            FilledButton.icon(
+              onPressed: loading
+                  ? null
+                  : () async {
+                      if (titleCtrl.text.trim().isEmpty || msgCtrl.text.trim().isEmpty) return;
+                      setD(() => loading = true);
+                      try {
+                        await ApiClient.instance.post('/notifications/broadcast', {
+                          'role': roleCtrl.text,
+                          'title': titleCtrl.text.trim(),
+                          'message': msgCtrl.text.trim(),
+                        });
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) showServisSnackbar(context, 'Broadcast terkirim!', type: SnackbarType.success);
+                      } catch (e) {
+                        if (context.mounted) showServisSnackbar(context, 'Gagal: $e', type: SnackbarType.error);
+                      } finally {
+                        setD(() => loading = false);
+                      }
+                    },
+              icon: loading
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send, size: 18),
+              label: const Text('Kirim'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Platform'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign_outlined),
+            tooltip: 'Broadcast Notifikasi',
+            onPressed: () => _showBroadcastDialog(context),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import {
   OrderNotFoundException,
   InvalidStatusTransitionException,
@@ -17,6 +18,7 @@ export class PaymentsService {
   constructor(
     private prisma: PrismaService,
     private notif: NotificationsService,
+    private appNotif: InAppNotificationsService,
   ) {}
 
   async createPayment(orderId: string, userId: string, dto: CreatePaymentDto) {
@@ -85,6 +87,22 @@ export class PaymentsService {
       payment.order.orderNumber,
       payment.order.deliveryMethod,
     );
+    await this.appNotif.create({
+      userId: payment.order.user.id,
+      role: 'customer',
+      title: 'Pesanan Selesai',
+      message: `Pesanan #${payment.order.orderNumber} selesai! Terima kasih sudah menggunakan ServisGadget.`,
+      type: 'completed',
+      linkTo: `/orders/${orderId}`,
+    });
+    await this.appNotif.create({
+      storeId,
+      role: 'store_admin',
+      title: 'Pembayaran Dikonfirmasi',
+      message: `Pembayaran #${payment.order.orderNumber} dikonfirmasi. Order selesai.`,
+      type: 'payment_confirmed',
+      linkTo: `/store/orders/${orderId}`,
+    });
 
     return { status: 'completed', warrantyDays, warrantyExpiredAt };
   }

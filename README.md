@@ -200,7 +200,7 @@ service-hub/
 │       ├── reviews/             3 files
 │       ├── spareparts/          3 files
 │       ├── uploads/             3 files
-│       ├── notifications/       3 files
+│       ├── notifications/       5 files (wa, email, in-app, controller)
 │       ├── platform-admin/      7 files (auth, store, user, mgmt services)
 │       ├── redis/               2 files
 │       └── jobs/                3 files (SLA monitor, credential cleaner)
@@ -214,11 +214,11 @@ service-hub/
 │       └── features/            Domain-driven feature modules
 │           ├── customer/
 │           │   ├── application/ 10 provider files (1 per concern)
-│           │   ├── data/        9 repository files (1 per domain)
+│           │       ├── data/        9 repository files (1 per domain, notifications via Supabase)
 │           │   ├── domain/      15 model files (1 per class)
 │           │   └── presentation/
 │           │       ├── routing/ 1 router (25 routes)
-│           │       ├── screens/ 25 screen files (1 per screen)
+│           │       ├── screens/ 25 screen files (1 per screen, includes guest*)
 │           │       └── widgets/ 11 widget files (1 per widget)
 │           ├── store_admin/
 │           │   ├── application/ 11 provider files
@@ -270,8 +270,82 @@ service-hub/
 | `POST /v1/orders/guest/track` | GuestOrdersController | No |
 | `POST /v1/orders/guest/credentials` | GuestOrdersController | No |
 | `POST /v1/orders/guest/:orderId/activate` | GuestOrdersController | Store Admin JWT |
+| `GET /v1/notifications` | NotificationsController | Customer JWT |
+| `GET /v1/notifications/unread-count` | NotificationsController | Customer JWT |
+| `PATCH /v1/notifications/:id/read` | NotificationsController | Customer JWT |
+| `PATCH /v1/notifications/read-all` | NotificationsController | Customer JWT |
+| `POST /v1/notifications/test` | NotificationsController | Customer JWT |
+| `POST /v1/notifications/broadcast` | NotificationsController | Platform Admin |
+| `GET /v1/store/notifications` | StoreNotificationsController | Store Admin JWT |
+| `PATCH /v1/store/notifications/:id/read` | StoreNotificationsController | Store Admin JWT |
+| `POST /v1/store/notifications/test` | StoreNotificationsController | Store Admin JWT |
 | `POST /v1/auth/login` | AuthController | No |
 | `POST /v1/store/orders/*` | StoreOrdersController | Store Admin JWT |
+
+---
+
+## Notification System
+
+Aplikasi punya **dual notification channel**: WhatsApp (external) + In-App (internal).
+
+### In-App Notifications
+
+| Event | Target | Type | Trigger |
+|-------|--------|------|---------|
+| Order created | Store Admin | `new_order` | `order-creation.service.ts` |
+| Device received | Customer | `device_received` | `order-status.service.ts` |
+| Diagnosing | Customer | `diagnosing` | `order-status.service.ts` |
+| Diagnosis ready | Customer | `diagnosis_result` | `order-diagnosis.service.ts` |
+| Order approved | Store Admin | `order_approved` | `order-diagnosis.service.ts` |
+| Repair started | Customer | `repairing` | `order-status.service.ts` |
+| Quality check | Customer | `quality_check` | `order-status.service.ts` |
+| Waiting payment | Customer | `waiting_payment` | `order-status.service.ts` |
+| Payment confirmed | Both | `payment_confirmed` | `payments.service.ts` |
+| Order completed | Customer | `completed` | `payments.service.ts` |
+| Order cancelled | Customer | `cancelled` | `order-status.service.ts` |
+| Account activated | Customer | `account_activated` | `guest-orders.service.ts` |
+| Broadcast | All | `broadcast` | Admin dashboard |
+| Test | Self | `test` | Test button |
+
+### Backend API
+
+| Method | Endpoint | Auth | Deskripsi |
+|--------|----------|------|-----------|
+| `GET` | `/v1/notifications` | Customer JWT | List notifikasi pelanggan |
+| `GET` | `/v1/notifications/unread-count` | Customer JWT | Badge count |
+| `PATCH` | `/v1/notifications/:id/read` | Customer JWT | Mark one as read |
+| `PATCH` | `/v1/notifications/read-all` | Customer JWT | Mark all read |
+| `POST` | `/v1/notifications/test` | Customer JWT | Test notification |
+| `POST` | `/v1/notifications/broadcast` | Platform Admin | Broadcast to role |
+| `GET` | `/v1/store/notifications` | Store JWT | List notifikasi toko |
+| `GET` | `/v1/store/notifications/unread-count` | Store JWT | Badge count |
+| `PATCH` | `/v1/store/notifications/:id/read` | Store JWT | Mark one read |
+| `POST` | `/v1/store/notifications/test` | Store JWT | Test notification |
+
+### Frontend Badge
+
+- Customer: badge on bell icon in AppBar (HomeScreen)
+- Store Admin: badge on bell icon in AppBar (StoreAdminScaffold)
+- Auto-refresh setiap 30s
+- Mark as read otomatis saat notifikasi ditekan
+- Deep link ke halaman order terkait
+
+### Database
+
+Table `notifications`:
+- `id, user_id, store_id, role, title, message, type, is_read, link_to, created_at`
+- RLS: customer hanya lihat miliknya, store admin lihat per store
+- Migration: `supabase/migrations/005_notifications.sql`
+
+### WhatsApp Notifications (existing)
+
+| Method | messageType | Recipient |
+|--------|-------------|-----------|
+| `sendNewOrderToStore()` | `new_order`, `stealth_account` | Store + Customer |
+| `sendWaitingPayment()` | `waiting_payment` | Customer |
+| `sendDiagnosisResult()` | `diagnosis_result` | Customer |
+| `sendOrderCompleted()` | `order_completed` | Customer |
+| `send()` (generic) | `order_approved`, `sla_*`, `dispute_*`, `account_activated` | Various |
 
 ---
 

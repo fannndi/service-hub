@@ -136,6 +136,7 @@ enum FeeBearerType {
 
 model User {
   id                 String         @id @default(uuid())
+  supabaseUserId     String?        @unique @map("supabase_user_id")
   fullName           String         @map("full_name") @db.VarChar(150)
   phoneNumber        String         @unique @map("phone_number") @db.VarChar(20)
   passwordHash       String         @map("password_hash") @db.VarChar(255)
@@ -157,6 +158,7 @@ model User {
   coupons            Coupon[]
   disputes           Dispute[]
   sessions           UserSession[]
+  notifications      Notification[]
 
   @@index([accountStatus, isFirstLogin])
   @@map("users")
@@ -472,6 +474,27 @@ model FailedNotification {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@map("failed_notifications")
+}
+
+// ─── IN-APP NOTIFICATIONS ───
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  storeId   String?  @map("store_id")
+  role      String   @default("customer") @db.VarChar(20)
+  title     String   @db.VarChar(200)
+  message   String   @db.Text
+  type      String   @default("info") @db.VarChar(50)
+  isRead    Boolean  @default(false) @map("is_read")
+  linkTo    String?  @map("link_to") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([storeId, isRead])
+  @@index([role, createdAt])
+  @@map("notifications")
 }
 
 // ─── PLATFORM ADMINS ───

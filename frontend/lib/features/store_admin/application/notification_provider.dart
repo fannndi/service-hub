@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/store_admin_repositories.dart';
 
@@ -6,4 +7,20 @@ final storeNotificationRepositoryProvider = Provider<StoreNotificationRepository
 final notificationsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final repo = ref.read(storeNotificationRepositoryProvider);
   return repo.getNotifications();
+});
+
+final storeUnreadCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final repo = ref.read(storeNotificationRepositoryProvider);
+  return repo.getUnreadCount();
+});
+
+Timer? _pollTimer;
+final storeUnreadStreamProvider = StreamProvider.autoDispose<int>((ref) {
+  final repo = ref.read(storeNotificationRepositoryProvider);
+  _pollTimer?.cancel();
+  _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    ref.invalidate(storeUnreadCountProvider);
+  });
+  ref.onDispose(() => _pollTimer?.cancel());
+  return Stream.periodic(const Duration(seconds: 30), (_) => 0).asyncMap((_) => repo.getUnreadCount());
 });

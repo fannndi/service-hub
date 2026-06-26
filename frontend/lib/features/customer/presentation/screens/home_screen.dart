@@ -6,6 +6,7 @@ import '../../../../ui/theme/app_decorations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
+import '../../application/notification_provider.dart';
 import '../widgets/customer_widgets.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -15,15 +16,20 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(customerAuthProvider).valueOrNull;
     final summary = ref.watch(homeSummaryProvider);
     final recent = ref.watch(customerOrdersProvider('recent'));
+    final unread = ref.watch(unreadCountProvider).valueOrNull ?? 0;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
     return CustomerScaffold(
       title: 'ServisGadget',
       actions: [
-        IconButton(
-          onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications_outlined),
+        Badge(
+          isLabelVisible: unread > 0,
+          label: Text(unread.toString()),
+          child: IconButton(
+            onPressed: () => context.push('/notifications'),
+            icon: const Icon(Icons.notifications_outlined),
+          ),
         ),
         IconButton(
           onPressed: () => context.push('/settings'),

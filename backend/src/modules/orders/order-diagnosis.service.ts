@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import {
   OrderNotFoundException,
   InvalidStatusTransitionException,
@@ -14,6 +15,7 @@ export class OrderDiagnosisService {
   constructor(
     private prisma: PrismaService,
     private notif: NotificationsService,
+    private appNotif: InAppNotificationsService,
   ) {}
 
   async approveOrder(orderId: string, userId: string) {
@@ -54,6 +56,14 @@ export class OrderDiagnosisService {
       `Pelanggan menyetujui order ${order.orderNumber}. Segera mulai perbaikan!`,
       'order_approved',
     );
+    await this.appNotif.create({
+      storeId: order.store.id,
+      role: 'store_admin',
+      title: 'Pesanan Disetujui',
+      message: `Pelanggan menyetujui diagnosa untuk #${order.orderNumber}. Segera mulai perbaikan!`,
+      type: 'order_approved',
+      linkTo: `/store/orders/${orderId}`,
+    });
     return { status: 'repairing' };
   }
 
@@ -206,6 +216,14 @@ export class OrderDiagnosisService {
       order.orderNumber,
       finalPrice,
     );
+    await this.appNotif.create({
+      userId: order.user.id,
+      role: 'customer',
+      title: 'Diagnosa Selesai',
+      message: `Diagnosa untuk #${order.orderNumber} sudah selesai. Total: Rp ${finalPrice.toLocaleString('id-ID')}. Silakan cek dan setujui di aplikasi.`,
+      type: 'diagnosis_result',
+      linkTo: `/orders/${orderId}`,
+    });
     return { status: 'waiting_approval', finalPrice };
   }
 }
