@@ -13,9 +13,7 @@ export default {
 
       const role = userClaims.user_metadata?.role as string;
       const body = await req.json();
-
-      const url = new URL(req.url);
-      const action = url.pathname.split('/').pop();
+      const action = body.action as string | undefined;
 
       // ─── CREATE ORDER (Customer) ───
       if (action === 'orders') {
@@ -134,7 +132,7 @@ export default {
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'waiting_approval', note: 'Diagnosa dikirim', created_by_type: 'store_admin', created_by_id: userClaims.id });
         await admin.from('notifications').insert({
           user_id: order.user_id, role: 'customer', type: 'diagnosis_result',
-          title: 'Diagnosa Selesai', message: `Diagnosa untuk #${order.order_number} sudah selesai. Total: Rp ${finalPrice.toLocaleString('id-ID')}. Silakan cek dan setujui.`,
+          title: 'Diagnosa Selesai', message: `Diagnosa untuk #${order.order_number} sudah selesai. Total: Rp ${finalPrice.toLocaleString()}. Silakan cek dan setujui.`,
           link_to: `/orders/${order_id}`,
         });
         return ok({ final_price: finalPrice, allowed_actions: VALID_TRANSITIONS['waiting_approval'] || [] });

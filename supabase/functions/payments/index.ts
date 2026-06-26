@@ -12,8 +12,7 @@ export default {
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
       const body = await req.json();
-      const url = new URL(req.url);
-      const action = url.pathname.split('/').pop();
+      const action = body.action as string | undefined;
 
       if (action === 'confirm') {
         const { order_id, payment_id, note } = body;

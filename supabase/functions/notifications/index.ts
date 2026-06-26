@@ -5,13 +5,12 @@ export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' } });
 
-    const url = new URL(req.url);
-    const action = url.pathname.split('/').pop();
     const { userClaims, supabaseAdmin: admin } = ctx;
     if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
     let body: Record<string, unknown> = {};
     try { body = await req.json(); } catch { return fail('INVALID_JSON', 'Invalid JSON body'); }
+    const action = body.action as string | undefined;
 
     // ─── BROADCAST (platform_admin only) ───
     if (action === 'broadcast') {
