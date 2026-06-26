@@ -16,7 +16,6 @@ call flutter clean >nul 2>&1
 :: Get version
 set VERSION=1.0.0
 for /f "tokens=2 delims=: " %%a in ('findstr /b "version:" pubspec.yaml') do set VERSION=%%a
-set VERSION=%VERSION:+=+%
 echo [2/3] Building v%VERSION%...
 
 :: Build APK
@@ -24,22 +23,26 @@ call flutter build apk --release ^
   --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co ^
   --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
 
-if %errorlevel% equ 0 (
-    echo.
-    echo ========================================
-    echo   BUILD SUCCESS v%VERSION%
-    echo ========================================
-    echo.
-    echo   APK: build\app\outputs\flutter-apk\app-release.apk
-    echo.
-    echo   Cara kirim ke teman:
-    echo   1. Buka folder build\app\outputs\flutter-apk\
-    echo   2. Copy app-release.apk
-    echo   3. Kirim lewat WhatsApp / Telegram / Bluetooth
-    echo.
-    echo   Di HP teman: buka file APK ^> Install
-    echo   (mungkin perlu izin "Install unknown apps")
-) else (
-    echo BUILD FAILED
-)
+if errorlevel 1 goto error
+
+echo.
+echo ========================================
+echo   BUILD SUCCESS v%VERSION%
+echo ========================================
+echo.
+echo   APK: build\app\outputs\flutter-apk\app-release.apk
+echo.
+echo   Cara kirim ke teman:
+echo   1. Buka folder build\app\outputs\flutter-apk\
+echo   2. Copy app-release.apk
+echo   3. Kirim lewat WhatsApp / Telegram
+echo.
+echo   Di HP teman: buka APK ^> Install
+echo   (mungkin perlu izin "Install unknown apps")
+goto end
+
+:error
+echo BUILD FAILED - cek error di atas.
+
+:end
 pause
