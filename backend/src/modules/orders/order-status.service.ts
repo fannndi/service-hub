@@ -45,7 +45,7 @@ export class OrderStatusService {
         : null;
 
     await this.prisma.$transaction(async (tx) => {
-      if (dto.status === 'repairing' && order.status === 'waiting_sparepart') {
+      if (dto.status === 'repairing' && ['waiting_sparepart', 'waiting_approval'].includes(order.status)) {
         const items = await tx.orderItem.findMany({
           where: { orderId, status: { in: ['confirmed', 'replaced'] } },
         });

@@ -524,9 +524,9 @@ class _CustomersTabState extends ConsumerState<_CustomersTab> {
                         ]),
                         Row(children: [const Icon(Icons.phone, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4),
                           Text(u.phoneNumber, style: theme.textTheme.bodySmall)]),
-                        if (u.plainPassword != null)
+                        if (u.isFirstLogin && !u.isCredentialSent)
                           Row(children: [const Icon(Icons.key, size: 14, color: AppColors.warning), const SizedBox(width: 4),
-                            Text(context.l10n.passwordLabel.replaceFirst('{password}', u.plainPassword ?? ''), style: theme.textTheme.bodySmall?.copyWith(color: AppColors.warning, fontWeight: FontWeight.w600))]),
+                            Text(context.l10n.passwordLabel.replaceFirst('{password}', '••••••••'), style: theme.textTheme.bodySmall?.copyWith(color: AppColors.warning, fontWeight: FontWeight.w600))]),
                         if (u.address != null && u.address!.isNotEmpty)
                           Text(u.address!, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                         const SizedBox(height: 4),

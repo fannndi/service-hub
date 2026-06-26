@@ -91,11 +91,15 @@ export class GuestOrdersService {
     const rawPass = this.credentialService.getDecryptedCredential(user.credentialPlainEnc);
     if (!rawPass) throw new Error('Failed to decrypt credential');
 
-    await this._createSupabaseAuthUser(user, rawPass);
+    const supabaseUserId = await this._createSupabaseAuthUserWithRetry(user, rawPass);
+    if (!supabaseUserId) {
+      this.logger.error(`Failed to create Supabase Auth user for ${user.phoneNumber} after retries — activation aborted`);
+      throw new Error('Gagal mengaktifkan akun. Silakan coba lagi.');
+    }
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { accountStatus: 'active', credentialPlainEnc: null, isCredentialSent: true },
+      data: { accountStatus: 'active', credentialPlainEnc: null, isCredentialSent: true, supabaseUserId },
     });
 
     await this.notif.send(
@@ -121,6 +125,23 @@ export class GuestOrdersService {
     return { message: 'Akun berhasil diaktifkan. Cek WhatsApp untuk info login.' };
   }
 
+  private async _createSupabaseAuthUserWithRetry(
+    user: { id: string; phoneNumber: string; fullName: string },
+    password: string,
+  ): Promise<string | undefined> {
+    const delays = [1_000, 3_000, 9_000];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const result = await this._createSupabaseAuthUser(user, password);
+        if (result) return result;
+      } catch (err) {
+        this.logger.warn(`Supabase Auth attempt ${attempt}/3 failed: ${err instanceof Error ? err.message : String(err)}`);
+        if (attempt < 3) await new Promise((r) => setTimeout(r, delays[attempt - 1]));
+      }
+    }
+    return undefined;
+  }
+
   private _isAtLeastDeviceReceived(status: string): boolean {
     const order = ['device_received', 'diagnosing', 'waiting_approval', 'waiting_sparepart', 'repairing', 'quality_check', 'waiting_payment', 'completed'];
     return order.includes(status);
@@ -143,41 +164,31 @@ export class GuestOrdersService {
     }
 
     const email = `${user.phoneNumber}@customer.servisgadget.com`;
-    try {
-      const res = await axios.post(
-        `https://${projectRef}.supabase.co/auth/v1/admin/users`,
-        {
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            role: 'customer',
-            phone: user.phoneNumber,
-            full_name: user.fullName,
-            is_first_login: true,
-          },
+    const res = await axios.post(
+      `https://${projectRef}.supabase.co/auth/v1/admin/users`,
+      {
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: 'customer',
+          phone: user.phoneNumber,
+          full_name: user.fullName,
+          is_first_login: true,
         },
-        {
-          headers: {
-            apikey: serviceRoleKey,
-            Authorization: `Bearer ${serviceRoleKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 15_000,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
         },
-      );
-      const supabaseUserId = res.data?.id as string | undefined;
-      if (supabaseUserId) {
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { supabaseUserId },
-        });
-        this.logger.log(`Supabase Auth user created for ${email} (id: ${supabaseUserId})`);
-        return supabaseUserId;
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Failed to create Supabase Auth user for ${email}: ${msg}`);
+        timeout: 15_000,
+      },
+    );
+    const supabaseUserId = res.data?.id as string | undefined;
+    if (supabaseUserId) {
+      this.logger.log(`Supabase Auth user created for ${email} (id: ${supabaseUserId})`);
+      return supabaseUserId;
     }
   }
 }

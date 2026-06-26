@@ -64,6 +64,12 @@ export class PlatformUserService {
     if (dto.isFirstLogin !== undefined) data.isFirstLogin = dto.isFirstLogin;
     if (dto.isCredentialSent !== undefined) data.isCredentialSent = dto.isCredentialSent;
     await this.prisma.user.update({ where: { id }, data });
+    if (dto.accountStatus === 'suspended' || dto.accountStatus === 'deleted') {
+      await this.prisma.userSession.updateMany({
+        where: { userId: id, isActive: true },
+        data: { isActive: false },
+      });
+    }
     return { message: 'Pelanggan berhasil diupdate.' };
   }
 

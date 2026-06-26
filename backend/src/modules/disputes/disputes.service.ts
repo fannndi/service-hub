@@ -5,6 +5,7 @@ import {
   OrderNotFoundException,
   WarrantyExpiredException,
   DisputeAlreadyActiveException,
+  StockUnavailableException,
 } from '../../common/exceptions';
 import { generateOrderNumber } from '../../common/utils';
 import { CreateDisputeDto, RespondDisputeDto } from './dto/dispute.dto';
@@ -114,10 +115,13 @@ export class DisputesService {
 
         for (const item of warrantyOrderItems) {
           if (!item.sparepartId) continue;
-          await tx.$queryRawUnsafe(
-            `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0`,
+          const result = await tx.$queryRawUnsafe<Array<{ id: string }>>(
+            `UPDATE spareparts SET qty_reserved = qty_reserved + 1 WHERE id = $1 AND qty - qty_reserved > 0 RETURNING id`,
             item.sparepartId,
           );
+          if (result.length === 0) {
+            throw new StockUnavailableException();
+          }
         }
         await tx.dispute.update({
           where: { id: disputeId },

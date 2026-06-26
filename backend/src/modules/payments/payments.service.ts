@@ -57,20 +57,21 @@ export class PaymentsService {
     const completedAt = new Date();
     const warrantyExpiredAt = new Date(completedAt.getTime() + warrantyDays * 24 * 60 * 60 * 1000);
 
-    await this.prisma.$transaction([
-      this.prisma.payment.update({
-        where: { id: paymentId },
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.payment.updateMany({
+        where: { id: paymentId, status: 'pending' },
         data: { status: 'confirmed', confirmedBy: adminId, confirmedAt: new Date() },
-      }),
-      this.prisma.serviceOrder.update({
+      });
+      if (updated.count === 0) return;
+      await tx.serviceOrder.update({
         where: { id: orderId },
         data: { status: 'completed', paymentStatus: 'paid', completedAt, warrantyDays, warrantyExpiredAt },
-      }),
-      this.prisma.store.update({
+      });
+      await tx.store.update({
         where: { id: storeId },
         data: { totalCompleted: { increment: 1 } },
-      }),
-      this.prisma.serviceTracking.create({
+      });
+      await tx.serviceTracking.create({
         data: {
           orderId,
           status: 'completed',
@@ -78,8 +79,8 @@ export class PaymentsService {
           createdById: adminId,
           note: 'Pembayaran dikonfirmasi. Order selesai.',
         },
-      }),
-    ]);
+      });
+    });
 
     await this.notif.sendOrderCompleted(
       payment.order.user.phoneNumber,

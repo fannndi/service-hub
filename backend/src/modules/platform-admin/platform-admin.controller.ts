@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { PlatformAuthService } from './platform-auth.service';
 import { PlatformStoreService } from './platform-store.service';
 import { PlatformUserService } from './platform-user.service';
@@ -18,6 +19,7 @@ export class PlatformAdminController {
   ) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: AdminLoginDto) {
     return this.platformAuthService.login(dto.username, dto.password);
