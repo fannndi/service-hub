@@ -27,6 +27,10 @@
 # Keep Dio
 -keep class com.github.dio.** { *; }
 
+# Play Core (split install / deferred components)
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
 # Generic Android rules
 -dontwarn javax.annotation.**
 -dontwarn sun.misc.Unsafe
