@@ -1,10 +1,12 @@
-import '../../../../core/api_client.dart';
+import 'api_helper.dart';
 
 class StoreNotificationRepository {
+  String get storeId => sb.storeId ?? '';
+
   Future<List<dynamic>> getNotifications({int page = 1}) async {
     try {
-      final result = await ApiClient.instance.get('/store/notifications?page=$page');
-      return (result['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final data = await sb.from('notifications').select('*').eq('store_id', storeId).order('created_at', ascending: false).limit(50);
+      return data;
     } catch (_) {
       return [];
     }
@@ -12,22 +14,18 @@ class StoreNotificationRepository {
 
   Future<int> getUnreadCount() async {
     try {
-      final result = await ApiClient.instance.get('/store/notifications/unread-count');
-      return result['count'] as int? ?? 0;
+      final data = await sb.from('notifications').select('id').eq('store_id', storeId).eq('is_read', false);
+      return (data as List).length;
     } catch (_) {
       return 0;
     }
   }
 
   Future<void> markAsRead(String id) async {
-    try {
-      await ApiClient.instance.patch('/store/notifications/$id/read', {});
-    } catch (_) {}
+    await sb.from('notifications').update({'is_read': true}).eq('id', id);
   }
 
   Future<void> markAllRead() async {
-    try {
-      await ApiClient.instance.patch('/store/notifications/read-all', {});
-    } catch (_) {}
+    await sb.from('notifications').update({'is_read': true}).eq('store_id', storeId).eq('is_read', false);
   }
 }

@@ -21,7 +21,7 @@ export default {
 
         if (!items || items.length === 0) return fail('INVALID_INPUT', 'Minimal 1 item');
 
-        const { data: store } = await admin.from('stores').select('id').eq('id', store_id).eq('is_active', true).single();
+        const { data: store } = await admin.from('stores').select('id, config').eq('id', store_id).eq('is_active', true).single();
         if (!store) return fail('STORE_NOT_ACTIVE', 'Toko tidak aktif');
 
         for (const item of items) {
@@ -139,16 +139,72 @@ export default {
         if (!order) return fail('ORDER_NOT_FOUND', 'Pesanan tidak ditemukan', 404);
         assertValidTransition(order.status, status);
 
+        const update: Record<string, any> = { status };
+        if (status === 'completed') update.completed_at = new Date().toISOString();
+        if (status === 'cancelled') update.cancelled_at = new Date().toISOString();
+
+        let slaDeadline: string | null = null;
+        const sla24h = ['device_received', 'diagnosing', 'waiting_approval', 'waiting_sparepart', 'repairing', 'quality_check'].includes(status);
+        if (sla24h) {
+          slaDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          update.sla_deadline = slaDeadline;
+        }
+        if (status === 'waiting_payment') {
+          slaDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+          update.sla_deadline = slaDeadline;
+        }
+
         if (order.status === 'waiting_sparepart' && status === 'repairing') {
           for (const item of order.order_items) {
             if (item.sparepart_id) await admin.rpc('consume_stock', { p_sparepart_id: item.sparepart_id });
           }
         }
 
-        const update: Record<string, any> = { status };
-        if (status === 'completed') update.completed_at = new Date().toISOString();
-        if (status === 'cancelled') update.cancelled_at = new Date().toISOString();
-        if (status === 'waiting_payment') update.sla_deadline = null;
+        const slaTitleMap: Record<string, string> = {
+          device_received: 'Perangkat Diterima', diagnosing: 'Diagnosis Dimulai',
+          waiting_approval: 'Menunggu Persetujuan', waiting_sparepart: 'Menunggu Suku Cadang',
+          repairing: 'Perbaikan Dimulai', quality_check: 'Quality Check', waiting_payment: 'Waktu Pembayaran',
+        };
+        if (slaDeadline) {
+          await admin.from('notifications').insert({
+            user_id: order.user_id,
+            store_id: order.store_id,
+            role: 'customer',
+            title: `SLA - ${slaTitleMap[status]}`,
+            message: sla24h
+              ? `Status diperbarui ke ${status}. Batas waktu SLA: ${slaDeadline}.`
+              : `Waktu pembayaran telah dimulai. Silakan selesaikan pembayaran sebelum ${slaDeadline}.`,
+            type: 'sla',
+            is_read: false,
+            link_to: `/orders/${order_id}`,
+          });
+        }
+
+        if (status === 'completed') {
+          await admin.from('notifications').insert({
+            user_id: order.user_id,
+            store_id: order.store_id,
+            role: 'customer',
+            title: 'Order Selesai',
+            message: `Order telah selesai. Terima kasih telah menggunakan layanan kami.`,
+            type: 'order_completion',
+            is_read: false,
+            link_to: `/orders/${order_id}`,
+          });
+        }
+
+        if (status === 'cancelled') {
+          await admin.from('notifications').insert({
+            user_id: order.user_id,
+            store_id: order.store_id,
+            role: 'customer',
+            title: 'Order Dibatalkan',
+            message: `Order telah dibatalkan.`,
+            type: 'order_cancellation',
+            is_read: false,
+            link_to: `/orders/${order_id}`,
+          });
+        }
 
         await admin.from('service_orders').update(update).eq('id', order.id);
         await admin.from('service_tracking').insert({ order_id: order.id, status, note: note || null, created_by_type: 'store_admin', created_by_id: userClaims.id });

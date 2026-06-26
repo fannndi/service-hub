@@ -78,10 +78,6 @@ VALUES
   ('a0000001-0000-0000-0000-000000000005', 'Google', 'Pixel 8', 'camera', 'Kamera Google Pixel 8', 900000, 1, 0, 'available')
 ON CONFLICT DO NOTHING;
 
--- ─── UPDATE rpc get_device_models data ───
--- Refresh materialized views if any
-SELECT setval('stores_id_seq', COALESCE((SELECT MAX(id::text::integer) FROM stores), 0));
-
 -- ═══════════════════════════════════════════
 -- AUTH USERS (via auth schema)
 -- ═══════════════════════════════════════════

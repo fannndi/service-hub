@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/api_client.dart';
 import '../../../../core/domain/order_status.dart';
+import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../shared_widgets/status_badge.dart';
 import '../../domain/models/tracking_entry.dart';
@@ -47,22 +47,14 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     }
     setState(() { _loading = true; _error = null; _result = null; });
     try {
-      final data = await ApiClient.instance.post('/orders/guest/track', {
-        'order_number': order,
-        'phone_number': phone,
-      });
-      final credData = await ApiClient.instance.post('/orders/guest/credentials', {
-        'order_id': data['order_number'],
-        'phone_number': phone,
-      });
+      final sb = SupabaseService.instance;
+      final data = await sb.invoke('guest', body: {'action': 'track', 'order_number': order, 'phone_number': phone}) as Map<String, dynamic>;
+      final credData = await sb.invoke('guest', body: {'action': 'credentials', 'order_id': data['order_number'], 'phone_number': phone}) as Map<String, dynamic>;
       if (!mounted) return;
       setState(() { _result = {...data, ...credData}; });
-    } on ApiException catch (e) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.message);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _error = context.l10n.connectionFailed);
+      setState(() => _error = e is Map ? (e['message'] as String? ?? 'Gagal. Coba lagi.') : 'Gagal. Coba lagi.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

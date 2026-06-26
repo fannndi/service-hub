@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/platform_admin_providers.dart';
 import '../../../../core/widgets/address_dropdowns.dart';
-import '../../../../core/api_client.dart';
+import '../../../../core/supabase_service.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../ui/theme/app_theme.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -70,8 +70,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
                       if (titleCtrl.text.trim().isEmpty || msgCtrl.text.trim().isEmpty) return;
                       setD(() => loading = true);
                       try {
-                        await ApiClient.instance.post('/notifications/broadcast', {
-                          'role': roleCtrl.text,
+                        await SupabaseService.instance.invoke('notifications', body: {
+                          'action': 'broadcast',
+                          'target_role': roleCtrl.text,
                           'title': titleCtrl.text.trim(),
                           'message': msgCtrl.text.trim(),
                         });

@@ -7,7 +7,6 @@ import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
-import '../../../../core/api_client.dart';
 import '../../../../core/supabase_service.dart';
 import 'service_flow_steps.dart';
 
@@ -90,9 +89,10 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       };
 
       if (isGuest) {
-        final result = await ApiClient.instance.post('/orders', body);
+        final result = await SupabaseService.instance.invoke('guest', body: {'action': 'create-order', ...body});
         if (!mounted) return;
-        context.go('/booking-success/${result['order_number']}', extra: {'isGuest': true});
+        final data = result as Map<String, dynamic>? ?? {};
+        context.go('/booking-success/${data['order_number']}', extra: {'isGuest': true});
       } else {
         final result = await ref.read(orderRepositoryProvider).createOrder(
           CreateOrderRequest(
