@@ -8,14 +8,17 @@ class GuestBookingSuccessScreen extends StatelessWidget {
   const GuestBookingSuccessScreen({
     super.key,
     required this.orderNumber,
+    this.tempPassword,
   });
 
   final String orderNumber;
+  final String? tempPassword;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final hasPw = tempPassword != null && tempPassword!.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.bookingSuccess)),
@@ -26,17 +29,11 @@ class GuestBookingSuccessScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const Icon(Icons.check_circle_rounded, size: 80, color: Colors.green),
             const SizedBox(height: 16),
-            Text(
-              context.l10n.orderCreated,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-            ),
+            Text(context.l10n.orderCreated, textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text(
-              context.l10n.saveOrderNumber,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-            ),
+            Text(context.l10n.saveOrderNumber, textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
             const SizedBox(height: 24),
             Card(
               child: Padding(
@@ -57,23 +54,44 @@ class GuestBookingSuccessScreen extends StatelessWidget {
                 ]),
               ),
             ),
-            const SizedBox(height: 24),
-            Card(
-              color: scheme.primaryContainer.withAlpha(80),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  Icon(Icons.info_outline, color: scheme.primary, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      context.l10n.guestInfoMessage,
-                      style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
-                    ),
-                  ),
-                ]),
+            if (hasPw) ...[
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.amber.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      const Icon(Icons.key, size: 20, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text('Akun Sementara', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    ]),
+                    const SizedBox(height: 12),
+                    _row(theme, 'Username', '08xxxxxxxx'),
+                    _row(theme, 'Password', tempPassword!),
+                    const SizedBox(height: 8),
+                    Text('Gunakan untuk login setelah akun diaktifkan toko.',
+                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade700)),
+                  ]),
+                ),
               ),
-            ),
+            ],
+            const SizedBox(height: 24),
+            if (!hasPw)
+              Card(
+                color: scheme.primaryContainer.withAlpha(80),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(children: [
+                    Icon(Icons.info_outline, color: scheme.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(context.l10n.guestInfoMessage,
+                          style: theme.textTheme.bodySmall?.copyWith(height: 1.4)),
+                    ),
+                  ]),
+                ),
+              ),
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: () => context.go('/guest/track/$orderNumber'),
@@ -90,4 +108,12 @@ class GuestBookingSuccessScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _row(ThemeData theme, String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(children: [
+      SizedBox(width: 80, child: Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
+      Expanded(child: Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600))),
+    ]),
+  );
 }

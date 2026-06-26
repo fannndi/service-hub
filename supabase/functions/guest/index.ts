@@ -107,6 +107,7 @@ export default {
 
       const orderNumber = generateOrderNumber();
       const totalEstimasi = items.reduce((s: number, i: any) => s + (i.item_price || 0), 0);
+      const waConfigured = !!(Deno.env.get('WA_GATEWAY_URL') && Deno.env.get('WA_GATEWAY_TOKEN'));
 
       const { data: order, error: orderErr } = await admin.from('service_orders').insert({
         user_id: userId, store_id, order_number, device_type, brand, device_model,
@@ -135,7 +136,15 @@ export default {
         await sendWhatsApp(phone, customerMsg, 'stealth_account');
       }
 
-      return ok({ order_id: order.id, order_number, is_new_customer: isNew, message: isNew ? 'Order berhasil dibuat. Cek WhatsApp untuk info akun.' : 'Order berhasil dibuat.' });
+      return ok({
+        order_id: order.id,
+        order_number,
+        is_new_customer: isNew,
+        temp_password: isNew && !waConfigured ? password : undefined,
+        message: isNew
+          ? (waConfigured ? 'Order berhasil dibuat. Cek WhatsApp untuk info akun.' : 'Order berhasil dibuat. Simpan password yang ditampilkan.')
+          : 'Order berhasil dibuat.',
+      });
     }
 
     // ─── TRACK ORDER (public) ───

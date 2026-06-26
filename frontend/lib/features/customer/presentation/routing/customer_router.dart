@@ -47,15 +47,16 @@ final customerRoutes = <RouteBase>[
   GoRoute(
     path: '/booking-success/:orderNumber',
     builder: (_, state) {
-      final extra = state.extra;
-      if (extra is Map && extra['isGuest'] == true) {
+      final extra = state.extra is Map ? Map<String, dynamic>.from(state.extra as Map) : {};
+      if (extra['isGuest'] == true) {
         return GuestBookingSuccessScreen(
           orderNumber: state.pathParameters['orderNumber']!,
+          tempPassword: extra['temp_password'] as String?,
         );
       }
       return BookingSuccessScreen(
         orderNumber: state.pathParameters['orderNumber']!,
-        isNewCustomer: extra is bool ? extra : (extra is Map ? (extra['isNewCustomer'] as bool? ?? false) : false),
+        isNewCustomer: extra['isNewCustomer'] == true,
       );
     },
   ),

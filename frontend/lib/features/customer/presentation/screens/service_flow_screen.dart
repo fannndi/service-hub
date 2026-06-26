@@ -91,8 +91,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       if (isGuest) {
         final result = await SupabaseService.instance.invoke('guest', body: {'action': 'create-order', ...body});
         if (!mounted) return;
-        final data = result as Map<String, dynamic>? ?? {};
-        context.go('/booking-success/${data['order_number']}', extra: {'isGuest': true});
+        final data = Map<String, dynamic>.from(result as Map? ?? {});
+        context.go('/booking-success/${data['order_number']}', extra: data);
       } else {
         final result = await ref.read(orderRepositoryProvider).createOrder(
           CreateOrderRequest(
