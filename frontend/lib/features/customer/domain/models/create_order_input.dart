@@ -12,6 +12,7 @@ class CreateOrderItemInput {
         'service_type': serviceType,
         'complaint': complaint,
         if (sparepartId != null) 'sparepart_id': sparepartId,
+        if (itemPrice > 0) 'item_price': itemPrice,
       };
 }
 

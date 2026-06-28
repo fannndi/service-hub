@@ -11,5 +11,5 @@ final dashboardSummaryProvider = StreamProvider.autoDispose<DashboardSummary>((r
   return Stream.periodic(const Duration(seconds: 60), (_) => _).asyncMap((_) async {
     final data = await repo.getDashboardSummary();
     return data;
-  }).handleError((e) { debugPrint('dashboardSummaryProvider error: $e'); });
+  }).handleError((e) { debugPrint('dashboardSummaryProvider error: $e'); throw e; });
 });

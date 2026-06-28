@@ -8,5 +8,9 @@ class StoreProfileRepository {
     return data;
   }
 
-  Future<void> updateProfile(Map<String, dynamic> payload) async {}
+  Future<void> updateProfile(Map<String, dynamic> payload) async {
+    final adminId = sb.user?.id;
+    if (adminId == null) throw Exception('Not authenticated');
+    await sb.from('store_admins').update(payload).eq('id', adminId);
+  }
 }

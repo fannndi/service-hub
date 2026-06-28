@@ -22,10 +22,10 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
   Future<void> _submit() async {
     setState(() => _loading = true);
     try {
-      await ref.read(reviewRepositoryProvider).createReview(
+      final result = await ref.read(reviewRepositoryProvider).createReview(
           widget.orderId, rating: _rating, comment: _comment.text);
       ref.invalidate(orderDetailProvider(widget.orderId));
-      if (mounted) context.go('/review-success');
+      if (mounted) context.go('/review-success', extra: result);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)

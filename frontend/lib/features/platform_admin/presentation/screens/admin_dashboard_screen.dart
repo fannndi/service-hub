@@ -31,7 +31,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
     showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => AlertDialog(
       title: Text(context.l10n.broadcastNotification),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        DropdownButtonFormField<String>(initialValue: 'customer', decoration: InputDecoration(labelText: context.l10n.target, isDense: true),
+        DropdownButtonFormField<String>(value: 'customer', decoration: InputDecoration(labelText: context.l10n.target, isDense: true),
           items: [DropdownMenuItem(value: 'customer', child: Text(context.l10n.allCustomers)), DropdownMenuItem(value: 'store_admin', child: Text(context.l10n.allStoreAdmins))],
           onChanged: (v) => setD(() => roleCtrl.text = v ?? 'customer')),
         const SizedBox(height: 8),

@@ -37,7 +37,13 @@ class OrderRepository {
     if (uid == null) throw Exception('Not authenticated');
     var q = sb.from('service_orders').select('*, items:order_items(*)')
       .eq('user_id', uid);
-    if (status != null && status != 'all') q = q.eq('status', status);
+    if (status != null && status != 'all') {
+      if (status == 'active') {
+        q = q.not('status', 'in', '("completed","cancelled")');
+      } else {
+        q = q.eq('status', status);
+      }
+    }
     final data = await q
       .order('created_at', ascending: false)
       .range((page - 1) * 20, page * 20 - 1);

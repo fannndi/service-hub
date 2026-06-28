@@ -51,7 +51,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
         _buildModelField(deviceModels ?? []),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          initialValue: _selectedPartType,
+          value: _selectedPartType,
           decoration: InputDecoration(
               labelText: context.l10n.sparepartType,
               prefixIcon: const Icon(Icons.build_outlined)),
@@ -111,7 +111,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
     return Row(children: [
       Expanded(
         child: DropdownButtonFormField<String>(
-          initialValue: _selectedBrand,
+          value: _selectedBrand,
           decoration: InputDecoration(
               labelText: context.l10n.brand,
               prefixIcon: const Icon(Icons.branding_watermark_outlined)),
@@ -143,7 +143,7 @@ class _SparepartFormScreenState extends ConsumerState<SparepartFormScreen> {
     return Row(children: [
       Expanded(
         child: DropdownButtonFormField<String>(
-          initialValue: _selectedDeviceModel,
+          value: _selectedDeviceModel,
           decoration: InputDecoration(
               labelText: context.l10n.deviceModel,
               prefixIcon: const Icon(Icons.phone_android_outlined)),

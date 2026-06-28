@@ -34,6 +34,15 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   Future<void> updateProfile({String? fullName, String? address}) async {
     final repo = ref.read(customerAuthRepositoryProvider);
     await repo.updateProfile(fullName: fullName, address: address);
-    state = AsyncData(state.valueOrNull);
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncData(CustomerUser(
+        id: current.id,
+        fullName: fullName ?? current.fullName,
+        phoneNumber: current.phoneNumber,
+        isFirstLogin: current.isFirstLogin,
+        address: address ?? current.address,
+      ));
+    }
   }
 }
