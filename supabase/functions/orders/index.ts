@@ -1,6 +1,25 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { assertValidTransition, VALID_TRANSITIONS, ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
+
+async function autoActivateGuest(userId: string, admin: any) {
+  const { data: user } = await admin.from('users').select('*').eq('id', userId).single();
+  if (!user || user.account_status === 'active') return;
+  if (!user.phone_number) { console.error('autoActivateGuest: user has no phone_number'); return; }
+  const email = `${user.phone_number}@customer.servisgadget.com`;
+  const { error: authErr } = await admin.auth.admin.createUser({
+    email, password: user.password_hash, email_confirm: true,
+    user_metadata: { role: 'customer', full_name: user.full_name },
+  });
+  if (authErr) { console.error('autoActivateGuest failed:', authErr.message); return; }
+  await admin.from('users').update({
+    account_status: 'active', is_first_login: true, is_credential_sent: false, updated_at: new Date().toISOString(),
+  }).eq('id', userId);
+  if (isWAConfigured()) {
+    await sendWA(user.phone_number, `Halo ${user.full_name}!\nAkun ServisGadget kamu sudah aktif!\nNomor HP: ${user.phone_number}\nPassword: ${user.password_hash}\nSegera login dan ganti passwordmu.`, admin);
+  }
+}
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -36,7 +55,7 @@ export default {
         let discount = 0;
         if (coupon_code) {
           const { data: coupon } = await admin.from('coupons')
-            .select('id, amount').eq('code', coupon_code).eq('user_id', userClaims.id).eq('is_used', false).gt('expired_at', new Date().toISOString()).single();
+            .select('id, amount').eq('code', coupon_code).eq('user_id', userClaims.id).eq('is_used', false).gt('expired_at', new Date().ISOString()).single();
           if (!coupon) return fail('COUPON_INVALID', 'Kupon tidak valid');
           coupon_id = coupon.id;
           discount = coupon.amount;
@@ -147,9 +166,13 @@ export default {
         const { data: adminRow } = await admin.from('store_admins').select('store_id').eq('id', userClaims.id).single();
         if (!adminRow) return fail('FORBIDDEN', 'Unauthorized', 403);
 
-        const { data: order } = await admin.from('service_orders').select('*, order_items(id, sparepart_id)').eq('id', order_id).eq('store_id', adminRow.store_id).single();
+        const { data: order } = await admin.from('service_orders').select('*, order_items(id, sparepart_id), user:users(account_status)').eq('id', order_id).eq('store_id', adminRow.store_id).single();
         if (!order) return fail('ORDER_NOT_FOUND', 'Pesanan tidak ditemukan', 404);
         assertValidTransition(order.status, status);
+
+        if (status === 'device_received' && order.user?.account_status === 'suspended') {
+          await autoActivateGuest(order.user_id, admin);
+        }
 
         const update: Record<string, any> = { status, updated_at: now };
         if (status === 'completed') update.completed_at = new Date().toISOString();

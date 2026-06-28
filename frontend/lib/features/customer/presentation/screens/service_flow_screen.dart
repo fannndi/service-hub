@@ -12,6 +12,10 @@ import '../../../../core/supabase_service.dart';
 import 'service_flow_steps.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 
+// Constants for hardcoded strings
+const String _namaWajibDiisi = 'Nama dan nomor WhatsApp wajib diisi.';
+const String _alamatWajibDiisi = 'Alamat penjemputan wajib diisi untuk pickup kurir.';
+
 class ServiceFlowScreen extends ConsumerStatefulWidget {
   const ServiceFlowScreen({super.key});
   @override
@@ -49,7 +53,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         deviceModel: _state.selectedModel!,
         partType: _state.serviceType,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_matchStores error: ' + e.toString());
       _state.matchedStores = const [];
     } finally {
       if (mounted) setState(() => _state.loading = false);
@@ -93,7 +98,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       if (isGuest) {
         final result = await SupabaseService.instance.invoke('guest', body: {'action': 'create-order', ...body});
         if (!mounted) return;
-        final data = Map<String, dynamic>.from(result as Map? ?? {});
+        final resultMap = result as Map<String, dynamic>?;
+        final data = Map<String, dynamic>.from(resultMap ?? {});
         context.go('/booking-success/${data['order_number']}', extra: data);
       } else {
         final result = await ref.read(orderRepositoryProvider).createOrder(
@@ -143,13 +149,13 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     }
     if (_step == 3 &&
         (_state.name.text.trim().isEmpty || _state.phone.text.trim().isEmpty)) {
-      _showFlowMessage('Nama dan nomor WhatsApp wajib diisi.');
+      _showFlowMessage(_namaWajibDiisi);
       return;
     }
     if (_step == 3 &&
         _state.delivery == 'courier_pickup' &&
         _state.address.text.trim().isEmpty) {
-      _showFlowMessage('Alamat penjemputan wajib diisi untuk pickup kurir.');
+      _showFlowMessage(_alamatWajibDiisi);
       return;
     }
 

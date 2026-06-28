@@ -51,8 +51,10 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     setState(() { _loading = true; _error = null; _result = null; });
     try {
       final sb = SupabaseService.instance;
-      final data = await sb.invoke('guest', body: {'action': 'track', 'order_number': order, 'phone_number': phone}) as Map<String, dynamic>;
-      final credData = await sb.invoke('guest', body: {'action': 'credentials', 'order_id': data['order_number'], 'phone_number': phone}) as Map<String, dynamic>;
+      final data = await sb.invoke('guest', body: {'action': 'track', 'order_number': order, 'phone_number': phone});
+      if (data is! Map<String, dynamic>) throw Exception('Invalid response');
+      final credData = await sb.invoke('guest', body: {'action': 'credentials', 'order_id': data['order_number'], 'phone_number': phone});
+      if (credData is! Map<String, dynamic>) throw Exception('Invalid response');
       if (!mounted) return;
       setState(() { _result = {...data, ...credData}; });
     } catch (e) {
@@ -68,7 +70,13 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.checkOrder)),
+      appBar: AppBar(
+        title: Text(context.l10n.checkOrder),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go("/welcome"),
+        ),
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -117,26 +125,26 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
   }
 
   Widget _buildResult(ThemeData theme) {
-    final status = OrderStatus.fromJson(_result!['status']);
-    final canActivate = _result!['can_activate'] as bool? ?? false;
-    final isActivated = _result!['is_activated'] as bool? ?? false;
-    final hasCredential = _result!['has_credential'] as bool? ?? false;
-    final phone = _result!['phone_number'] as String? ?? '';
-    final fullName = _result!['full_name'] as String? ?? '';
-    final maskedPass = _result!['masked_password'] as String?;
-    final rawTracking = (_result!['tracking'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final status = OrderStatus.fromJson(_result?['status']);
+    final canActivate = _result?['can_activate'] as bool? ?? false;
+    final isActivated = _result?['is_activated'] as bool? ?? false;
+    final hasCredential = _result?['has_credential'] as bool? ?? false;
+    final phone = _result?['phone_number'] as String? ?? '';
+    final fullName = _result?['full_name'] as String? ?? '';
+    final maskedPass = _result?['masked_password'] as String?;
+    final rawTracking = (_result?['tracking'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         ModernCard(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Expanded(child: Text('Nomor Pesanan ${_result!['order_number'] as String? ?? ''}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
+              Expanded(child: Text('Nomor Pesanan ${_result?['order_number'] as String? ?? ''}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
               StatusBadge(label: status.label),
             ]),
             const SizedBox(height: 8),
-            Text('${_result!['brand']} ${_result!['device_model']}', style: theme.textTheme.bodyMedium),
-            Text(_result!['store_name'] as String? ?? '', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text('${_result?['brand']} ${_result?['device_model']}', style: theme.textTheme.bodyMedium),
+            Text(_result?['store_name'] as String? ?? '', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ]),
         ),
       if (rawTracking.isNotEmpty) ...[

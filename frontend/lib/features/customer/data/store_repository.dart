@@ -12,7 +12,8 @@ class StoreDiscoveryRepository {
 
   Future<List<DeviceModelGroup>> getDeviceModels() async {
     final data = await sb.client.rpc('get_device_models');
-    return (data as List).map((json) => DeviceModelGroup.fromJson(json)).toList();
+    final list = data is List ? data : <dynamic>[];
+    return list.map((json) => DeviceModelGroup.fromJson(json)).toList();
   }
 
   Future<List<StoreMatchResult>> matchStores({required String brand, required String deviceModel, required String partType}) async {

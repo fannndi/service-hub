@@ -7,8 +7,10 @@ class CustomerAuthRepository {
     final email = SupabaseConfig.buildCustomerEmail(phone);
     final response = await sb.signIn(email, password);
     final meta = response.user?.userMetadata ?? {};
+    final uid = response.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     return CustomerUser(
-      id: response.user!.id,
+      id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
       phoneNumber: phone,
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
@@ -22,8 +24,10 @@ class CustomerAuthRepository {
   Future<CustomerUser?> restoreSession() async {
     if (!sb.isLoggedIn) return null;
     final meta = sb.user?.userMetadata ?? {};
+    final uid = sb.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     return CustomerUser(
-      id: sb.user!.id,
+      id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
       phoneNumber: meta['phone'] as String? ?? '',
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
@@ -35,7 +39,9 @@ class CustomerAuthRepository {
     if (fullName != null) updates['full_name'] = fullName;
     if (address != null) updates['address'] = address;
     if (updates.isNotEmpty) {
-      await sb.from('users').update(updates).eq('id', sb.user!.id);
+      final uid = sb.user?.id;
+      if (uid == null) throw Exception('Not authenticated');
+      await sb.from('users').update(updates).eq('id', uid);
     }
   }
 }

@@ -43,7 +43,7 @@ class StoreOrderRepository {
       'status': status,
       'note': '$title: $note',
       'created_by_type': 'store_admin',
-      'created_by_id': sb.user!.id,
+      'created_by_id': (sb.user?.id ?? (throw Exception('Not authenticated'))),
     });
   }
 }

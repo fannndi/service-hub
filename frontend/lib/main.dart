@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,8 +77,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 class _AuthRefresh extends ChangeNotifier {
+  late final StreamSubscription _sub;
   _AuthRefresh() {
-    SupabaseService.instance.onAuthStateChange.listen((_) => notifyListeners());
+    _sub = SupabaseService.instance.onAuthStateChange.listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/order_providers.dart';
@@ -37,7 +38,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   Widget build(BuildContext context) {
     final repo = ref.watch(storeOrderRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.trackingTimeline)),
+      appBar: AppBar(title: Text(context.l10n.trackingTimeline), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/store/orders/${widget.orderId}'))),
       body: FutureBuilder<List<dynamic>>(
         future: _trackingFuture,
         builder: (context, snapshot) {

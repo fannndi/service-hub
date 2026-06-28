@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendWA } from '../_shared/whatsapp.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -73,13 +74,8 @@ export default {
           link_to: `/orders/${warrantyOrder.id}`,
         });
 
-        const waUrl = Deno.env.get('WA_GATEWAY_URL');
-        const waToken = Deno.env.get('WA_GATEWAY_TOKEN');
-        if (waUrl && waToken) {
-          const { data: store } = await admin.from('stores').select('phone_number').eq('id', dispute.store_id).single();
-          const waMsg = `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda.`;
-          fetch(waUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: waToken }, body: JSON.stringify({ target: store?.phone_number || '', message: waMsg, countryCode: '62' }) }).catch(() => {});
-        }
+        const { data: store } = await admin.from('stores').select('phone_number').eq('id', dispute.store_id).single();
+        await sendWA(store?.phone_number || '', `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda.`, admin);
       } else {
         await admin.from('disputes').update({ status: newStatus, store_response, resolved_at: new Date().toISOString() }).eq('id', dispute_id);
         await admin.from('service_tracking').insert({ order_id: dispute.order_id, status: 'completed', note: `Klaim ditolak: ${store_response || '-'}`, created_by_type: 'store_admin', created_by_id: userClaims.id });

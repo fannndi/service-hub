@@ -29,6 +29,11 @@ class SupabaseService {
     await client.auth.signOut();
   }
 
+  /// Reset auth state for clean restart (integration tests).
+  Future<void> reset() async {
+    await client.auth.signOut();
+  }
+
   Future<void> updatePassword(String newPassword) async {
     await client.auth.updateUser(UserAttributes(password: newPassword));
   }

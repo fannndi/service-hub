@@ -46,6 +46,7 @@ export default {
           updated_at: now,
         }).eq('id', order_id);
 
+        // Intentional: separate notification for each role (customer + store_admin)
         await admin.from('notifications').insert([{ user_id: order.user_id, store_id: order.store_id, role: 'customer', title: 'Pembayaran Berhasil', message: `Pembayaran untuk pesanan #${order.order_number} telah dikonfirmasi. Garansi berlaku selama ${warrantyDays} hari hingga ${warrantyExpiredAt}.`, type: 'payment', is_read: false, link_to: `/orders/${order_id}` }]);
 
         await admin.from('notifications').insert([{ user_id: null, store_id: order.store_id, role: 'store_admin', title: 'Pembayaran Berhasil', message: `Pembayaran untuk pesanan #${order.order_number} telah dikonfirmasi. Garansi berlaku selama ${warrantyDays} hari.`, type: 'payment', is_read: false, link_to: `/admin/orders/${order_id}` }]);

@@ -66,7 +66,7 @@ class OrderDetailScreen extends ConsumerWidget {
             if (order.status == OrderStatus.waitingApproval)
               DiagnosisApprovalCard(order: order),
             SectionTitle(context.l10n.tracking, action: null),
-            OrderStatusTimeline(entries: order.tracking.take(3).toList()),
+            OrderStatusTimeline(entries: order.tracking.reversed.take(3).toList()),
             TextButton(
                 onPressed: () => context.push('/orders/$orderId/tracking'),
                 child: Text(context.l10n.viewAllTracking)),

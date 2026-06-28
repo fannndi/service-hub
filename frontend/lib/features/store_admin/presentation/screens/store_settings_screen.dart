@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
@@ -34,7 +35,7 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
     final profile = ref.watch(storeProfileProvider);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.storeProfile)),
+      appBar: AppBar(title: Text(context.l10n.storeProfile), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/store/dashboard'))),
       body: profile.when(
         loading: () => const Center(child: M3LoadingIndicator()),
         error: (e, _) => ErrorPanel(message: e.toString()),

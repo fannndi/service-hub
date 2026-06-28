@@ -18,7 +18,7 @@ class OrderDetailScreen extends ConsumerWidget {
     final order = ref.watch(orderDetailProvider(orderId));
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.orderDetail), actions: [
+      appBar: AppBar(title: Text(context.l10n.orderDetail), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/store/orders')), actions: [
         IconButton(
           onPressed: () => context.push('/store/orders/$orderId/tracking'),
           icon: const Icon(Icons.timeline),

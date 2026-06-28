@@ -7,8 +7,10 @@ class StoreAuthRepository {
     final email = SupabaseConfig.buildStoreAdminEmail(phone);
     final response = await sb.signIn(email, password);
     final meta = response.user?.userMetadata ?? {};
+    final uid = response.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     return StoreAdminSession(
-      adminId: response.user!.id,
+      adminId: uid,
       adminName: meta['full_name'] as String? ?? 'Admin',
       phoneNumber: phone,
       storeId: meta['store_id'] as String? ?? '',
@@ -22,8 +24,10 @@ class StoreAuthRepository {
   Future<StoreAdminSession?> restoreSession() async {
     if (!sb.isLoggedIn || sb.role != 'store_admin') return null;
     final meta = sb.user?.userMetadata ?? {};
+    final uid = sb.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     return StoreAdminSession(
-      adminId: sb.user!.id,
+      adminId: uid,
       adminName: meta['full_name'] as String? ?? 'Admin',
       phoneNumber: '',
       storeId: meta['store_id'] as String? ?? '',

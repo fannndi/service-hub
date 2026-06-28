@@ -14,7 +14,7 @@ class AdminAuthNotifier extends AsyncNotifier<PlatformAdminUser?> {
   Future<PlatformAdminUser?> build() async {
     if (!_sb.isLoggedIn || _sb.role != 'platform_admin') return null;
     final meta = _sb.user?.userMetadata ?? {};
-    return PlatformAdminUser(id: _sb.user!.id, username: meta['username'] as String? ?? 'admin', fullName: meta['full_name'] as String? ?? 'Admin');
+    return PlatformAdminUser(id: _sb.user?.id ?? '', username: meta['username'] as String? ?? 'admin', fullName: meta['full_name'] as String? ?? 'Admin');
   }
 
   Future<void> login(String username, String password) async {

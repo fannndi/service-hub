@@ -54,6 +54,7 @@ final customerRoutes = <RouteBase>[
         return GuestBookingSuccessScreen(
           orderNumber: state.pathParameters['orderNumber']!,
           tempPassword: extra['temp_password'] as String?,
+          phoneNumber: extra['phone_number'] as String?,
         );
       }
       return BookingSuccessScreen(
@@ -95,8 +96,11 @@ final customerRoutes = <RouteBase>[
           WarrantyClaimScreen(orderId: state.pathParameters['id']!)),
   GoRoute(
       path: '/review-success',
-      builder: (_, state) =>
-          ReviewSuccessScreen(result: state.extra as ReviewResult)),
+      builder: (_, state) {
+        final extra = state.extra;
+        if (extra is! ReviewResult) return const WelcomeScreen();
+        return ReviewSuccessScreen(result: extra);
+      }),
   GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   GoRoute(path: '/sessions', builder: (_, __) => const SessionsScreen()),
   GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
@@ -104,8 +108,11 @@ final customerRoutes = <RouteBase>[
       path: '/notifications', builder: (_, __) => const NotificationsScreen()),
   GoRoute(
       path: '/notifications/:id',
-      builder: (_, state) => _NotificationDetail(
-          notification: state.extra as NotificationItem)),
+      builder: (_, state) {
+        final extra = state.extra;
+        if (extra is! NotificationItem) return const WelcomeScreen();
+        return _NotificationDetail(notification: extra);
+      }),
   GoRoute(path: '/coupons', builder: (_, __) => const CouponsScreen()),
   GoRoute(path: '/security', builder: (_, __) => const SecurityScreen()),
   GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationsScreen()),

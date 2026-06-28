@@ -8,7 +8,8 @@ class AdminAuthRepository {
   Future<PlatformAdminUser> login(String username, String password) async {
     final email = SupabaseConfig.buildPlatformAdminEmail(username);
     await sb.signIn(email, password);
-    return PlatformAdminUser(id: sb.user!.id, username: username, fullName: 'Admin');
+    final uid = sb.user?.id ?? '';
+    return PlatformAdminUser(id: uid, username: username, fullName: 'Admin');
   }
 
   Future<void> logout() => sb.signOut();

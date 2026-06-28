@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -24,25 +25,11 @@ export default {
       }
 
       if (action === 'send') {
-        const { phone, message, type } = body as any;
+        const { phone, message } = body as any;
         if (!phone || !message) return fail('INVALID_INPUT', 'phone and message required');
-        const gatewayUrl = Deno.env.get('WA_GATEWAY_URL');
-        const token = Deno.env.get('WA_GATEWAY_TOKEN');
-        if (!gatewayUrl || !token) return fail('WA_NOT_CONFIGURED', 'WhatsApp gateway not configured');
-        try {
-          await fetch(gatewayUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: token },
-            body: JSON.stringify({ target: phone, message, countryCode: '62' }),
-          });
-          return ok({ message: 'Sent' });
-        } catch (err) {
-          await admin.from('failed_notifications').insert({
-            recipient_type: 'whatsapp', recipient_id: phone, message_type: type || 'generic',
-            payload: { phone, message }, attempt_count: 1, last_error: String(err),
-          });
-          return fail('SEND_FAILED', 'Failed to send notification');
-        }
+        if (!isWAConfigured()) return fail('WA_NOT_CONFIGURED', 'WhatsApp gateway not configured');
+        const sent = await sendWA(phone, message, admin);
+        return sent ? ok({ message: 'Sent' }) : fail('SEND_FAILED', 'Failed to send notification');
       }
 
       return fail('NOT_FOUND', 'Endpoint not found', 404);

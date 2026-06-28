@@ -2,7 +2,9 @@ import 'api_helper.dart';
 
 class StoreProfileRepository {
   Future<Map<String, dynamic>> getProfile() async {
-    final data = await sb.from('store_admins').select('*, stores(*)').eq('id', sb.user!.id).single();
+    final adminId = sb.user?.id;
+    if (adminId == null) throw Exception('Not authenticated');
+    final data = await sb.from('store_admins').select('*, stores(*)').eq('id', adminId).single();
     return data;
   }
 

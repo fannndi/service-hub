@@ -1,109 +1,202 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:m3_expressive/m3_expressive.dart';
 
+import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 
-class GuestBookingSuccessScreen extends StatelessWidget {
+class GuestBookingSuccessScreen extends StatefulWidget {
   const GuestBookingSuccessScreen({
     super.key,
     required this.orderNumber,
     this.tempPassword,
+    this.phoneNumber,
   });
 
   final String orderNumber;
   final String? tempPassword;
+  final String? phoneNumber;
+
+  @override
+  State<GuestBookingSuccessScreen> createState() => _GuestBookingSuccessScreenState();
+}
+
+class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
+  bool _activated = false;
+  bool _checking = true;
+  bool _popRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkActivation();
+  }
+
+  Future<void> _checkActivation() async {
+    try {
+      final result = await SupabaseService.instance.invoke('guest', body: {
+        'action': 'credentials',
+        'order_id': widget.orderNumber,
+        'phone_number': widget.phoneNumber ?? '',
+      });
+      final data = Map<String, dynamic>.from(result as Map? ?? {});
+      if (mounted) setState(() {
+        _activated = data['is_activated'] == true;
+        _checking = false;
+      });
+    } catch (e) {
+      debugPrint('guest_booking_check: ' + e.toString());
+      if (mounted) setState(() => _checking = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final hasPw = tempPassword != null && tempPassword!.isNotEmpty;
+    final hasPw = widget.tempPassword?.isNotEmpty ?? false;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.bookingSuccess)),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const SizedBox(height: 16),
-            const Icon(Icons.check_circle_rounded, size: 80, color: Colors.green),
-            const SizedBox(height: 16),
-            Text(context.l10n.orderCreated, textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Text(context.l10n.saveOrderNumber, textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-            const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Column(children: [
-                  Text(context.l10n.orderNumber, style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                  const SizedBox(height: 8),
-                  SelectableText(orderNumber, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  const SizedBox(height: 12),
-                  FilledButton.tonalIcon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: orderNumber));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.orderNumberCopied)));
-                    },
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: Text(context.l10n.copy),
-                  ),
-                ]),
-              ),
-            ),
-            if (hasPw) ...[
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_activated) {
+          context.go('/welcome');
+          return;
+        }
+        setState(() => _popRequested = true);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Simpan kredensial dulu sebelum pergi!'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ));
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) setState(() => _popRequested = false);
+        });
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(context.l10n.bookingSuccess),
+          automaticallyImplyLeading: false,
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
               const SizedBox(height: 16),
-              Card(
-                color: Colors.amber.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      const Icon(Icons.key, size: 20, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Text('Akun Sementara', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-                    ]),
-                    const SizedBox(height: 12),
-                    _row(theme, 'Username', '08xxxxxxxx'),
-                    _row(theme, 'Password', tempPassword!),
-                    const SizedBox(height: 8),
-                    Text('Gunakan untuk login setelah akun diaktifkan toko.',
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange.shade700)),
-                  ]),
-                ),
+              Icon(Icons.check_circle_rounded, size: 80, color: _activated ? Colors.green : Colors.orange),
+              const SizedBox(height: 16),
+              Text(
+                _activated ? 'Akun Aktif!' : 'Pesanan Dibuat',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
-            ],
-            const SizedBox(height: 24),
-            if (!hasPw)
+              const SizedBox(height: 8),
+              Text(
+                _activated
+                    ? 'Kamu sudah bisa login dengan kredensial di bawah.'
+                    : 'Simpan kredensial di bawah. Akun akan aktif setelah toko menerima perangkat.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 24),
               Card(
-                color: scheme.primaryContainer.withAlpha(80),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(children: [
-                    Icon(Icons.info_outline, color: scheme.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(context.l10n.guestInfoMessage,
-                          style: theme.textTheme.bodySmall?.copyWith(height: 1.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  child: Column(children: [
+                    Text(context.l10n.orderNumber, style: theme.textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                    const SizedBox(height: 8),
+                    SelectableText(widget.orderNumber, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    const SizedBox(height: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: widget.orderNumber));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.orderNumberCopied)));
+                      },
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: Text(context.l10n.copy),
                     ),
                   ]),
                 ),
               ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () => context.go('/guest/track/$orderNumber'),
-              icon: const Icon(Icons.search),
-              label: Text(context.l10n.checkOrderStatus),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => context.go('/welcome'),
-              child: Text(context.l10n.backToHome),
-            ),
-          ],
+              if (widget.phoneNumber != null && hasPw) ...[
+                const SizedBox(height: 16),
+                Card(
+                  color: _activated ? Colors.green.shade50 : Colors.amber.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Icon(_activated ? Icons.check_circle : Icons.key, size: 20, color: _activated ? Colors.green : Colors.orange),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _activated ? 'Akun Aktif' : 'Akun Sementara (Belum Aktif)',
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: _activated ? Colors.green.shade800 : Colors.orange.shade800),
+                          ),
+                        ),
+                        if (_activated)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
+                            child: const Text('AKTIF', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                      ]),
+                      const SizedBox(height: 12),
+                      _row(theme, 'Username', widget.phoneNumber ?? ''),
+                      _row(theme, 'Password', widget.tempPassword ?? ''),
+                      const SizedBox(height: 8),
+                      Text(
+                        _activated
+                            ? 'Gunakan kredensial di atas untuk login.'
+                            : 'Kredensial ini akan aktif setelah toko menerima perangkatmu.',
+                        style: theme.textTheme.bodySmall?.copyWith(color: _activated ? Colors.green.shade700 : Colors.orange.shade700),
+                      ),
+                    ]),
+                  ),
+                ),
+                if (_activated) ...[
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () => context.go('/login'),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Login Sekarang'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      backgroundColor: Colors.green,
+                    ),
+                  ),
+                ],
+              ],
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.go('/guest/track/${widget.orderNumber}'),
+                icon: const Icon(Icons.search),
+                label: Text(context.l10n.checkOrderStatus),
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              ),
+              const SizedBox(height: 12),
+              _checking
+                  ? const Center(child: Padding(padding: EdgeInsets.all(8), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))))
+                  : TextButton.icon(
+                      onPressed: () {
+                        if (_activated) {
+                          context.go('/welcome');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: const Text('Simpan kredensial dulu sebelum pergi!'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
+                          ));
+                        }
+                      },
+                      icon: Icon(_activated ? Icons.home : Icons.lock, size: 18),
+                      label: Text(_activated ? 'Ke Beranda' : 'Kredensial Belum Tersimpan'),
+                      style: TextButton.styleFrom(foregroundColor: _activated ? null : Colors.grey),
+                    ),
+            ],
+          ),
         ),
       ),
     );

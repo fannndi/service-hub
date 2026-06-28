@@ -58,7 +58,7 @@ class _StoreChangePasswordScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(context.l10n.changePassword)),
+        appBar: AppBar(title: Text(context.l10n.changePassword), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/store/dashboard'))),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),

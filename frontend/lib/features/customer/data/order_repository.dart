@@ -20,7 +20,8 @@ class OrderRepository {
       }).toList(),
       'coupon_code': req.couponCode,
     });
-    final data = result as Map<String, dynamic>;
+    if (result is! Map<String, dynamic>) throw Exception('Invalid response');
+    final data = result;
     return CreateOrderResult(
       id: data['order_id'] as String? ?? '',
       orderNumber: data['order_number'] as String? ?? '',
@@ -32,8 +33,10 @@ class OrderRepository {
   }
 
   Future<List<CustomerOrder>> getOrders({String? status, int page = 1}) async {
+    final uid = sb.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     var q = sb.from('service_orders').select('*, items:order_items(*)')
-      .eq('user_id', sb.user!.id);
+      .eq('user_id', uid);
     if (status != null && status != 'all') q = q.eq('status', status);
     final data = await q
       .order('created_at', ascending: false)
@@ -42,8 +45,10 @@ class OrderRepository {
   }
 
   Future<CustomerOrder> getDetail(String orderId) async {
+    final uid = sb.user?.id;
+    if (uid == null) throw Exception('Not authenticated');
     final data = await sb.from('service_orders').select('*, items:order_items(*, sparepart:spareparts(*)), tracking:service_tracking(*), payments(*), store:stores(store_name, address, phone_number)')
-      .eq('id', orderId).eq('user_id', sb.user!.id).single();
+      .eq('id', orderId).eq('user_id', uid).single();
     return CustomerOrder.fromJson(data);
   }
 

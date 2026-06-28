@@ -1,13 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-
-async function sendWA(phone: string, message: string) {
-  const gw = Deno.env.get('WA_GATEWAY_URL');
-  const tk = Deno.env.get('WA_GATEWAY_TOKEN');
-  if (!gw || !tk) return;
-  await fetch(gw, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: tk }, body: JSON.stringify({ target: phone, message, countryCode: '62' }) }).catch(() => {});
-}
+import { sendWA } from '../_shared/whatsapp.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -50,8 +44,13 @@ export default {
         });
 
         if (authErr) {
+          console.error(`Auth createUser failed for application ${application_id}: ${authErr.message}. Rolling back store ${store.id}...`);
           const { error: delErr } = await admin.from('stores').delete().eq('id', store.id);
           if (delErr) console.error(`Rollback delete store ${store.id} failed:`, delErr.message);
+          await admin.from('store_applications').update({
+            status: 'pending', reviewed_by: null, reviewed_at: null,
+          }).eq('id', application_id);
+          console.error(`Rollback complete: store ${store.id} deleted, application ${application_id} reverted to pending.`);
           return fail('AUTH_FAILED', authErr.message);
         }
 

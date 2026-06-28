@@ -1,21 +1,17 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
 
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
+    let isNew = false;
+    let userId = '';
     try {
       const body = await req.json();
       const action = body.action as string;
       const { supabaseAdmin: admin } = ctx;
-
-      async function sendWA(phone: string, msg: string, type: string) {
-        const gw = Deno.env.get('WA_GATEWAY_URL');
-        const tk = Deno.env.get('WA_GATEWAY_TOKEN');
-        if (!gw || !tk) return;
-        await fetch(gw, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: tk }, body: JSON.stringify({ target: phone, message: msg, countryCode: '62' }) }).catch(() => {});
-      }
 
       // ─── CREATE ORDER ───
       if (action === 'create-order') {
@@ -28,7 +24,6 @@ export default {
         const now = new Date().toISOString();
 
         const { data: existing } = await admin.from('users').select('id').eq('phone_number', phone).maybeSingle();
-        let userId: string, isNew = false;
         if (existing) { userId = existing.id; }
         else {
           const { data: nu } = await admin.from('users').insert({ full_name: customer_name, phone_number: phone, password_hash: password, account_status: 'suspended', is_first_login: true, is_credential_sent: false, updated_at: now }).select('id').single();
@@ -56,18 +51,21 @@ export default {
           delivery_method, delivery_address: delivery_address || null, status: 'waiting_device',
           total_estimasi: totalEstimasi, sla_deadline: new Date(Date.now() + 86400000).toISOString(), updated_at: now,
         }).select().single();
-        if (orderErr) return fail('CREATE_FAILED', orderErr.message);
+        if (orderErr) {
+          if (isNew) await admin.from('users').delete().eq('id', userId);
+          return fail('CREATE_FAILED', orderErr.message);
+        }
 
         await admin.from('order_items').insert(items.map((i: any) => ({ order_id: order.id, sparepart_id: i.sparepart_id || null, service_type: i.service_type, complaint: i.complaint, item_price: i.item_price || 0 })));
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'waiting_device', note: 'Order dibuat', created_by_type: 'customer', created_by_id: userId });
-        await admin.from('notifications').insert({ store_id, role: 'store_admin', type: 'new_order', title: 'Pesanan Baru', message: `#${orderNumber} \u2014 ${brand} ${device_model}`, link_to: `/store/orders/${order.id}` });
+        await admin.from('notifications').insert({ store_id, role: 'store_admin', type: 'new_order', title: 'Pesanan Baru', message: `#${orderNumber} — ${brand} ${device_model}`, link_to: `/store/orders/${order.id}` });
 
         if (isNew) {
-          await sendWA(phone, `Halo ${customer_name}!\nAkun ServisGadget kamu sudah dibuat.\nNomor HP: ${phone}\nPassword: ${password}\nSegera login dan ganti passwordmu.`, 'stealth_account');
+          await sendWA(phone, `Halo ${customer_name}!\nAkun ServisGadget kamu sudah dibuat.\nNomor HP: ${phone}\nPassword: ${password}\nSegera login dan ganti passwordmu.`);
         }
 
-        const waOk = !!(Deno.env.get('WA_GATEWAY_URL') && Deno.env.get('WA_GATEWAY_TOKEN'));
-        return ok({ order_id: order.id, order_number: orderNumber, is_new_customer: isNew, temp_password: isNew && !waOk ? password : undefined, message: isNew ? (waOk ? 'Cek WhatsApp' : 'Simpan password') : 'OK' });
+        const waOk = isWAConfigured();
+        return ok({ order_id: order.id, order_number: orderNumber, phone_number: phone, is_new_customer: isNew, temp_password: isNew ? password : undefined, message: isNew ? (waOk ? 'Cek WhatsApp' : 'Simpan password') : 'OK' });
       }
 
       // ─── TRACK ───
@@ -90,7 +88,8 @@ export default {
         const { order_id, phone_number } = body as any;
         if (!order_id || !phone_number) return fail('INVALID_INPUT', 'order_id and phone_number required');
         const phone = phone_number.replace(/\D/g, '').replace(/^62/, '08').replace(/^8/, '08');
-        const { data: order } = await admin.from('service_orders').select('*, user:users(*)').eq('id', order_id).single();
+        let { data: order } = await admin.from('service_orders').select('*, user:users(*)').eq('id', order_id).maybeSingle();
+        if (!order) order = (await admin.from('service_orders').select('*, user:users(*)').eq('order_number', order_id).single()).data;
         if (!order || order.user.phone_number !== phone) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
         const user = order.user;
         const canActivate = ['device_received','diagnosing','waiting_approval','waiting_sparepart','repairing','quality_check','waiting_payment','completed'].includes(order.status);
@@ -101,6 +100,11 @@ export default {
       return fail('NOT_FOUND', 'Unknown action', 404);
     } catch (err: any) {
       console.error('Guest EF error:', err);
+      if (isNew && userId) {
+        const { supabaseAdmin: admin } = ctx;
+        await admin.from('users').delete().eq('id', userId);
+        console.error(`Orphan user ${userId} deleted after error`);
+      }
       return fail('INTERNAL', err.message || 'Unknown error', 500);
     }
   }),
