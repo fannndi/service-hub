@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_spacing.dart';
@@ -33,6 +34,14 @@ class _StoreLoginScreenState extends ConsumerState<StoreLoginScreen> {
     final scheme = theme.colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

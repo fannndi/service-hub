@@ -13,7 +13,7 @@ class AdminStoreRepository {
     bool handlesAndroid = true, bool handlesIos = true,
   }) async {
     await sb.invoke('admin', body: {
-      'path': 'create-store',
+      'action': 'create-store',
       'store_name': storeName, 'address': address, 'store_phone': storePhone,
       'admin_name': adminName, 'admin_phone': adminPhone, 'password': password,
       'handles_android': handlesAndroid, 'handles_ios': handlesIos,

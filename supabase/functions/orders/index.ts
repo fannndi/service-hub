@@ -55,7 +55,7 @@ export default {
         let discount = 0;
         if (coupon_code) {
           const { data: coupon } = await admin.from('coupons')
-            .select('id, amount').eq('code', coupon_code).eq('user_id', userClaims.id).eq('is_used', false).gt('expired_at', new Date().ISOString()).single();
+            .select('id, amount').eq('code', coupon_code).eq('user_id', userClaims.id).eq('is_used', false).gt('expired_at', new Date().toISOString()).single();
           if (!coupon) return fail('COUPON_INVALID', 'Kupon tidak valid');
           coupon_id = coupon.id;
           discount = coupon.amount;

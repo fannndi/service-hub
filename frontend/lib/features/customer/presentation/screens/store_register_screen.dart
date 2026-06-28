@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_spacing.dart';
@@ -51,7 +52,15 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Daftarkan Toko')),
+      appBar: AppBar(
+        title: const Text('Daftarkan Toko'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         const Icon(Icons.store, size: 64),
         const SizedBox(height: 16),

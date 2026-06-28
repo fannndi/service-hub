@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/order_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
-import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 
 class TrackingScreen extends ConsumerStatefulWidget {

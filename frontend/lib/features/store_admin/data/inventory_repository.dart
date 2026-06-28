@@ -5,7 +5,7 @@ class StoreInventoryRepository {
 
   Future<Map<String, dynamic>> getSpareparts({String? search, String? brand, String? deviceModel, String? partType, int page = 1}) async {
     var query = sb.from('spareparts').select('*').eq('store_id', storeId);
-    if (search != null) query = query.ilike('part_name', '%%');
+    if (search != null && search.isNotEmpty) query = query.ilike('part_name', '%$search%');
     if (brand != null) query = query.eq('brand', brand);
     if (deviceModel != null) query = query.eq('device_model', deviceModel);
     if (partType != null) query = query.eq('part_type', partType);

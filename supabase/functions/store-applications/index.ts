@@ -26,7 +26,10 @@ export default {
         store_name: store_name.trim(),
         applicant_name: admin_name.trim(),
         phone_number: phone,
+        admin_phone: adminPhone,
         address: address.trim(),
+        id_card_url: '-',
+        business_license_url: '-',
         status: 'pending',
       }).select('id').single();
 

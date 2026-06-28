@@ -22,12 +22,12 @@ class UserListItem {
 
   factory UserListItem.fromJson(Map<String, dynamic> json) => UserListItem(
         id: readString(json, 'id'),
-        fullName: readString(json, 'fullName'),
-        phoneNumber: readString(json, 'phoneNumber'),
+        fullName: readString(json, 'full_name', 'fullName'),
+        phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
         address: json['address'] as String?,
-        accountStatus: readString(json, 'accountStatus'),
-        isFirstLogin: json['isFirstLogin'] as bool? ?? false,
-        isCredentialSent: json['isCredentialSent'] as bool? ?? false,
-        createdAt: readString(json, 'createdAt'),
+        accountStatus: readString(json, 'account_status', 'accountStatus'),
+        isFirstLogin: (json['isFirstLogin'] ?? json['is_first_login'] ?? false) as bool,
+        isCredentialSent: (json['isCredentialSent'] ?? json['is_credential_sent'] ?? false) as bool,
+        createdAt: readString(json, 'created_at', 'createdAt'),
       );
 }

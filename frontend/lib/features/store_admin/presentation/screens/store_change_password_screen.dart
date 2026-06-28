@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/store_admin_providers.dart';
-import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 
 class StoreChangePasswordScreen extends ConsumerStatefulWidget {

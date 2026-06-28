@@ -35,6 +35,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (loc.startsWith('/guest/') || loc.startsWith('/booking-success/')) return null;
       if (loc == '/splash') return null;
 
+      // Logged-in users redirected away from public entry points
+      if (user != null && publicRoutes.contains(loc)) {
+        if (role == 'platform_admin') return '/admin/dashboard';
+        if (role == 'store_admin') return '/store/dashboard';
+        if (role == 'customer') return '/home';
+        return null;
+      }
+
       if (loc.startsWith('/admin/')) {
         if (role != 'platform_admin' && loc != '/admin/login') return '/admin/login';
         if (role == 'platform_admin' && loc == '/admin/login') return '/admin/dashboard';

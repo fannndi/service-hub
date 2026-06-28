@@ -37,7 +37,8 @@ export default {
           config: { warranty_days: 30 }, updated_at: now,
         }).select('id').single();
 
-        const email = `${app.phone_number}@store.servisgadget.com`;
+        const adminPhone = app.admin_phone || app.phone_number;
+        const email = `${adminPhone}@store.servisgadget.com`;
         const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
           email, password, email_confirm: true,
           user_metadata: { role: 'store_admin', store_id: store.id, full_name: app.applicant_name },
@@ -55,13 +56,13 @@ export default {
         }
 
         await admin.from('store_admins').insert({
-          id: authUser.user.id, store_id: store.id, full_name: app.applicant_name, phone_number: app.phone_number,
+          id: authUser.user.id, store_id: store.id, full_name: app.applicant_name, phone_number: adminPhone,
           password_hash: 'supabase-managed', is_first_login: true,
         });
 
         await admin.from('store_applications').update({ status: 'approved', reviewed_by: userClaims.id, reviewed_at: new Date().toISOString() }).eq('id', application_id);
 
-        await sendWA(app.phone_number, `Halo ${app.applicant_name}!\nPendaftaran toko ${app.store_name} disetujui!\nLogin: ${app.phone_number}\nPassword: ${password}\nSegera ganti password setelah login.`);
+        await sendWA(adminPhone, `Halo ${app.applicant_name}!\nPendaftaran toko ${app.store_name} disetujui!\nLogin: ${adminPhone}\nPassword: ${password}\nSegera ganti password setelah login.`);
 
         return ok({ store_id: store.id, admin_id: authUser.user.id });
       }

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/store_admin_providers.dart';
 import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
-import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class PaymentsScreen extends ConsumerWidget {
   const PaymentsScreen({super.key});

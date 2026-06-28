@@ -26,13 +26,13 @@ class StoreListItem {
     final config = json['config'] as Map<String, dynamic>?;
     return StoreListItem(
       id: readString(json, 'id'),
-      storeName: readString(json, 'storeName'),
+      storeName: readString(json, 'store_name', 'storeName'),
       address: readString(json, 'address'),
-      phoneNumber: readString(json, 'phoneNumber'),
+      phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
       deviceTypes: config?['device_types'] as Map<String, dynamic>?,
-      ratingAvg: moneyFromJson(json['ratingAvg']),
-      totalCompleted: json['totalCompleted'] as int? ?? 0,
-      createdAt: readString(json, 'createdAt'),
+      ratingAvg: moneyFromJson(json['ratingAvg'] ?? json['rating_avg']),
+      totalCompleted: (json['totalCompleted'] ?? json['total_completed'] ?? 0) as int,
+      createdAt: readString(json, 'created_at', 'createdAt'),
       admins: (json['admins'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
           .toList(),

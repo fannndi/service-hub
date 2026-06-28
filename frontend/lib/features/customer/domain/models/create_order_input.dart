@@ -9,9 +9,9 @@ class CreateOrderItemInput {
   final String? sparepartId;
   final double itemPrice;
   Map<String, dynamic> toJson() => {
-        'serviceType': serviceType,
+        'service_type': serviceType,
         'complaint': complaint,
-        if (sparepartId != null) 'sparepartId': sparepartId,
+        if (sparepartId != null) 'sparepart_id': sparepartId,
       };
 }
 
@@ -41,17 +41,17 @@ class CreateOrderRequest {
   final List<CreateOrderItemInput> items;
 
   Map<String, dynamic> toJson() => {
-        'storeId': storeId,
-        'customerName': fullName,
-        'phoneNumber': phoneNumber,
-        'deviceType': deviceType,
+        'store_id': storeId,
+        'customer_name': fullName,
+        'phone_number': phoneNumber,
+        'device_type': deviceType,
         'brand': brand,
-        'deviceModel': deviceModel,
-        'deliveryMethod': deliveryMethod,
+        'device_model': deviceModel,
+        'delivery_method': deliveryMethod,
         if (deliveryAddress != null && deliveryAddress!.isNotEmpty)
-          'deliveryAddress': deliveryAddress,
+          'delivery_address': deliveryAddress,
         if (couponCode != null && couponCode!.isNotEmpty)
-          'couponCode': couponCode,
+          'coupon_code': couponCode,
         'items': items.map((item) => item.toJson()).toList(),
       };
 }

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:servisgadget_foundation/features/customer/data/barrel.dart';
-import 'package:servisgadget_foundation/features/customer/domain/customer_models.dart';
+import 'package:service_me/features/customer/data/barrel.dart';
+import 'package:service_me/features/customer/domain/customer_models.dart';
 
 void main() {
   test('normalizes Indonesian phone numbers to 0xxx format', () {
@@ -27,13 +27,13 @@ void main() {
       ],
     );
 
-    expect(request.toJson(), containsPair('storeId', 'store-1'));
-    expect(request.toJson(), containsPair('customerName', 'Budi Santoso'));
+    expect(request.toJson(), containsPair('store_id', 'store-1'));
+    expect(request.toJson(), containsPair('customer_name', 'Budi Santoso'));
     expect(request.toJson(), isNot(contains('fullName')));
-    expect(request.toJson(), containsPair('phoneNumber', '081234567890'));
+    expect(request.toJson(), containsPair('phone_number', '081234567890'));
     expect(request.toJson()['items'], isA<List<dynamic>>());
     final itemJson = (request.toJson()['items'] as List).first as Map;
-    expect(itemJson, containsPair('sparepartId', 'part-1'));
+    expect(itemJson, containsPair('sparepart_id', 'part-1'));
     expect(itemJson, isNot(contains('itemPrice')));
   });
 

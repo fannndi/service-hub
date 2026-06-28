@@ -42,6 +42,12 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go("/welcome"),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(

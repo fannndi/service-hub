@@ -22,10 +22,7 @@ async function createSnapToken(orderId: string, userId: string, admin: any) {
     },
     credit_card: { secure: true },
     customer_details: { first_name: user.full_name, phone: user.phone_number },
-    expiry: {
-      start_time: new Date().toISOString().replace(/T/, ' ').substring(0, 19) + ' +0700',
-      unit: 'hour', duration: 24,
-    },
+    expiry: { start_time: new Date().toISOString().replace(/T/, ' ').substring(0, 19) + ' +0700', unit: 'hour', duration: 24 },
   };
 
   const auth = btoa(serverKey + ':');
@@ -55,7 +52,6 @@ async function processNotification(body: Record<string, unknown>, admin: any) {
   const transactionStatus = body.transaction_status as string;
   const fraudStatus = body.fraud_status as string;
   const paymentType = body.payment_type as string;
-
   const orderNumber = orderId.replace(/^ORDER-/, '').replace(/-\d+$/, '');
   const { data: order } = await admin.from('service_orders').select('id, user_id').eq('order_number', orderNumber).single();
   if (!order) return fail('ORDER_NOT_FOUND', 'Order ' + orderNumber + ' not found');
@@ -80,7 +76,6 @@ async function processNotification(body: Record<string, unknown>, admin: any) {
       midtrans_payment_type: paymentType,
     });
     if (e1) return fail('DB_ERROR', e1.message);
-
     const { error: e2 } = await admin.from('service_orders').update({ status: 'completed', payment_status: 'paid', completed_at: now }).eq('id', order.id);
     if (e2) return fail('DB_ERROR', e2.message);
     const { error: e3 } = await admin.from('service_tracking').insert({
@@ -100,21 +95,21 @@ async function processNotification(body: Record<string, unknown>, admin: any) {
 }
 
 export default {
-  fetch: withSupabase({ auth: false }, async (req: Request) => {
+  fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx: any) => {
     const url = new URL(req.url);
     const action = url.pathname.split('/').pop();
+    const admin = ctx?.supabaseAdmin;
 
     if (action === 'snap-token') {
+      if (!ctx?.userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
       const { orderId, userId } = await req.json() as { orderId: string; userId: string };
-      const ctx = await withSupabase({ auth: true }).fetch(req, new Map());
-      if (!ctx?.supabaseAdmin) return fail('UNAUTHORIZED', 'Unauthorized', 401);
-      return createSnapToken(orderId, userId, ctx.supabaseAdmin);
+      if (ctx.userClaims.id !== userId) return fail('FORBIDDEN', 'User ID mismatch', 403);
+      return createSnapToken(orderId, userId, admin);
     }
 
     if (action === 'notification') {
       const body = await req.json();
-      const ctx = await withSupabase({ auth: false }).fetch(req, new Map());
-      return processNotification(body, ctx?.supabaseAdmin);
+      return processNotification(body, admin);
     }
 
     return fail('NOT_FOUND', 'Unknown action: use snap-token or notification');

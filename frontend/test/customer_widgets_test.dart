@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:servisgadget_foundation/features/customer/presentation/screens/welcome_screen.dart';
-import 'package:servisgadget_foundation/features/customer/presentation/screens/service_flow_steps.dart';
-import 'package:servisgadget_foundation/features/customer/presentation/widgets/customer_widgets.dart';
-import 'package:servisgadget_foundation/shared_widgets/status_badge.dart';
+import 'package:service_me/features/customer/presentation/screens/welcome_screen.dart';
+import 'package:service_me/features/customer/presentation/screens/service_flow_steps.dart';
+import 'package:service_me/features/customer/presentation/widgets/customer_widgets.dart';
+import 'package:service_me/shared_widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 
 void main() {

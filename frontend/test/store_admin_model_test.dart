@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:servisgadget_foundation/features/store_admin/domain/store_admin_models.dart';
+import 'package:service_me/features/store_admin/domain/store_admin_models.dart';
 
 void main() {
   group('StoreOrderStatus', () {
