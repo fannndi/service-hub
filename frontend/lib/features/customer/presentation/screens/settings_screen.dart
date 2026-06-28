@@ -54,10 +54,11 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             SegmentedButton<ThemeMode>(
               segments: const [
+                ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.settings_brightness)),
                 ButtonSegment(value: ThemeMode.light, label: Text('Terang'), icon: Icon(Icons.light_mode)),
                 ButtonSegment(value: ThemeMode.dark, label: Text('Gelap'), icon: Icon(Icons.dark_mode)),
               ],
-              selected: {currentTheme == ThemeMode.dark ? ThemeMode.dark : ThemeMode.light},
+              selected: {currentTheme},
               onSelectionChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v.first),
               showSelectedIcon: false,
             ),
