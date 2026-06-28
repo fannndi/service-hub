@@ -12,9 +12,38 @@ export default {
       const { userClaims, supabaseAdmin: admin } = ctx;
       if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
 
-      const { dispute_id, decision, store_response } = await req.json();
+      const body = await req.json();
       const now = new Date().toISOString();
 
+      const action = body.action as string | undefined;
+
+      if (action === 'create') {
+        const { order_id, dispute_type, description, evidence_urls } = body;
+        if (!order_id || !dispute_type || !description) return fail('INVALID_INPUT', 'order_id, dispute_type, description wajib');
+
+        const { data: order } = await admin.from('service_orders').select('id, user_id, store_id').eq('id', order_id).single();
+        if (!order) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
+        if (order.user_id !== userClaims.id) return fail('FORBIDDEN', 'Bukan order Anda', 403);
+
+        const { data: existing } = await admin.from('disputes').select('id').eq('order_id', order_id).maybeSingle();
+        if (existing) return fail('DUPLICATE', 'Dispute sudah ada untuk order ini');
+
+        const { data: dispute, error: dErr } = await admin.from('disputes').insert({
+          order_id, user_id: userClaims.id, store_id: order.store_id,
+          dispute_type, description,
+          evidence_urls: evidence_urls || [], status: 'open',
+        }).select().single();
+        if (dErr) return fail('DB_ERROR', dErr.message);
+
+        await admin.from('service_orders').update({ status: 'disputed', updated_at: now }).eq('id', order_id);
+        await admin.from('service_tracking').insert({
+          order_id, status: 'disputed', note: `Klaim: ${description.substring(0, 100)}`,
+          created_by_type: 'customer', created_by_id: userClaims.id,
+        });
+        return ok(dispute);
+      }
+
+      const { dispute_id, decision, store_response } = body;
       const { data: adminRow } = await admin.from('store_admins').select('store_id').eq('id', userClaims.id).single();
       if (!adminRow) return fail('FORBIDDEN', 'Unauthorized', 403);
 

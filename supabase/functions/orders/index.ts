@@ -93,7 +93,11 @@ export default {
           link_to: `/store/orders/${order.id}`,
         });
 
-        return ok({ order_id: order.id, order_number, allowed_actions: VALID_TRANSITIONS['waiting_device'] || [] });
+        return ok({
+          order_id: order.id, order_number, total_estimasi: totalEstimasi - discount,
+          status: 'waiting_device', is_new_customer: true,
+          message: 'Pesanan berhasil dibuat', allowed_actions: VALID_TRANSITIONS['waiting_device'] || [],
+        });
       }
 
       // ─── APPROVE ORDER ───

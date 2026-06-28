@@ -15,6 +15,24 @@ export default {
       const now = new Date().toISOString();
       const action = body.action as string | undefined;
 
+      if (action === 'create') {
+        const { order_id, amount, payment_method, payment_type, proof_url } = body;
+        if (!order_id || !amount) return fail('INVALID_INPUT', 'order_id dan amount wajib');
+
+        const { data: order } = await admin.from('service_orders').select('id, status, user_id').eq('id', order_id).single();
+        if (!order) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
+        if (order.user_id !== userClaims.id) return fail('FORBIDDEN', 'Bukan order Anda', 403);
+
+        const { data: payment, error: pErr } = await admin.from('payments').insert({
+          order_id, user_id: userClaims.id, amount,
+          payment_method: payment_method || 'transfer_bank',
+          payment_type: payment_type || 'final_payment',
+          proof_url: proof_url || null, status: 'pending',
+        }).select().single();
+        if (pErr) return fail('DB_ERROR', pErr.message);
+        return ok(payment);
+      }
+
       if (action === 'confirm') {
         const { order_id, payment_id, note } = body;
 
