@@ -8,12 +8,12 @@
 
 | Layer | Tech |
 |-------|------|
-| Backend | NestJS 10+ (TypeScript) + Prisma ORM + Supabase (PostgreSQL + Auth + Edge Functions) |
+| Backend | Supabase (Edge Functions + PostgreSQL + Auth + Storage) — Serverless |
 | Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14, Supabase Flutter |
 | Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) |
-| Guest Flow | NestJS API → auto-create suspended account → sync ke Supabase Auth saat toko approve |
+| Payments | Midtrans Sandbox (via Supabase Edge Function) |
 | Storage | Supabase Storage |
-| Infra | Docker Compose (Postgres + Redis + Backend) |
+| Infra | Supabase (serverless) — no Docker/NestJS needed |
 
 ---
 
@@ -23,11 +23,16 @@
 # 1. Clone
 git clone https://github.com/fannndi/service-hub.git && cd service-hub
 
-# 2. Setup backend (SQL + Edge Functions)
-#    a) Buka Supabase SQL Editor:
+# 2. Deploy Edge Functions + DB
+#    a) Link project + deploy functions:
+#       npx supabase login
+#       npx supabase link --project-ref eboplbemgtvmviwhdlfa
+#       npx supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
+#       npx supabase functions deploy orders disputes payments admin guest midtrans reviews notifications store-applications cron-sla
+#       npx supabase db push
+#    b) Atau jalankan SQL manual via Supabase Dashboard:
 #       https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
-#    b) Copy-paste dan run urut:
-#       supabase/migrations/001_init.sql
+#       jalankan file di supabase/migrations/ urut
 #       supabase/migrations/002_rls.sql
 #       supabase/migrations/003_functions.sql
 #       supabase/migrations/004_seed.sql
