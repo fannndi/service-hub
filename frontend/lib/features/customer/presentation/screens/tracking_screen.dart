@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../../domain/order_models.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import '../widgets/customer_widgets.dart';
 
 class TrackingScreen extends ConsumerWidget {

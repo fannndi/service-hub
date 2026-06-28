@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/platform_admin_models.dart';
 import '../../../core/supabase_config.dart';

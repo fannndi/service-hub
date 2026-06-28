@@ -33,7 +33,7 @@ class _StoreSettingsScreenState extends ConsumerState<StoreSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(storeProfileProvider);
-    final scheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme; scheme;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.storeProfile), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/store/dashboard'))),
       body: profile.when(

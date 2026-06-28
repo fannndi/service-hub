@@ -6,7 +6,6 @@ import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../shared_widgets/status_badge.dart';
 import '../../domain/models/tracking_entry.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../widgets/customer_widgets.dart';
 import 'package:m3_expressive/m3_expressive.dart';

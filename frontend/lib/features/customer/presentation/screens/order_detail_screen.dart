@@ -118,7 +118,7 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // ignore: unused_local_variable
     return ModernCard(
       padding: EdgeInsets.all(AppSpacing.md),
       child: Column(

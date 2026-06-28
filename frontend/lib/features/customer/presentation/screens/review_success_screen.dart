@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import '../../domain/customer_models.dart';
 import '../widgets/customer_widgets.dart';
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:m3_expressive/m3_expressive.dart';
-
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
 
@@ -25,8 +23,6 @@ class GuestBookingSuccessScreen extends StatefulWidget {
 class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
   bool _activated = false;
   bool _checking = true;
-  bool _popRequested = false;
-
   @override
   void initState() {
     super.initState();
@@ -65,15 +61,11 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
           context.go('/welcome');
           return;
         }
-        setState(() => _popRequested = true);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Simpan kredensial dulu sebelum pergi!'),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
         ));
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) setState(() => _popRequested = false);
-        });
       },
       child: Scaffold(
         appBar: AppBar(

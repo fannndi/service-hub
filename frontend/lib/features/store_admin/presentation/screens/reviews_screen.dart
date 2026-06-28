@@ -7,8 +7,6 @@ import '../../domain/store_admin_models.dart';
 import '../widgets/store_admin_widgets.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/supabase_service.dart';
-import '../../../../shared_widgets/formatters.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 

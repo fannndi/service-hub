@@ -7,7 +7,6 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 import '../../application/customer_providers.dart';
-import '../../application/notification_provider.dart';
 import '../widgets/customer_widgets.dart';
 
 class HomeScreen extends ConsumerWidget {

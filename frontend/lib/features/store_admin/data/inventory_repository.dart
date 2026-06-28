@@ -29,15 +29,13 @@ class StoreInventoryRepository {
 
   Future<List<String>> getBrands() async {
     final data = await sb.from('spareparts').select('brand').eq('store_id', storeId);
-    final list = data is List ? data : <dynamic>[];
-    return list.map((d) => d['brand'] as String? ?? '').toSet().toList()..sort();
+    return data.map((d) => d['brand'] as String? ?? '').toSet().toList()..sort();
   }
 
   Future<List<String>> getDeviceModels(String? brand) async {
     var q = sb.from('spareparts').select('device_model').eq('store_id', storeId);
     if (brand != null) q = q.eq('brand', brand);
     final data = await q;
-    final list = data is List ? data : <dynamic>[];
-    return list.map((d) => d['device_model'] as String? ?? '').toSet().toList()..sort();
+    return data.map((d) => d['device_model'] as String? ?? '').toSet().toList()..sort();
   }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/supabase_service.dart';
-import '../../../../core/l10n/app_localizations.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 
 class StoreRegisterScreen extends StatefulWidget {

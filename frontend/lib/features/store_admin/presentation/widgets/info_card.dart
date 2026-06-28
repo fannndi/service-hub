@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
 
 class InfoCard extends StatelessWidget {
