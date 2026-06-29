@@ -16,6 +16,12 @@ import 'core/l10n/l10n_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID');
+
+  // Global error handler (ECC pattern #8: error handling)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+  };
+
   await SupabaseService.instance.init();
   runApp(const ProviderScope(child: ServisGadgetApp()));
 }
@@ -212,6 +218,26 @@ class ServisGadgetApp extends ConsumerWidget {
       themeMode: themeMode,
       locale: locale,
       supportedLocales: const [Locale('id'), Locale('en')],
+      builder: (context, widget) {
+        ErrorWidget.builder = (details) => Material(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+                  const SizedBox(height: 16),
+                  Text('Terjadi kesalahan', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(details.exceptionAsString(), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+                ],
+              ),
+            ),
+          ),
+        );
+        return widget!;
+      },
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,

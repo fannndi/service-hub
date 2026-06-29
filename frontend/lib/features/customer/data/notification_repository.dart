@@ -22,6 +22,7 @@ class NotificationRepository {
         .eq('is_read', false);
       return (data as List).length;
     } catch (_) {
+    // TODO: log error
       return 0;
     }
   }

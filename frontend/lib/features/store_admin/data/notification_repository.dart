@@ -8,6 +8,7 @@ class StoreNotificationRepository {
       final data = await sb.from('notifications').select('*').eq('store_id', storeId).order('created_at', ascending: false).limit(50);
       return data;
     } catch (_) {
+    // TODO: log error
       return [];
     }
   }
@@ -17,6 +18,7 @@ class StoreNotificationRepository {
       final data = await sb.from('notifications').select('id').eq('store_id', storeId).eq('is_read', false);
       return (data as List).length;
     } catch (_) {
+    // TODO: log error
       return 0;
     }
   }
