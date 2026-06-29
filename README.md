@@ -1,6 +1,6 @@
 ﻿# ServisGadget
 
-> Platform Marketplace Servis Gadget Dua Sisi
+> Platform Marketplace Servis Gadget Dua Sisi — **100% Serverless**
 >
 > UAS Team Project — fannndi, dryns, Nisa Aulia.
 
@@ -8,12 +8,14 @@
 
 | Layer | Tech |
 |-------|------|
-| Backend | Supabase (Edge Functions + PostgreSQL + Auth + Storage) — Serverless |
+| Backend | **Supabase only** (Edge Functions + PostgreSQL + Auth + Storage) |
 | Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14, Supabase Flutter |
 | Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) |
-| Payments | Midtrans Sandbox (via Supabase Edge Function) |
+| Payments | Midtrans (via Supabase Edge Function) |
 | Storage | Supabase Storage |
-| Infra | Supabase (serverless) — no Docker/NestJS needed |
+| Infra | **Serverless** — no VPS, no Docker, no NestJS needed |
+
+**Tidak perlu sewa server/VPS.** Semua jalan di Supabase free tier (500 MB DB, 50K Edge invocations/hari, 1 GB Storage).
 
 ---
 
@@ -23,95 +25,70 @@
 # 1. Clone
 git clone https://github.com/fannndi/service-hub.git && cd service-hub
 
-# 2. Deploy Edge Functions + DB
-#    a) Link project + deploy functions:
-#       npx supabase login
-#       npx supabase link --project-ref eboplbemgtvmviwhdlfa
-#       npx supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
-#       npx supabase functions deploy orders disputes payments admin guest midtrans reviews notifications store-applications cron-sla
-#       npx supabase db push
-#    b) Atau jalankan SQL manual via Supabase Dashboard:
-#       https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
-#       jalankan file di supabase/migrations/ urut
-#       supabase/migrations/002_rls.sql
-#       supabase/migrations/003_functions.sql
-#       supabase/migrations/004_seed.sql
+# 2. Deploy database + Edge Functions ke Supabase
+npx supabase login
+npx supabase link --project-ref eboplbemgtvmviwhdlfa
+npx supabase db push                             # Migrate DB
+npx supabase functions deploy orders              # Order lifecycle
+npx supabase functions deploy guest               # Guest booking
+npx supabase functions deploy payments            # Payment flow
+npx supabase functions deploy midtrans            # Midtrans gateway
+npx supabase functions deploy disputes            # Warranty
+npx supabase functions deploy reviews             # Reviews
+npx supabase functions deploy notifications       # Notifications
+npx supabase functions deploy admin               # Admin ops
+npx supabase functions deploy store-applications  # Store registration
+npx supabase functions deploy cron-sla            # SLA monitoring
+npx supabase secrets set MIDTRANS_SERVER_KEY=your-key
+npx supabase secrets set WA_GATEWAY_URL=your-wa-url
+npx supabase secrets set WA_GATEWAY_TOKEN=your-token
 
-# 3. Deploy Edge Functions
-supabase login
-supabase link --project-ref eboplbemgtvmviwhdlfa
-supabase functions deploy orders
-supabase functions deploy payments
-supabase functions deploy disputes
-supabase functions deploy admin
-supabase functions deploy cron-sla
-
-# 4. Build APK
+# 3. Build APK
 cd frontend
 flutter build apk --release \
   --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV \
-  --dart-define=API_BASE_URL=http://localhost:3000/v1
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV
 
-# 5. Install di HP → buka apps
+# 4. Install APK ke HP
 ```
 
 ---
 
 ## Guest Account Flow
 
-Aplikasi ini punya mekanisme **guest account** seperti game — user bisa langsung booking tanpa login:
+Aplikasi punya mekanisme **guest account** — user bisa booking tanpa login. Semua via Supabase Edge Function `guest/index.ts`:
 
 ```
 User → [Ajukan Servis]
   → Isi form (device, keluhan, toko, nama, no hp)
-  → Submit → NestJS POST /v1/orders (no auth)
-     → autoCreateAccount() → Prisma user = SUSPENDED + credential encrypted
-     → Order dibuat, link ke user
+  → Submit → Edge Function `guest` (action: 'create-order', no auth)
+     → Auto-create user di Supabase DB (status: suspended)
+     → Order dibuat
   → [GuestBookingSuccessScreen] → catat nomor order
 
-User → [Cek Pesanan] (dari welcome atau langsung)
+User → [Cek Pesanan]
   → Input nomor order + WhatsApp
-  → NestJS POST /v1/orders/guest/track
-  → Lihat tracking + credential (masked)
-  → Jika status < device_received:
-       "Menunggu toko menerima perangkat..."
-       Credential card: nama, username (phone), password (masked)
-       Tombol "Hubungkan Akun" disabled
-  → Jika status >= device_received:
-       Akun otomatis aktif + sync ke Supabase Auth
-       User bisa login via Supabase Auth normal
+  → Edge Function `guest` (action: 'track', no auth)
+  → Lihat status tracking
 
-[Store Admin] → terima device → POST /v1/store/orders/:id/status { status: device_received }
-  → Backend activateGuestAccount():
-     1. Decrypt credential dari Prisma
-     2. Panggil Supabase Admin API → create Auth user
+[Store Admin] → terima device
+  → Edge Function `orders` (action: 'status', status: 'device_received')
+  → autoActivateGuest() dipanggil:
+     1. Create Supabase Auth user via Admin API
         email: {phone}@customer.servisgadget.com
         password: auto-generated
-     3. Prisma user: accountStatus = active, credentialPlainEnc = null
-     4. WhatsApp notif: "Akun aktif! Login dengan..."
+     2. Set account_status = active di DB
+     3. WhatsApp notif
 ```
 
 ### Key Components
 
-| Component | File | Fungsi |
-|-----------|------|--------|
-| `CredentialService` | `auth/credential.service.ts` | Auto-create account → set status `suspended` |
-| `GuestOrdersService` | `orders/guest-orders.service.ts` | Verify tracking, activate account, sync ke Supabase Auth |
-| `GuestOrdersController` | `orders/guest-orders.controller.ts` | Public endpoints: track, credentials, activate |
-| `OrderStatusService` | `orders/order-status.service.ts` | Hook: on `device_received` → activate guest account |
-| `GuestBookingSuccessScreen` | `frontend/.../guest_booking_success_screen.dart` | Booking success tanpa login |
-| `GuestTrackingScreen` | `frontend/.../guest_tracking_screen.dart` | Tracking + credential card + CTA login |
-| `ApiClient` | `frontend/core/api_client.dart` | HTTP client ke NestJS backend |
-
-### Endpoints
-
-| Method | Endpoint | Auth | Deskripsi |
-|--------|----------|------|-----------|
-| `POST` | `/v1/orders` | No | Guest order creation (auto-create suspended account) |
-| `POST` | `/v1/orders/guest/track` | No | Tracking + status by orderNumber + phone |
-| `POST` | `/v1/orders/guest/credentials` | No | Get credential status (masked password) |
-| `POST` | `/v1/orders/guest/:orderId/activate` | Store Admin | Activate guest account (hook from device_received) |
+| Component | Lokasi | Fungsi |
+|-----------|--------|--------|
+| Guest Edge Function | `supabase/functions/guest/index.ts` | Create order, track, credentials (all no-auth) |
+| Orders Edge Function | `supabase/functions/orders/index.ts` | Order lifecycle + auto-activate guest |
+| `GuestBookingSuccessScreen` | `frontend/.../guest_booking_success_screen.dart` | Booking success |
+| `GuestTrackingScreen` | `frontend/.../guest_tracking_screen.dart` | Tracking + credential card |
 
 ### Flow Diagram
 
@@ -175,117 +152,75 @@ User → [Cek Pesanan] (dari welcome atau langsung)
 
 ```
 service-hub/
-├── backend/                     NestJS API server
-│   ├── prisma/                  Prisma schema & migrations
-│   ├── src/
-│   │   ├── main.ts              Bootstrap (Swagger, CORS, validation)
-│   │   ├── app.module.ts        Root module
-│   │   ├── config/              App configuration (JWT, SLA, storage, Supabase)
-│   │   └── common/              Shared infrastructure
-│   │       ├── prisma/          PrismaClient wrapper
-│   │       ├── exceptions/      24 exception classes (1 per file)
-│   │       ├── guards/          JWT auth guards
-│   │       ├── filters/         Global exception filter
-│   │       ├── interceptors/    Response wrapper
-│   │       ├── decorators/      @GetUser() param decorator
-│   │       ├── types/           JWT payload types
-│   │       ├── logger/          Pino logger module
-│   │       ├── utils/           Phone, password, encryption, nanoid
-│   │       ├── health.controller.ts
-│   │       └── config.controller.ts
-│   └── modules/                 Feature modules (1 class = 1 file)
-│       ├── auth/                4 files (auth, credential services)
-│       ├── users/               3 files
-│       ├── stores/              6 files (discovery, dashboard, profile)
-│       ├── store-auth/          4 files
-│       ├── store-register/      3 files
-│       ├── orders/              15 files (creation, diagnosis, status, query, tracking, guest)
-│       ├── payments/            4 files (customer + store controllers)
-│       ├── disputes/            4 files (customer + store controllers)
-│       ├── reviews/             3 files
-│       ├── spareparts/          3 files
-│       ├── uploads/             3 files
-│       ├── notifications/       5 files (wa, email, in-app, controller)
-│       ├── platform-admin/      7 files (auth, store, user, mgmt services)
-│       ├── redis/               2 files
-│       └── jobs/                3 files (SLA monitor, credential cleaner)
-│
-├── frontend/                    Flutter mobile app
+├── frontend/                    Flutter mobile app (45 screens)
 │   └── lib/
 │       ├── main.dart            App entry, GoRouter, splash
-│       ├── core/                SupabaseService, ApiClient, Config, JSON helpers
-│       ├── ui/                  Theme (Material 3), design system widgets
+│       ├── core/                SupabaseService, Config, helpers
+│       ├── ui/                  Theme (Material 3), widgets
 │       ├── shared_widgets/      Cross-feature reusable widgets
-│       └── features/            Domain-driven feature modules
-│           ├── customer/
-│           │   ├── application/ 10 provider files (1 per concern)
-│           │       ├── data/        9 repository files (1 per domain, notifications via Supabase)
-│           │   ├── domain/      15 model files (1 per class)
-│           │   └── presentation/
-│           │       ├── routing/ 1 router (25 routes)
-│           │       ├── screens/ 25 screen files (1 per screen, includes guest*)
-│           │       └── widgets/ 11 widget files (1 per widget)
-│           ├── store_admin/
-│           │   ├── application/ 11 provider files
-│           │   ├── data/        10 repository files
-│           │   ├── domain/      14 model files
-│           │   └── presentation/
-│           │       ├── routing/ 1 router
-│           │       ├── screens/ 16 screen files
-│           │       └── widgets/ 15 widget files
-│           └── platform_admin/
-│               ├── application/ 3 provider files
-│               ├── data/        4 repository files
-│               ├── domain/      6 model files
-│               └── presentation/
-│                   ├── routing/ 1 router
-│                   └── screens/ 2 screen files
+│       └── features/
+│           ├── customer/        Customer: booking, orders, payments, reviews
+│           │   ├── application/ Riverpod providers
+│           │   ├── data/        Repositories
+│           │   ├── domain/      Models
+│           │   └── presentation/25 screens
+│           ├── store_admin/     Store: dashboard, orders, inventory
+│           │   ├── application/ Providers
+│           │   ├── data/        Repositories
+│           │   ├── domain/      Models
+│           │   └── presentation/16 screens
+│           └── platform_admin/  Admin: login + dashboard
+│               ├── application/ 3 providers
+│               ├── data/        4 repositories
+│               ├── domain/      6 models
+│               └── presentation/2 screens
 │
-├── supabase/                    Supabase SQL + Edge Functions
-│   ├── migrations/              SQL schema, RLS, functions, seed
-│   └── functions/               Edge Functions (orders, payments, disputes, admin, cron-sla)
+├── supabase/                    Supabase DB + Edge Functions (serverless)
+│   ├── migrations/              15 SQL files (schema, RLS, functions, seed)
+│   └── functions/               11 Edge Functions (orders, guest, payments, midtrans, dll)
+│       └── _shared/             Cors, helpers, WhatsApp shared
 │
-├── scripts/                     Deployment helpers
-├── docker-compose.yml           Postgres + Redis + Backend
-└── docs/                        PRD, architecture, changelog
-```
+├── scripts/                     Build helpers
+└── docs/                        PRD, architecture, testing
 
-**Modularity principle:** 1 class = 1 file. Every controller, service, DTO, repository, provider, model, and widget gets its own file. Barrel files re-export for backward-compatible imports.
+**Serverless:** No backend server needed. Semua via Supabase (Auth + DB + Functions + Storage).
+```
 
 ---
 
-## Backend Architecture
+## Architecture
 
-**Dual-layer architecture:**
+**True serverless — no backend server needed:**
 
 | Layer | Lokasi | Fungsi |
 |-------|--------|--------|
-| Auth & Queries | Supabase (Auth + RLS + DB) | Customer login, order tracking, store discovery |
-| Business Logic | NestJS + Prisma | Order creation, guest account, store admin ops, credentials |
-| Edge Functions | Supabase Functions | Order flow, stock management, disputes |
-| Cache | Redis | Session, rate limiting |
+| Auth | Supabase Auth native | Login 3 roles (customer, store_admin, platform_admin) |
+| Database | Supabase PostgreSQL | All tables + RLS per role |
+| Business Logic | 11 Edge Functions | Order lifecycle, guest flow, payments, disputes |
+| Payments | Edge Function `midtrans` | Midtrans Snap + webhook |
+| Storage | Supabase Storage | File uploads (payment proof, avatars) |
+| Notifications | Edge Function | In-app + WhatsApp gateway |
 
-### NestJS API Endpoints
+### Edge Functions API
 
-| Prefix | Controller | Auth |
-|--------|-----------|------|
-| `POST /v1/orders` | OrdersController | No (guest order) |
-| `GET /v1/orders/me` | OrdersController | Customer JWT |
-| `GET /v1/orders/:id` | OrdersController | Customer JWT |
-| `POST /v1/orders/guest/track` | GuestOrdersController | No |
-| `POST /v1/orders/guest/credentials` | GuestOrdersController | No |
-| `POST /v1/orders/guest/:orderId/activate` | GuestOrdersController | Store Admin JWT |
-| `GET /v1/notifications` | NotificationsController | Customer JWT |
-| `GET /v1/notifications/unread-count` | NotificationsController | Customer JWT |
-| `PATCH /v1/notifications/:id/read` | NotificationsController | Customer JWT |
-| `PATCH /v1/notifications/read-all` | NotificationsController | Customer JWT |
-| `POST /v1/notifications/test` | NotificationsController | Customer JWT |
-| `POST /v1/notifications/broadcast` | NotificationsController | Platform Admin |
-| `GET /v1/store/notifications` | StoreNotificationsController | Store Admin JWT |
-| `PATCH /v1/store/notifications/:id/read` | StoreNotificationsController | Store Admin JWT |
-| `POST /v1/store/notifications/test` | StoreNotificationsController | Store Admin JWT |
-| `POST /v1/auth/login` | AuthController | No |
-| `POST /v1/store/orders/*` | StoreOrdersController | Store Admin JWT |
+| Function | Auth | Action | Fungsi |
+|----------|------|--------|--------|
+| `guest` | None | `create-order` | Guest booking (auto-create suspended user) |
+| `guest` | None | `track` | Cek status by order number |
+| `guest` | None | `credentials` | Lihat credential (masked) |
+| `orders` | User JWT | `orders` | Buat order (customer) |
+| `orders` | User JWT | `approve/reject` | Setujui/tolak diagnosa (customer) |
+| `orders` | User JWT | `status` | Update status order (store admin) |
+| `orders` | User JWT | `diagnosis` | Kirim diagnosa (store admin) |
+| `payments` | User JWT | `create` | Upload bukti bayar |
+| `payments` | User JWT | `confirm` | Konfirmasi bayar (store admin) |
+| `midtrans` | None | — | Midtrans Snap token + webhook |
+| `disputes` | User JWT | — | Klaim garansi |
+| `reviews` | User JWT | — | Kirim review |
+| `notifications` | User JWT | — | Notifikasi in-app + WA |
+| `admin` | User JWT | — | Admin panel (create store, dll) |
+| `store-applications` | None | — | Pendaftaran toko baru |
+| `cron-sla` | None | — | Auto-cancel SLA breach |
 
 ---
 
@@ -368,28 +303,28 @@ Table `notifications`:
 
 ## Environment Variables
 
-### Required (backend)
+### Supabase Edge Functions secrets (`supabase secrets set`)
 
 | Variable | Deskripsi |
 |----------|-----------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_ACCESS_SECRET` | Customer JWT access token secret |
-| `JWT_REFRESH_SECRET` | Customer JWT refresh token secret |
-| `JWT_STORE_ACCESS_SECRET` | Store admin JWT access secret |
-| `JWT_STORE_REFRESH_SECRET` | Store admin JWT refresh secret |
-| `JWT_PLATFORM_ADMIN_SECRET` | Platform admin JWT secret |
-| `CREDENTIAL_ENCRYPTION_KEY` | AES-256-GCM key for guest credentials (32-byte hex) |
 | `MIDTRANS_SERVER_KEY` | Midtrans payment server key |
-| `SUPABASE_PROJECT_REF` | Supabase project ref (for Admin API) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role key (for guest sync) |
+| `MIDTRANS_CLIENT_KEY` | Midtrans client key |
+| `WA_GATEWAY_URL` | WhatsApp gateway URL |
+| `WA_GATEWAY_TOKEN` | WhatsApp gateway token |
+| `WA_SENDER_NUMBER` | Nomor pengirim WA |
 
 ### Frontend build args
 
-| Arg | Default | Deskripsi |
-|-----|---------|-----------|
-| `SUPABASE_URL` | `''` | Supabase project URL |
-| `SUPABASE_ANON_KEY` | `''` | Supabase anon key |
-| `API_BASE_URL` | `http://localhost:3000/v1` | NestJS backend URL |
+| Arg | Contoh | Deskripsi |
+|-----|--------|-----------|
+| `SUPABASE_URL` | `https://eboplbemgtvmviwhdlfa.supabase.co` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | `sb_publishable_xxxx` | Supabase anon key |
+
+```bash
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_xxxx
+```
 
 ---
 
@@ -439,23 +374,39 @@ Table `notifications`:
 
 ## Deployment
 
-### Backend (Docker Compose)
+### 1. Database + Edge Functions
 
 ```bash
-docker compose up -d
+supabase login
+supabase link --project-ref eboplbemgtvmviwhdlfa
+supabase db push
+supabase functions deploy orders guest payments midtrans disputes reviews notifications admin store-applications cron-sla
+supabase secrets set MIDTRANS_SERVER_KEY=xxx WA_GATEWAY_URL=xxx WA_GATEWAY_TOKEN=xxx
 ```
 
-### Frontend (APK)
+### 2. Build APK
 
 ```bash
 cd frontend
 flutter build apk --release \
   --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV \
-  --dart-define=API_BASE_URL=http://YOUR_SERVER_IP:3000/v1
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRZBosGlsQ_4cpeOMRV
 ```
 
 Output: `build/app/outputs/flutter-apk/app-release.apk`
+
+### 3. Publish ke Play Store
+
+```bash
+cd frontend
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=... \
+  --dart-define=SUPABASE_ANON_KEY=...
+```
+
+Upload `build/app/outputs/bundle/release/app-release.aab` ke Play Console.
+
+**Biaya:** $0 — Supabase free tier + Play Store $25 developer fee (sekali).
 
 ---
 

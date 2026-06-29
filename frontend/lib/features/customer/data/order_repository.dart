@@ -4,6 +4,7 @@ import 'api_helper.dart';
 class OrderRepository {
   Future<CreateOrderResult> createOrder(CreateOrderRequest req) async {
     final result = await sb.invoke('orders', body: {
+      'action': 'orders',
       'store_id': req.storeId,
       'device_type': req.deviceType,
       'brand': req.brand,
