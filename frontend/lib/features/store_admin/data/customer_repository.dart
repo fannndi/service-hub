@@ -8,7 +8,7 @@ class StoreCustomerRepository {
       .eq('store_id', storeId);
     final userIds = (orders as List).map((o) => o['user_id'] as String?).whereType<String>().toSet().toList();
     if (userIds.isEmpty) return {'items': [], 'total': 0};
-    var query = sb.from('users').select('*').inFilter('id', userIds);
+    final query = sb.from('users').select('*').inFilter('id', userIds);
     final items = await query;
     return {'items': items, 'total': items.length};
   }

@@ -29,15 +29,15 @@ final storeAdminRoutes = <RouteBase>[
   GoRoute(
       path: '/store/orders/:id',
       builder: (_, state) =>
-          OrderDetailScreen(orderId: state.pathParameters['id']!)),
+          OrderDetailScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/store/orders/:id/diagnosis',
       builder: (_, state) =>
-          DiagnosisScreen(orderId: state.pathParameters['id']!)),
+          DiagnosisScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/store/orders/:id/tracking',
       builder: (_, state) =>
-          TrackingScreen(orderId: state.pathParameters['id']!)),
+          TrackingScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/store/inventory', builder: (_, __) => const InventoryScreen()),
   GoRoute(

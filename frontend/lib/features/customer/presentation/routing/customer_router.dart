@@ -41,24 +41,25 @@ final customerRoutes = <RouteBase>[
   GoRoute(
       path: '/stores/:id',
       builder: (_, state) =>
-          StoreDetailScreen(storeId: state.pathParameters['id']!)),
+          StoreDetailScreen(storeId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/booking/:storeId',
       builder: (_, state) =>
-          BookingFormScreen(storeId: state.pathParameters['storeId']!)),
+          BookingFormScreen(storeId: state.pathParameters['storeId'] ?? '')),
   GoRoute(
     path: '/booking-success/:orderNumber',
     builder: (_, state) {
       final extra = state.extra is Map ? Map<String, dynamic>.from(state.extra as Map) : {};
+      final orderNum = state.pathParameters['orderNumber'] ?? '';
       if (extra['isGuest'] == true) {
         return GuestBookingSuccessScreen(
-          orderNumber: state.pathParameters['orderNumber']!,
+          orderNumber: orderNum,
           tempPassword: extra['temp_password'] as String?,
           phoneNumber: extra['phone_number'] as String?,
         );
       }
       return BookingSuccessScreen(
-        orderNumber: state.pathParameters['orderNumber']!,
+        orderNumber: orderNum,
         isNewCustomer: extra['isNewCustomer'] == true,
       );
     },
@@ -77,23 +78,23 @@ final customerRoutes = <RouteBase>[
   GoRoute(
       path: '/orders/:id',
       builder: (_, state) =>
-          OrderDetailScreen(orderId: state.pathParameters['id']!)),
+          OrderDetailScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/orders/:id/tracking',
       builder: (_, state) =>
-          TrackingScreen(orderId: state.pathParameters['id']!)),
+          TrackingScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/orders/:id/payment',
       builder: (_, state) =>
-          PaymentUploadScreen(orderId: state.pathParameters['id']!)),
+          PaymentUploadScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/orders/:id/review',
       builder: (_, state) =>
-          ReviewFormScreen(orderId: state.pathParameters['id']!)),
+          ReviewFormScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/orders/:id/warranty-claim',
       builder: (_, state) =>
-          WarrantyClaimScreen(orderId: state.pathParameters['id']!)),
+          WarrantyClaimScreen(orderId: state.pathParameters['id'] ?? '')),
   GoRoute(
       path: '/review-success',
       builder: (_, state) {

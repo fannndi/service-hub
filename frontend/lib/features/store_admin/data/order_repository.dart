@@ -5,7 +5,7 @@ class StoreOrderRepository {
   String get storeId => sb.storeId ?? '';
 
   Future<Map<String, dynamic>> getOrders({String? status, String? q, int page = 1, String? actionGroup}) async {
-    var query = sb.from('service_orders').select('*, items:order_items(*), user:users(full_name, phone_number)')
+    final query = sb.from('service_orders').select('*, items:order_items(*), user:users(full_name, phone_number)')
       .eq('store_id', storeId);
     if (status != null) query = query.eq('status', status);
     if (q != null) query = query.or('order_number.ilike.%$q%,user.full_name.ilike.%$q%,device_model.ilike.%$q%');

@@ -165,7 +165,7 @@ class InventoryScreen extends ConsumerWidget {
                               ),
                               Container(
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey[300]!),
+                                  border: Border.all(color: (Colors.grey[300] ?? Colors.grey)),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(

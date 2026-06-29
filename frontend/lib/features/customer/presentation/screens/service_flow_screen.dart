@@ -54,7 +54,6 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         partType: _state.serviceType,
       );
     } catch (e) {
-      debugPrint('_matchStores error: ' + e.toString());
       _state.matchedStores = const [];
     } finally {
       if (mounted) setState(() => _state.loading = false);

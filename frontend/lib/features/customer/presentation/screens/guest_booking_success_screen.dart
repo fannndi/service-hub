@@ -42,7 +42,6 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
         _checking = false;
       });
     } catch (e) {
-      debugPrint('guest_booking_check: ' + e.toString());
       if (mounted) setState(() => _checking = false);
     }
   }
