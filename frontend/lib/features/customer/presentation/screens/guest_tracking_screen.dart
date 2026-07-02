@@ -58,7 +58,8 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
       setState(() { _result = {...data, ...credData}; });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e is Map ? (e['message'] as String? ?? 'Gagal. Coba lagi.') : 'Gagal. Coba lagi.');
+      final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Gagal. Coba lagi.';
+      setState(() => _error = msg);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

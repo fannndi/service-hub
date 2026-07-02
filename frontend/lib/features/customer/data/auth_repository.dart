@@ -22,7 +22,7 @@ class CustomerAuthRepository {
   Future<void> changePassword(String oldPw, String newPw) => sb.updatePassword(newPw);
 
   Future<CustomerUser?> restoreSession() async {
-    if (!sb.isLoggedIn) return null;
+    if (!sb.isLoggedIn || sb.role != 'customer') return null;
     final meta = sb.user?.userMetadata ?? {};
     final uid = sb.user?.id;
     if (uid == null) throw Exception('Not authenticated');

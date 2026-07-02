@@ -18,8 +18,8 @@ class StoreDiscoveryRepository {
 
   Future<List<StoreMatchResult>> matchStores({required String brand, required String deviceModel, required String partType}) async {
     final data = await sb.from('stores').select('''
-      id, store_name, address, phone_number, rating_avg,
-      spareparts!inner(brand, device_model, part_type, part_name, price, qty, qty_reserved)
+      id, store_name, address, phone_number, rating_avg, total_completed,
+      spareparts!inner(id, brand, device_model, part_type, part_name, price, qty, qty_reserved, status)
     ''').eq('is_active', true).eq('spareparts.brand', brand).eq('spareparts.device_model', deviceModel).eq('spareparts.part_type', partType);
     final results = data.map((json) => StoreMatchResult.fromJson(json)).toList();
     return _dedupeStores(results);

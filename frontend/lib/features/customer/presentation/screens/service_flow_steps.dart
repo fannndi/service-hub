@@ -111,7 +111,7 @@ class Step1Widget extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: brandValue,
+                    value: brandValue,
                     decoration: InputDecoration(
                         labelText: context.l10n.smartphoneBrand,
                         prefixIcon: const Icon(Icons.branding_watermark)),
@@ -126,7 +126,7 @@ class Step1Widget extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    initialValue: modelValue,
+                    value: modelValue,
                     decoration: InputDecoration(
                         labelText: context.l10n.smartphoneType,
                         prefixIcon: const Icon(Icons.smartphone)),

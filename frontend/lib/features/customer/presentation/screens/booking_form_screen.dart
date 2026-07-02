@@ -209,7 +209,7 @@ child: ListView(
                   validator: _required),
               SectionTitle(context.l10n.damage),
               DropdownButtonFormField<String>(
-                  initialValue: _serviceType,
+                  value: _serviceType,
                   decoration: InputDecoration(
                       labelText: context.l10n.serviceType,
                       prefixIcon: const Icon(Icons.build_outlined)),

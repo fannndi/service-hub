@@ -46,6 +46,12 @@ class SupabaseService {
   }
 
   Future<dynamic> invoke(String name, {Object? body}) async {
-    return client.functions.invoke(name, body: body);
+    final response = await client.functions.invoke(name, body: body);
+    if (response is Map<String, dynamic>) {
+      if (response['success'] == true) return response['data'];
+      final error = response['error'] as Map? ?? {};
+      throw Exception(error['message'] as String? ?? 'Unknown error');
+    }
+    return response;
   }
 }

@@ -70,18 +70,19 @@ class StoreMatchResult {
 
   factory StoreMatchResult.fromJson(Map<String, dynamic> json) {
     final sparepartsJson = json['spareparts'] as List? ?? const [];
+    final parts = sparepartsJson
+        .whereType<Map<String, dynamic>>()
+        .map(MatchSparePart.fromJson)
+        .toList();
     return StoreMatchResult(
-      storeId: readString(json, 'storeId'),
-      storeName: readString(json, 'storeName'),
+      storeId: readString(json, 'id'),
+      storeName: readString(json, 'store_name', 'storeName'),
       address: readString(json, 'address'),
-      phoneNumber: readString(json, 'phoneNumber'),
-      ratingAvg: (json['ratingAvg'] as num?)?.toDouble() ?? 0,
-      totalCompleted: json['totalCompleted'] as int? ?? 0,
-      spareparts: sparepartsJson
-          .whereType<Map<String, dynamic>>()
-          .map(MatchSparePart.fromJson)
-          .toList(),
-      estimatedCost: moneyFromJson(json['estimatedCost']),
+      phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
+      ratingAvg: (json['rating_avg'] as num?)?.toDouble() ?? (json['ratingAvg'] as num?)?.toDouble() ?? 0,
+      totalCompleted: json['total_completed'] as int? ?? json['totalCompleted'] as int? ?? 0,
+      spareparts: parts,
+      estimatedCost: parts.fold<double>(0, (sum, p) => sum + p.price),
     );
   }
 }
@@ -105,10 +106,10 @@ class MatchSparePart {
 
   factory MatchSparePart.fromJson(Map<String, dynamic> json) => MatchSparePart(
         id: readString(json, 'id'),
-        partName: readString(json, 'partName'),
-        partType: readString(json, 'partType'),
+        partName: readString(json, 'part_name', 'partName'),
+        partType: readString(json, 'part_type', 'partType'),
         price: moneyFromJson(json['price']),
-        availableQty: json['availableQty'] as int? ?? 0,
+        availableQty: (json['qty'] as int? ?? 0) - (json['qty_reserved'] as int? ?? 0),
         status: readString(json, 'status'),
       );
 }

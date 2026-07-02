@@ -19,7 +19,7 @@ final orderTrackingProvider = StreamProvider.autoDispose.family<List<TrackingEnt
   return Stream.periodic(const Duration(seconds: 30), (_) => _).asyncMap((_) async {
     final sb = SupabaseService.instance;
     final data = await sb.from('service_tracking')
-        .select('*')
+        .select('id,order_id,status,note,created_by_type,created_by_id,created_at')
         .eq('order_id', orderId)
         .order('created_at', ascending: false);
     return (data as List?)?.map((e) => TrackingEntry.fromJson(e)).toList() ?? [];
