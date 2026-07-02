@@ -3,7 +3,7 @@ import 'api_helper.dart';
 
 class StoreDiscoveryRepository {
   Future<List<ServiceStore>> getStores({String? brand, String? model}) async {
-    final q = sb.from('stores').select('*, spareparts!inner(brand, device_model)').eq('is_active', true);
+    var q = sb.from('stores').select('*, spareparts!inner(brand, device_model)').eq('is_active', true);
     if (brand != null && brand != 'All') q = q.eq('spareparts.brand', brand);
     if (model != null && model.isNotEmpty) q = q.ilike('spareparts.device_model', '%$model%');
     final data = await q.order('created_at', ascending: false).limit(20) as List;

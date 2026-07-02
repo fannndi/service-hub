@@ -36,7 +36,7 @@ class OrderRepository {
   Future<List<CustomerOrder>> getOrders({String? status, int page = 1}) async {
     final uid = sb.user?.id;
     if (uid == null) throw Exception('Not authenticated');
-    final q = sb.from('service_orders').select('*, items:order_items(*)')
+    var q = sb.from('service_orders').select('*, items:order_items(*)')
       .eq('user_id', uid);
     if (status != null && status != 'all') {
       if (status == 'active') {
