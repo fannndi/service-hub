@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:functions_client/functions_client.dart';
 import 'supabase_config.dart';
 
 class SupabaseService {
@@ -56,13 +55,9 @@ class SupabaseService {
         throw Exception(error['message'] as String? ?? 'Unknown error');
       }
       return response.data;
-    } on FunctionException catch (e) {
-      final details = e.details;
-      if (details is Map<String, dynamic>) {
-        final error = details['error'] as Map? ?? {};
-        throw Exception(error['message'] as String? ?? e.reasonPhrase ?? 'Unknown error');
-      }
-      throw Exception(e.reasonPhrase ?? 'Unknown error');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Unexpected error: $e');
     }
   }
 }
