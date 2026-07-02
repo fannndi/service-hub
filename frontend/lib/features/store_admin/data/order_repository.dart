@@ -14,8 +14,9 @@ class StoreOrderRepository {
   }
 
   Future<StoreOrder> getOrderDetail(String orderId) async {
-    final data = await sb.from('service_orders').select('*, items:order_items(*, sparepart:spareparts(*)), user:users(full_name, phone_number, credential_plain_enc), tracking:service_tracking(*), payments(*), disputes(*)')
+    final data = await sb.from('service_orders').select('*, items:order_items(*, sparepart:spareparts(*)), user:users(full_name, phone_number, credential_plain_enc), trackingEvents:service_tracking(*), payments(*), disputes(*)')
       .eq('id', orderId).eq('store_id', storeId).single();
+    data['device_name'] = data['device_model'];
     return StoreOrder.fromJson(data);
   }
 

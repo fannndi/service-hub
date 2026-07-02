@@ -24,7 +24,10 @@ class AdminAuthNotifier extends AsyncNotifier<PlatformAdminUser?> {
   }
 
   Future<void> logout() async {
-    await SupabaseService.instance.signOut();
-    state = const AsyncData(null);
+    try {
+      await SupabaseService.instance.signOut();
+    } finally {
+      state = const AsyncData(null);
+    }
   }
 }

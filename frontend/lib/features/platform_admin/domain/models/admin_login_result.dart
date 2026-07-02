@@ -10,8 +10,8 @@ class AdminLoginResult {
 
   factory AdminLoginResult.fromJson(Map<String, dynamic> json) =>
       AdminLoginResult(
-        accessToken: readString(json, 'accessToken'),
-        refreshToken: json['refreshToken'] as String?,
+        accessToken: readString(json, 'access_token', 'accessToken'),
+        refreshToken: (json['refresh_token'] ?? json['refreshToken']) as String?,
         admin: AdminSession.fromJson(
             (json['admin'] as Map<String, dynamic>?) ?? {}),
       );

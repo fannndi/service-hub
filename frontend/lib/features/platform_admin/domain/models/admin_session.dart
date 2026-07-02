@@ -10,6 +10,6 @@ class AdminSession {
   factory AdminSession.fromJson(Map<String, dynamic> json) => AdminSession(
         id: readString(json, 'id'),
         username: readString(json, 'username'),
-        fullName: readString(json, 'fullName'),
+        fullName: readString(json, 'full_name', 'fullName'),
       );
 }

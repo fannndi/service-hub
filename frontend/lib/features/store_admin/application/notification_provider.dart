@@ -14,13 +14,12 @@ final storeUnreadCountProvider = FutureProvider.autoDispose<int>((ref) async {
   return repo.getUnreadCount();
 });
 
-Timer? _pollTimer;
 final storeUnreadStreamProvider = StreamProvider.autoDispose<int>((ref) {
   final repo = ref.read(storeNotificationRepositoryProvider);
-  _pollTimer?.cancel();
-  _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-    ref.invalidate(storeUnreadCountProvider);
-  });
-  ref.onDispose(() => _pollTimer?.cancel());
-  return Stream.periodic(const Duration(seconds: 30), (_) => 0).asyncMap((_) => repo.getUnreadCount());
+  return Stream.periodic(const Duration(seconds: 30), (_) => 0)
+    .asyncMap((_) => repo.getUnreadCount())
+    .handleError((e) {
+      debugPrint('Unread count error: $e');
+      return 0;
+    });
 });

@@ -13,6 +13,5 @@ final dashboardSummaryProvider = StreamProvider.autoDispose<DashboardSummary>((r
     return data;
   }).handleError((e) {
     debugPrint('Dashboard refresh error: $e');
-    throw e;
   });
 });

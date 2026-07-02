@@ -17,11 +17,11 @@ class UserSession {
 
   factory UserSession.fromJson(Map<String, dynamic> json) => UserSession(
         id: (json['id'] ?? '').toString(),
-        deviceInfo: json['deviceInfo'] as Map<String, dynamic>?,
-        ipAddress: json['ipAddress'] as String?,
-        lastActiveAt: _parseDate(json['lastActiveAt']),
-        isActive: json['isActive'] == true,
-        createdAt: _parseDate(json['createdAt']),
+        deviceInfo: (json['device_info'] ?? json['deviceInfo']) as Map<String, dynamic>?,
+        ipAddress: (json['ip_address'] ?? json['ipAddress']) as String?,
+        lastActiveAt: _parseDate(json['last_active_at'] ?? json['lastActiveAt']),
+        isActive: (json['is_active'] ?? json['isActive']) == true,
+        createdAt: _parseDate(json['created_at'] ?? json['createdAt']),
       );
 
   static DateTime _parseDate(dynamic value) {

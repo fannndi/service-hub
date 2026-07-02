@@ -9,6 +9,6 @@ class PlatformAdminUser {
   factory PlatformAdminUser.fromJson(Map<String, dynamic> json) => PlatformAdminUser(
     id: readString(json, 'id'),
     username: readString(json, 'username'),
-    fullName: readString(json, 'fullName'),
+    fullName: readString(json, 'full_name', 'fullName'),
   );
 }

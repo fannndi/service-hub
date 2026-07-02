@@ -22,8 +22,11 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   }
 
   Future<void> logout() async {
-    await SupabaseService.instance.signOut();
-    state = const AsyncData(null);
+    try {
+      await SupabaseService.instance.signOut();
+    } finally {
+      state = const AsyncData(null);
+    }
   }
 
   Future<void> changePassword(String oldPw, String newPw) async {

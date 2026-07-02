@@ -22,11 +22,11 @@ class StoreAdminListItem {
     final store = json['store'] as Map<String, dynamic>? ?? {};
     return StoreAdminListItem(
       id: readString(json, 'id'),
-      fullName: readString(json, 'fullName'),
-      phoneNumber: readString(json, 'phoneNumber'),
-      isActive: json['isActive'] as bool? ?? true,
-      isFirstLogin: json['isFirstLogin'] as bool? ?? false,
-      storeName: readString(store, 'storeName'),
+      fullName: readString(json, 'full_name', 'fullName'),
+      phoneNumber: readString(json, 'phone_number', 'phoneNumber'),
+      isActive: (json['is_active'] ?? json['isActive']) as bool? ?? true,
+      isFirstLogin: (json['is_first_login'] ?? json['isFirstLogin']) as bool? ?? false,
+      storeName: readString(store, 'store_name', 'storeName'),
       storeId: readString(store, 'id'),
     );
   }

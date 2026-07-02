@@ -9,7 +9,7 @@ class StoreReviewRepository {
     return {'items': items, 'total': (items as List).length};
   }
 
-  Future<void> respondReview(String reviewId, String response) async {
-    await sb.from('reviews').update({'store_response': response}).eq('id', reviewId);
+  Future<void> respondReview(String reviewId, String text) async {
+    await sb.from('reviews').update({'comment': comment + '\n\nRespon toko:\n' + text}).eq('id', reviewId);
   }
 }

@@ -18,7 +18,8 @@ final homeSummaryProvider = FutureProvider.autoDispose<HomeSummary>((ref) async 
   }
 
   final orders = await sb.from('service_orders').select('id,status').eq('user_id', userId).limit(50);
-  final activeCount = (orders as List).where((o) => !['completed', 'cancelled'].contains(o['status'])).length;
+  final ordersList = orders as? List ?? [];
+  final activeCount = ordersList.where((o) => !['completed', 'cancelled'].contains(o['status'])).length;
 
   final coupons = await sb.from('coupons').select('id').eq('user_id', userId).eq('is_used', false).limit(1);
   final warrantyOrders = await sb.from('service_orders').select('id').eq('user_id', userId)
@@ -26,7 +27,7 @@ final homeSummaryProvider = FutureProvider.autoDispose<HomeSummary>((ref) async 
 
   return HomeSummary(
     activeOrders: activeCount,
-    activeCoupons: (coupons as List).length,
-    activeWarranties: (warrantyOrders as List).length,
+    activeCoupons: ((coupons as? List) ?? []).length,
+    activeWarranties: ((warrantyOrders as? List) ?? []).length,
   );
 });
