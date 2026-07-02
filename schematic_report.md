@@ -1,6 +1,6 @@
 # 🤖 AI Agent Test Report
 
-**Generated:** 2026-07-02 22:00:53.324881
+**Generated:** 2026-07-02 22:10:35.981801
 
 ---
 
@@ -12,7 +12,7 @@ Total:     4
 Passed:    4 ✅
 Failed:    0 ❌
 Errored:   0 ⚠️
-Duration:  61s
+Duration:  34s
 
   ✅ platform-admin: 2/2 passed
   ✅ guest-booking: 1/1 passed
@@ -34,7 +34,7 @@ Duration:  61s
 
 | Step | Status | Detail |
 |------|--------|--------|
-| create-guest-order | ✅ | success is present ✓; error.code is present ✓ |
+| create-guest-order | ✅ | success = true ✓; data.order_id is present ✓; data.order_number is present ✓ |
 
 ### ✅ Verifikasi database — stores, spareparts, users via service_role key
 
