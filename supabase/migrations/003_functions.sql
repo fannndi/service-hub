@@ -21,7 +21,7 @@ END;
 $$;
 
 -- ─── ATOMIC STOCK: Reserve ───
-CREATE OR REPLACE FUNCTION reserve_stock(p_sparepart_id UUID, p_qty INT DEFAULT 1)
+CREATE OR REPLACE FUNCTION reserve_stock(p_sparepart_id TEXT, p_qty INT DEFAULT 1)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -45,7 +45,7 @@ END;
 $$;
 
 -- ─── ATOMIC STOCK: Consume (approve order) ───
-CREATE OR REPLACE FUNCTION consume_stock(p_sparepart_id UUID)
+CREATE OR REPLACE FUNCTION consume_stock(p_sparepart_id TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -63,7 +63,7 @@ END;
 $$;
 
 -- ─── ATOMIC STOCK: Release (reject/cancel order) ───
-CREATE OR REPLACE FUNCTION release_stock(p_sparepart_id UUID)
+CREATE OR REPLACE FUNCTION release_stock(p_sparepart_id TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -80,7 +80,7 @@ END;
 $$;
 
 -- ─── ATOMIC STOCK: Swap (diagnosis replace) ───
-CREATE OR REPLACE FUNCTION swap_sparepart(p_old_id UUID, p_new_id UUID)
+CREATE OR REPLACE FUNCTION swap_sparepart(p_old_id TEXT, p_new_id TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
