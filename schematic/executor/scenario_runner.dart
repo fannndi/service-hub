@@ -61,6 +61,11 @@ class ScenarioRunner {
 
       final result = await _runStep(step, vars);
 
+      // Capture variables from response (e.g., {order_id}, {order_number})
+      if (result.responseData != null) {
+        _captureVars(result.responseData!, vars);
+      }
+
       if (verbose && result.responseData != null) {
         print('    Response: ${result.responseData}');
       }
@@ -205,6 +210,30 @@ class ScenarioRunner {
       return 'Timeout: Supabase cold start. Coba jalankan ulang step ini';
     }
     return null;
+  }
+
+  void _captureVars(Map<String, dynamic> data, Map<String, String> vars) {
+    final knownKeys = ['order_id', 'order_number', 'user_id', 'store_id',
+      'sparepart_id', 'item_id', 'payment_id', 'dispute_id'];
+    _captureFromData('', data, knownKeys, vars);
+  }
+
+  void _captureFromData(String prefix, dynamic data, List<String> knownKeys, Map<String, String> vars) {
+    if (data is Map<String, dynamic>) {
+      for (final entry in data.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        if (knownKeys.contains(key) && value is String && !vars.containsKey(key)) {
+          vars[key] = value;
+          if (prefix.isEmpty) {
+            print('    📝 Captured: $key = ${value.substring(0, value.length > 20 ? 20 : value.length)}...');
+          }
+        }
+        if (value is Map<String, dynamic>) {
+          _captureFromData(key, value, knownKeys, vars);
+        }
+      }
+    }
   }
 
   Future<void> _runSetup(Map<String, dynamic> setup, Map<String, String> vars) async {

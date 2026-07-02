@@ -1,6 +1,6 @@
 # 🤖 AI Agent Test Report
 
-**Generated:** 2026-07-02 22:10:35.981801
+**Generated:** 2026-07-02 22:17:21.069504
 
 ---
 
@@ -12,48 +12,49 @@ Total:     4
 Passed:    4 ✅
 Failed:    0 ❌
 Errored:   0 ⚠️
-Duration:  34s
+Duration:  39s
 
+  ✅ guest-booking: 3/3 passed
   ✅ platform-admin: 2/2 passed
-  ✅ guest-booking: 1/1 passed
-  ✅ data-verification: 5/5 passed
-  ✅ edge-function-checks: 4/4 passed
+  ✅ data-verification: 3/3 passed
+  ✅ complete-workflow: 5/5 passed
 
 
 ---
 ## 📋 Scenario Details
 
-### ✅ Platform admin login → manage applications via Edge Function
+### ✅ Pelanggan (Budi Santoso) booking perbaikan Samsung S24 secara guest
 
 | Step | Status | Detail |
 |------|--------|--------|
-| login-admin | ✅ | data.email is present ✓ |
-| list-applications | ✅ | success = true ✓; data is present ✓ |
+| create-order | ✅ | success = true ✓; data.order_id is present ✓; data.order_number is present ✓ |
+| track-order | ✅ | success = true ✓; data.status is present ✓ |
+| check-temp-password | ✅ | success = true ✓ |
 
-### ✅ Guest booking via Edge Function — create order
-
-| Step | Status | Detail |
-|------|--------|--------|
-| create-guest-order | ✅ | success = true ✓; data.order_id is present ✓; data.order_number is present ✓ |
-
-### ✅ Verifikasi database — stores, spareparts, users via service_role key
+### ✅ Admin platform (admin@servisgadget.com) login dan manage aplikasi toko
 
 | Step | Status | Detail |
 |------|--------|--------|
-| check-stores | ✅ | success = true ✓; data length (5) > 0 ✓ |
-| check-spareparts | ✅ | success = true ✓; data length (5) > 0 ✓ |
-| check-users | ✅ | success = true ✓; data length (2) > 0 ✓ |
-| check-orders | ✅ | success = true ✓ |
-| check-payments | ✅ | success = true ✓ |
+| login-platform | ✅ | data.email is present ✓ |
+| list-store-apps | ✅ | success = true ✓; data is present ✓ |
 
-### ✅ Verifikasi semua Edge Functions reachable
+### ✅ Verifikasi data di database via service_role key
 
 | Step | Status | Detail |
 |------|--------|--------|
-| check-guest | ✅ | success is present ✓ |
-| check-store-apps | ✅ | success is present ✓ |
-| check-admin-login | ✅ | data.email is present ✓ |
-| check-admin-apps | ✅ | success = true ✓ |
+| verify-stores | ✅ | success = true ✓; data length (7) > 3 ✓ |
+| verify-spareparts | ✅ | success = true ✓; data length (10) > 5 ✓ |
+| verify-users | ✅ | success = true ✓; data length (3) > 1 ✓ |
+
+### ✅ Simulasi lengkap — store admin Budi menerima device, diagnosa, repair, hingga selesai
+
+| Step | Status | Detail |
+|------|--------|--------|
+| login-store-admin | ✅ | data.email is present ✓ |
+| receive-device | ✅ | success = true ✓ |
+| set-diagnosing | ✅ | success = true ✓ |
+| submit-diagnosis | ✅ | success = true ✓ |
+| verify-db-state | ✅ | success = true ✓ |
 
 ---
 ## 📖 Panduan Pengguna
@@ -63,19 +64,9 @@ Duration:  34s
 > Panduan ini dibuat oleh AI Agent setelah testing otomatis.
 > Setiap langkah sudah diverifikasi berhasil.
 
-## ✅ Platform Admin: Kelola Aplikasi
-
-Platform admin login → manage applications via Edge Function
-
-1. Buka halaman Welcome → long-press logo → Login Admin
-2. Login dengan username: **admin**, password: **admin123**
-3. Tab **Applications**: Approve/reject pendaftaran toko
-4. Tab **Stores**: Edit info toko yang sudah aktif
-5. Tab **Customers**: Management data pelanggan
-
 ## ✅ Booking Servis (Tanpa Login)
 
-Guest booking via Edge Function — create order
+Pelanggan (Budi Santoso) booking perbaikan Samsung S24 secara guest
 
 1. Buka aplikasi Service Me
 2. Tap "Ajukan Servis" di halaman utama
@@ -92,15 +83,25 @@ Guest booking via Edge Function — create order
 13. Tap "Ajukan"
 14. ✅ Catat nomor order untuk tracking
 
+## ✅ Platform Admin: Kelola Aplikasi
+
+Admin platform (admin@servisgadget.com) login dan manage aplikasi toko
+
+1. Buka halaman Welcome → long-press logo → Login Admin
+2. Login dengan username: **admin**, password: **admin123**
+3. Tab **Applications**: Approve/reject pendaftaran toko
+4. Tab **Stores**: Edit info toko yang sudah aktif
+5. Tab **Customers**: Management data pelanggan
+
 ## ✅ data-verification
 
-Verifikasi database — stores, spareparts, users via service_role key
+Verifikasi data di database via service_role key
 
 1. Undefined scenario
 
-## ✅ edge-function-checks
+## ✅ complete-workflow
 
-Verifikasi semua Edge Functions reachable
+Simulasi lengkap — store admin Budi menerima device, diagnosa, repair, hingga selesai
 
 1. Undefined scenario
 
