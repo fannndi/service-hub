@@ -9,7 +9,9 @@ class StoreReviewRepository {
     return {'items': items, 'total': (items as List).length};
   }
 
-  Future<void> respondReview(String reviewId, String text) async {
-    await sb.from('reviews').update({'comment': comment + '\n\nRespon toko:\n' + text}).eq('id', reviewId);
+  Future<void> respondReview(String reviewId, String responseText) async {
+    final current = await sb.from('reviews').select('comment').eq('id', reviewId).single();
+    final newComment = (current['comment'] as String? ?? '') + '\n\n— Respon toko:\n' + responseText;
+    await sb.from('reviews').update({'comment': newComment}).eq('id', reviewId);
   }
 }
