@@ -74,7 +74,21 @@ flutter build appbundle --release \
 
 ---
 
-## 5. Play Store Release
+## 5. Apply RPC Fix (SQL Editor)
+
+Karena Management API tidak mendukung SQL query di free tier, jalankan via Supabase Dashboard:
+
+1. Buka https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
+2. Copy paste isi file `supabase/migrations/016_fix_rpc_and_seed.sql`
+3. Run — ini akan fix `reserve_stock`, `consume_stock`, `release_stock`, `swap_sparepart`
+
+## 6. Deploy Guest Function (tanpa JWT)
+
+```bash
+supabase functions deploy guest --no-verify-jwt
+```
+
+## 7. Play Store Release
 
 1. Buka [Google Play Console](https://play.google.com/console)
 2. Upload AAB dari `frontend/build/app/outputs/bundle/release/app-release.aab`

@@ -43,10 +43,18 @@ BEGIN
 END;
 $$;
 
--- Seed test users (via Supabase Auth, executed via dashboard or script)
--- Customer:
---   Email: testcustomer@customer.servisgadget.com
---   Password: test123456
--- Store Admin (for TechFix Center):
---   Email: 6281111111@store.servisgadget.com
---   Password: admin123
+-- ⚠️ HOW TO APPLY:
+-- 1. Open https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
+-- 2. Run the SQL below
+-- =============================================
+
+-- Seed test users
+-- Customer: testcustomer@customer.servisgadget.com / test123456
+-- Store Admin (TechFix): 6281111111@store.servisgadget.com / admin123
+
+-- Create test customer via Supabase Auth (alternative: run from dashboard)
+-- SELECT supabase_admin.create_user(...) -- or create via Auth UI
+
+-- =============================================
+-- QUICK START (copy and paste this entire file to Supabase SQL Editor)
+-- =============================================
