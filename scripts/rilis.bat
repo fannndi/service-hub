@@ -44,8 +44,8 @@ echo [2/3] Membangun v%VERSION%...
 :: Build AAB
 echo [3/3] flutter build appbundle --release ...
 call flutter build appbundle --release ^
-  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co ^
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+  --dart-define=SUPABASE_URL=%SUPABASE_URL% ^
+  --dart-define=SUPABASE_ANON_KEY=%SUPABASE_ANON_KEY%
 
 if errorlevel 1 goto error
 
@@ -64,10 +64,9 @@ echo   4. Isi "What's new" (e.g. "Rilis perdana")
 echo   5. Save ^> Review ^> Start rollout
 echo.
 echo   Keystore: android\release.keystore
-echo   Password: Servic3Me2026
 echo   Alias:    service_me
 echo.
-echo   Simpan data.md untuk referensi keystore!
+echo   Lihat data.md untuk password keystore!
 goto end
 
 :error

@@ -1,7 +1,8 @@
 const https = require('https');
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (!TOKEN) { console.error('ERROR: SUPABASE_ACCESS_TOKEN env var required'); process.exit(1); }
-const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || 'eboplbemgtvmviwhdlfa';
+const PROJECT_REF = process.env.SUPABASE_PROJECT_REF;
+if (!PROJECT_REF) { console.error('ERROR: need SUPABASE_PROJECT_REF env'); process.exit(1); }
 const headers = { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' };
 
 async function sql(q) {

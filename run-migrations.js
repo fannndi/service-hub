@@ -4,9 +4,11 @@ const path = require('path');
 
 const SUPABASE_DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
 if (!SUPABASE_DB_PASSWORD) { console.error('ERROR: need SUPABASE_DB_PASSWORD env'); process.exit(1); }
+const SUPABASE_DB_HOST = process.env.SUPABASE_DB_HOST;
+if (!SUPABASE_DB_HOST) { console.error('ERROR: need SUPABASE_DB_HOST env'); process.exit(1); }
 
 const pool = new Pool({
-  host: 'db.eboplbemgtvmviwhdlfa.supabase.co',
+  host: SUPABASE_DB_HOST,
   port: 5432,
   database: 'postgres',
   user: 'postgres',

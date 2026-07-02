@@ -3,7 +3,11 @@ const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (!TOKEN) { console.error('ERROR: need SUPABASE_ACCESS_TOKEN'); process.exit(1); }
 const SRK = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SRK) { console.error('ERROR: need SUPABASE_SERVICE_ROLE_KEY env'); process.exit(1); }
-const REF = 'eboplbemgtvmviwhdlfa';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+if (!SUPABASE_URL) { console.error('ERROR: need SUPABASE_URL env'); process.exit(1); }
+const REF = process.env.SUPABASE_PROJECT_REF;
+if (!REF) { console.error('ERROR: need SUPABASE_PROJECT_REF env'); process.exit(1); }
+const CUSTOMER_PASSWORD = process.env.CUSTOMER_PASSWORD || 'customer123';
 
 async function sql(q) {
   const b = JSON.stringify({ query: q });
@@ -88,17 +92,17 @@ async function main() {
   // 3. Create customer auth user
   console.log('\nCreating customer...');
   try {
-    await fetch(`https://eboplbemgtvmviwhdlfa.supabase.co/auth/v1/admin/users`, {
+    await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
       method: 'POST',
       headers: { apikey: SRK, Authorization: `Bearer ${SRK}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: '08123456789@customer.servisgadget.com',
-        password: 'customer123',
+        password: CUSTOMER_PASSWORD,
         email_confirm: true,
         user_metadata: { role: 'customer', full_name: 'Budi Santoso' },
       }),
     });
-    console.log('  Customer created: 08123456789 / customer123');
+    console.log(`  Customer created: 08123456789 / ${CUSTOMER_PASSWORD}`);
   } catch(e) { console.log('  Customer:', e.message); }
 
   // 4. Create demo order

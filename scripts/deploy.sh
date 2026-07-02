@@ -20,7 +20,7 @@ echo "============================================"
 echo "  ServisGadget Deploy"
 echo "============================================"
 echo ""
-echo "Project: eboplbemgtvmviwhdlfa"
+echo "Project: ${SUPABASE_PROJECT_REF:-eboplbemgtvmviwhdlfa}"
 echo ""
 
 # ── STEP 1: SQL Migrations ──────────────────────────────────
@@ -30,7 +30,7 @@ echo "Via API:"
 echo "  node scripts/push-sql.js"
 echo ""
 echo "Via SQL Editor (alternatif browser):"
-echo "  https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new"
+echo "  https://supabase.com/dashboard/project/${SUPABASE_PROJECT_REF:-eboplbemgtvmviwhdlfa}/sql/new"
 echo ""
 echo "Copy-paste file ini (urutan):"
 echo "  1. supabase/migrations/001_init.sql"
@@ -51,7 +51,7 @@ fi
 echo ""
 echo "━━━ STEP 2/4: Link Supabase Project ━━━"
 echo ""
-echo "  npx supabase link --project-ref eboplbemgtvmviwhdlfa"
+echo "  npx supabase link --project-ref ${SUPABASE_PROJECT_REF:-eboplbemgtvmviwhdlfa}"
 echo ""
 
 # ── STEP 3: Deploy Edge Functions ───────────────────────────
@@ -70,9 +70,9 @@ echo ""
 echo "━━━ STEP 4/4: Build APK ─━━"
 echo ""
 echo "  cd frontend"
-echo '  flutter build apk --release \'
-echo '    --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \'
-echo '    --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV'
+echo "  flutter build apk --release \\"
+echo "    --dart-define=SUPABASE_URL=\${SUPABASE_URL} \\"
+echo "    --dart-define=SUPABASE_ANON_KEY=\${SUPABASE_ANON_KEY}"
 echo ""
 echo "Output: frontend/build/app/outputs/flutter-apk/app-release.apk"
 echo ""

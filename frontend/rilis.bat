@@ -5,9 +5,9 @@ REM =============================================
 
 setlocal enabledelayedexpansion
 
-REM ---- Supabase Credentials ----
-set SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
-set SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+REM ---- Supabase Credentials (dari env) ----
+if "%SUPABASE_URL%"=="" set SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
+if "%SUPABASE_ANON_KEY%"=="" set SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
 
 REM ---- Build Type (default: apk) ----
 set BUILD_TYPE=%1
