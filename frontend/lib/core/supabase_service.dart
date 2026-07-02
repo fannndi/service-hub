@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:functions_client/functions_client.dart';
 import 'supabase_config.dart';
 
 class SupabaseService {
@@ -46,12 +47,22 @@ class SupabaseService {
   }
 
   Future<dynamic> invoke(String name, {Object? body}) async {
-    final response = await client.functions.invoke(name, body: body);
-    if (response is Map<String, dynamic>) {
-      if (response['success'] == true) return response['data'];
-      final error = response['error'] as Map? ?? {};
-      throw Exception(error['message'] as String? ?? 'Unknown error');
+    try {
+      final response = await client.functions.invoke(name, body: body);
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) return data['data'];
+        final error = data['error'] as Map? ?? {};
+        throw Exception(error['message'] as String? ?? 'Unknown error');
+      }
+      return response.data;
+    } on FunctionException catch (e) {
+      final details = e.details;
+      if (details is Map<String, dynamic>) {
+        final error = details['error'] as Map? ?? {};
+        throw Exception(error['message'] as String? ?? e.reasonPhrase ?? 'Unknown error');
+      }
+      throw Exception(e.reasonPhrase ?? 'Unknown error');
     }
-    return response;
   }
 }
