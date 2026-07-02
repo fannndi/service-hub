@@ -78,6 +78,20 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => launchUrl(Uri.parse('https://wa.me/6285700375224'), mode: LaunchMode.externalApplication),
           ),
         ),
+        const SizedBox(height: 8),
+        ModernCard(
+          child: ListTile(
+            leading: Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(color: scheme.tertiaryContainer, borderRadius: BorderRadius.circular(10)),
+              child: Icon(Icons.privacy_tip_outlined, color: scheme.tertiary),
+            ),
+            title: Text('Kebijakan Privasi'),
+            subtitle: Text('Lihat kebijakan privasi aplikasi'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => launchUrl(Uri.parse('https://github.com/fannndi/service-hub/blob/main/PRIVACY_POLICY.md'), mode: LaunchMode.externalApplication),
+          ),
+        ),
         const SizedBox(height: 24),
         ModernCard(
           padding: EdgeInsets.all(AppSpacing.md),
