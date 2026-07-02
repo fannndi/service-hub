@@ -9,4 +9,6 @@ class DeviceModelGroup {
         brand: json['brand'] as String,
         models: (json['models'] as List).cast<String>(),
       );
+
+  Map<String, dynamic> toJson() => {'brand': brand, 'models': models};
 }
