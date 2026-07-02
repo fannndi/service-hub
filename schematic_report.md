@@ -1,6 +1,6 @@
 # 🤖 AI Agent Test Report
 
-**Generated:** 2026-07-02 21:17:59.828779
+**Generated:** 2026-07-02 22:00:53.324881
 
 ---
 
@@ -12,7 +12,7 @@ Total:     4
 Passed:    4 ✅
 Failed:    0 ❌
 Errored:   0 ⚠️
-Duration:  35s
+Duration:  61s
 
   ✅ platform-admin: 2/2 passed
   ✅ guest-booking: 1/1 passed
