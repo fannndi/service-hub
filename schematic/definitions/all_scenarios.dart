@@ -6,26 +6,25 @@ class AllScenarios {
   static List<Scenario> get list => [
     _platformAdmin,
     _guestBooking,
-    _storeFrontend,
+    _dataVerification,
     _edgeFunctionChecks,
   ];
 
   // ─── SCENARIO 1: Platform Admin ───
-  // Login + list applications + check stores via admin Edge Function
   static final _platformAdmin = Scenario(
     id: 'platform-admin',
-    description: 'Platform admin login → manage applications',
+    description: 'Platform admin login → manage applications via Edge Function',
     steps: [
       ScenarioStep(
         id: 'login-admin',
-        description: 'Login with admin@servisgadget.com',
+        description: 'Login dengan admin@servisgadget.com',
         action: SchematicAction(type: 'auth_login', target: '',
           body: {'email': 'admin@servisgadget.com', 'password': 'admin123'}),
         asserts: [Assertion(type: 'notNull', path: 'data.email')],
       ),
       ScenarioStep(
         id: 'list-applications',
-        description: 'List store applications (Edge Function)',
+        description: 'List store applications via admin edge function',
         action: SchematicAction(type: 'invoke', target: 'admin',
           body: {'action': 'applications'}),
         asserts: [
@@ -37,14 +36,13 @@ class AllScenarios {
   );
 
   // ─── SCENARIO 2: Guest Booking ───
-  // Tests guest Edge Function reachability and response format
   static final _guestBooking = Scenario(
     id: 'guest-booking',
-    description: 'Guest booking via Edge Function',
+    description: 'Guest booking via Edge Function — create order',
     steps: [
       ScenarioStep(
         id: 'create-guest-order',
-        description: 'Create order as guest',
+        description: 'Create sparepart order as guest',
         action: SchematicAction(
           type: 'invoke', target: 'guest',
           body: {
@@ -65,54 +63,80 @@ class AllScenarios {
     ],
   );
 
-  // ─── SCENARIO 3: Store Admin Frontend Flows ───
-  // Tests key frontend data queries
-  static final _storeFrontend = Scenario(
-    id: 'store-frontend',
-    description: 'Store admin + spareparts + orders data verification',
+  // ─── SCENARIO 3: Data Verification via Service Role Key ───
+  static final _dataVerification = Scenario(
+    id: 'data-verification',
+    description: 'Verifikasi database — stores, spareparts, users via service_role key',
     steps: [
       ScenarioStep(
-        id: 'check-spareparts',
-        description: 'Check sparepart data availability',
-        action: SchematicAction(
-          type: 'invoke', target: 'guest',
-          body: {'action': 'track', 'order_number': 'TEST', 'phone_number': '08123456789'}),
-        asserts: [Assertion(type: 'notNull', path: 'success')],
+        id: 'check-stores',
+        description: 'Data toko di database',
+        action: SchematicAction(type: 'admin_table', target: '',
+          body: {'table': 'stores', 'select': 'id,store_name,is_active,rating_avg::int', 'limit': 5}),
+        asserts: [
+          Assertion(type: 'equals', path: 'success', expected: true),
+          Assertion(type: 'length_gt', path: 'data', expected: 0),
+        ],
       ),
       ScenarioStep(
-        id: 'check-store-applications',
-        description: 'Store application endpoint',
-        action: SchematicAction(type: 'invoke', target: 'store-applications',
-          body: {'store_name': 'Test Store', 'applicant_name': 'Test',
-            'phone_number': '08123456789', 'address': 'Jl. Test No. 1'}),
-        asserts: [Assertion(type: 'notNull', path: 'success')],
+        id: 'check-spareparts',
+        description: 'Data sparepart di database',
+        action: SchematicAction(type: 'admin_table', target: '',
+          body: {'table': 'spareparts', 'select': 'id,part_name,price::int,qty', 'limit': 5}),
+        asserts: [
+          Assertion(type: 'equals', path: 'success', expected: true),
+          Assertion(type: 'length_gt', path: 'data', expected: 0),
+        ],
+      ),
+      ScenarioStep(
+        id: 'check-users',
+        description: 'Data users di database',
+        action: SchematicAction(type: 'admin_table', target: '',
+          body: {'table': 'users', 'select': 'id,full_name,phone_number', 'limit': 5}),
+        asserts: [
+          Assertion(type: 'equals', path: 'success', expected: true),
+          Assertion(type: 'length_gt', path: 'data', expected: 0),
+        ],
+      ),
+      ScenarioStep(
+        id: 'check-orders',
+        description: 'Data service orders',
+        action: SchematicAction(type: 'admin_table', target: '',
+          body: {'table': 'service_orders', 'select': 'id,order_number,status', 'limit': 5}),
+        asserts: [Assertion(type: 'equals', path: 'success', expected: true)],
+      ),
+      ScenarioStep(
+        id: 'check-payments',
+        description: 'Data payments',
+        action: SchematicAction(type: 'admin_table', target: '',
+          body: {'table': 'payments', 'select': 'id,amount::int,status', 'limit': 5}),
+        asserts: [Assertion(type: 'equals', path: 'success', expected: true)],
       ),
     ],
   );
 
   // ─── SCENARIO 4: Edge Function Connectivity ───
-  // Verifies all critical edge functions respond
   static final _edgeFunctionChecks = Scenario(
     id: 'edge-function-checks',
-    description: 'Verifikasi semua Edge Functions bisa dijangkau',
+    description: 'Verifikasi semua Edge Functions reachable',
     steps: [
       ScenarioStep(
         id: 'check-guest',
-        description: 'guest function reachable',
+        description: 'guest.track reachable',
         action: SchematicAction(type: 'invoke', target: 'guest',
           body: {'action': 'track', 'order_number': 'TEST', 'phone_number': '08123'}),
         asserts: [Assertion(type: 'notNull', path: 'success')],
       ),
       ScenarioStep(
         id: 'check-store-apps',
-        description: 'store-applications function reachable',
+        description: 'store-applications reachable',
         action: SchematicAction(type: 'invoke', target: 'store-applications',
-          body: {'store_name': 'Test', 'applicant_name': 'T', 'phone_number': '08123'}),
+          body: {'store_name': 'Test Store', 'applicant_name': 'Test', 'phone_number': '08123'}),
         asserts: [Assertion(type: 'notNull', path: 'success')],
       ),
       ScenarioStep(
-        id: 'check-admin',
-        description: 'admin function reachable (login first)',
+        id: 'check-admin-login',
+        description: 'admin login',
         action: SchematicAction(type: 'auth_login', target: '',
           body: {'email': 'admin@servisgadget.com', 'password': 'admin123'}),
         asserts: [Assertion(type: 'notNull', path: 'data.email')],

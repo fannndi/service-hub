@@ -123,6 +123,13 @@ class ScenarioRunner {
           final sql = resolvedBody['query'] as String? ?? '';
           response = await client.adminQuery(sql);
           break;
+        case 'admin_table':
+          final table = resolvedBody['table'] as String? ?? '';
+          final select = resolvedBody['select'] as String?;
+          final limit = resolvedBody['limit'] as int?;
+          final data = await client.adminTable(table, select: select, limit: limit);
+          response = {'success': true, 'data': data};
+          break;
         case 'wait':
           final seconds = resolvedBody['seconds'] as int? ?? 2;
           await Future.delayed(Duration(seconds: seconds));

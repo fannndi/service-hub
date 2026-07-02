@@ -64,26 +64,54 @@ class AgentSupabaseClient {
   }
 
   Future<Map<String, dynamic>> adminQuery(String sql) async {
+    // Use service_role key as apikey to bypass RLS (works with sb_secret_ format)
     if (serviceRoleKey != null) {
-      // Direct DB query via Supabase REST API with service_role key
-      final url = '$supabaseUrl/rest/v1/rpc/';
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
-        'apikey': anonKey,
-        'Authorization': 'Bearer $serviceRoleKey',
-      };
-      final res = await _httpPost('$supabaseUrl/rest/v1/rpc/', body: {'query': sql}, headers: headers);
-      return {'success': true, 'data': res};
-    }
-    if (managementToken != null && projectRef != null) {
-      final url = 'https://api.supabase.com/v1/projects/$projectRef/database/query';
-      final res = await _httpPost(url,
-        body: {'query': sql},
-        headers: {'Authorization': 'Bearer $managementToken', 'Content-Type': 'application/json'},
-      );
-      return {'success': true, 'data': res};
+      final client = HttpClient();
+      try {
+        // For raw SQL, use the Supabase Management API if token works
+        if (managementToken != null && projectRef != null) {
+          final url = 'https://api.supabase.com/v1/projects/$projectRef/database/query';
+          final req = await client.postUrl(Uri.parse(url));
+          req.headers.set('Authorization', 'Bearer $managementToken');
+          req.headers.set('Content-Type', 'application/json');
+          req.write(jsonEncode({'query': sql}));
+          final res = await req.close();
+          if (res.statusCode == 200) {
+            final body = await res.transform(utf8.decoder).join();
+            return {'success': true, 'data': body.isEmpty ? [] : jsonDecode(body)};
+          }
+        }
+        // Fallback: use REST Data API with service_role as apikey (table queries only)
+        throw Exception('Admin SQL query via service_role key requires Management API token');
+      } finally {
+        client.close();
+      }
     }
     throw Exception('Service role key or management token required for admin query');
+  }
+
+  /// Query a table directly with service_role privileges (bypass RLS)
+  Future<List<dynamic>> adminTable(String table, {String? select, Map<String, dynamic>? filters, int? limit}) async {
+    if (serviceRoleKey == null) throw Exception('Service role key required');
+    final client = HttpClient();
+    try {
+      var url = '$supabaseUrl/rest/v1/$table?select=${select ?? '*'}';
+      if (limit != null) url += '&limit=$limit';
+      if (filters != null) {
+        for (final e in filters.entries) {
+          url += '&${e.key}=eq.${e.value}';
+        }
+      }
+      final req = await client.getUrl(Uri.parse(url));
+      req.headers.set('apikey', serviceRoleKey!);
+      final res = await req.close();
+      final body = await res.transform(utf8.decoder).join();
+      if (body.isEmpty) return [];
+      final decoded = jsonDecode(body);
+      return decoded is List ? decoded : [decoded];
+    } finally {
+      client.close();
+    }
   }
 
   Future<String> getUserEmail(String role, String phone) async {

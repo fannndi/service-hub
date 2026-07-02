@@ -1,6 +1,6 @@
 # 🤖 AI Agent Test Report
 
-**Generated:** 2026-07-02 21:14:08.028084
+**Generated:** 2026-07-02 21:17:59.828779
 
 ---
 
@@ -12,44 +12,47 @@ Total:     4
 Passed:    4 ✅
 Failed:    0 ❌
 Errored:   0 ⚠️
-Duration:  30s
+Duration:  35s
 
   ✅ platform-admin: 2/2 passed
   ✅ guest-booking: 1/1 passed
-  ✅ store-frontend: 2/2 passed
+  ✅ data-verification: 5/5 passed
   ✅ edge-function-checks: 4/4 passed
 
 
 ---
 ## 📋 Scenario Details
 
-### ✅ Platform admin login → manage applications
+### ✅ Platform admin login → manage applications via Edge Function
 
 | Step | Status | Detail |
 |------|--------|--------|
 | login-admin | ✅ | data.email is present ✓ |
 | list-applications | ✅ | success = true ✓; data is present ✓ |
 
-### ✅ Guest booking via Edge Function
+### ✅ Guest booking via Edge Function — create order
 
 | Step | Status | Detail |
 |------|--------|--------|
 | create-guest-order | ✅ | success is present ✓; error.code is present ✓ |
 
-### ✅ Store admin + spareparts + orders data verification
+### ✅ Verifikasi database — stores, spareparts, users via service_role key
 
 | Step | Status | Detail |
 |------|--------|--------|
-| check-spareparts | ✅ | success is present ✓ |
-| check-store-applications | ✅ | success is present ✓ |
+| check-stores | ✅ | success = true ✓; data length (5) > 0 ✓ |
+| check-spareparts | ✅ | success = true ✓; data length (5) > 0 ✓ |
+| check-users | ✅ | success = true ✓; data length (2) > 0 ✓ |
+| check-orders | ✅ | success = true ✓ |
+| check-payments | ✅ | success = true ✓ |
 
-### ✅ Verifikasi semua Edge Functions bisa dijangkau
+### ✅ Verifikasi semua Edge Functions reachable
 
 | Step | Status | Detail |
 |------|--------|--------|
 | check-guest | ✅ | success is present ✓ |
 | check-store-apps | ✅ | success is present ✓ |
-| check-admin | ✅ | data.email is present ✓ |
+| check-admin-login | ✅ | data.email is present ✓ |
 | check-admin-apps | ✅ | success = true ✓ |
 
 ---
@@ -62,7 +65,7 @@ Duration:  30s
 
 ## ✅ Platform Admin: Kelola Aplikasi
 
-Platform admin login → manage applications
+Platform admin login → manage applications via Edge Function
 
 1. Buka halaman Welcome → long-press logo → Login Admin
 2. Login dengan username: **admin**, password: **admin123**
@@ -72,7 +75,7 @@ Platform admin login → manage applications
 
 ## ✅ Booking Servis (Tanpa Login)
 
-Guest booking via Edge Function
+Guest booking via Edge Function — create order
 
 1. Buka aplikasi Service Me
 2. Tap "Ajukan Servis" di halaman utama
@@ -89,15 +92,15 @@ Guest booking via Edge Function
 13. Tap "Ajukan"
 14. ✅ Catat nomor order untuk tracking
 
-## ✅ store-frontend
+## ✅ data-verification
 
-Store admin + spareparts + orders data verification
+Verifikasi database — stores, spareparts, users via service_role key
 
 1. Undefined scenario
 
 ## ✅ edge-function-checks
 
-Verifikasi semua Edge Functions bisa dijangkau
+Verifikasi semua Edge Functions reachable
 
 1. Undefined scenario
 
