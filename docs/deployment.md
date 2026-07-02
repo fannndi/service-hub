@@ -1,67 +1,94 @@
-# Deployment Guide
+# Deployment Guide — ServisGadget (Serverless)
 
 ## Prerequisites
 
-- Docker & Docker Compose (local)
-- Render.com account (production)
-- PostgreSQL 16 (Supabase or self-hosted)
-- Redis 7 (Upstash or self-hosted)
+- Supabase CLI (`npm install -g supabase`)
+- Flutter SDK 3.4+
+- Supabase project (free tier)
+- Midtrans account (sandbox for development)
 
-## Local Development
+---
+
+## 1. Initial Setup
 
 ```bash
-# Start all services
-docker compose up -d
+# Login ke Supabase
+supabase login
 
-# Run migrations
-cd backend && npx prisma migrate deploy
+# Link project
+supabase link --project-ref eboplbemgtvmviwhdlfa
 
-# Seed database
-cd backend && npm run prisma:seed
-
-# View logs
-docker compose logs -f backend
+# Push migrations
+supabase db push
 ```
 
-## Production (Render)
+---
 
-Health check endpoint: `GET /v1/health`
-Metrics endpoint: `GET /v1/metrics`
+## 2. Deploy Edge Functions
 
-1. Fork this repo
-2. Create a Render Web Service from the repo root
-3. Set runtime to `Docker`
-4. Set health check path to `/v1/health`
-5. Set required env vars via Render Dashboard:
-   - `DATABASE_URL` — PostgreSQL connection string
-   - `JWT_ACCESS_SECRET` — 64-byte hex random string
-   - `JWT_REFRESH_SECRET` — 64-byte hex random string
-   - `JWT_STORE_ACCESS_SECRET` — 64-byte hex random string (must differ from customer)
-   - `JWT_STORE_REFRESH_SECRET` — 64-byte hex random string
-   - `JWT_PLATFORM_ADMIN_SECRET` — 64-byte hex random string (must differ from both above)
-   - `CREDENTIAL_ENCRYPTION_KEY` — 32-byte hex key (64 hex chars)
-   - `REDIS_HOST` / `REDIS_PORT` — Redis connection (optional, graceful degradation)
-   - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` — Email fallback
-   - `STORE_EMAIL` — Email notif recipient for WA fallback
-   - `WA_GATEWAY_URL` / `WA_GATEWAY_TOKEN` / `WA_SENDER_NUMBER` — WhatsApp
-   - `STORAGE_ENDPOINT` / `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` / `STORAGE_BUCKET` / `STORAGE_PUBLIC_URL` — R2/S3
-   - `APP_URL` — Frontend app URL
-   - `PORT` — `3000`
+```bash
+# Deploy semua fungsi
+supabase functions deploy guest
+supabase functions deploy orders
+supabase functions deploy payments
+supabase functions deploy midtrans
+supabase functions deploy disputes
+supabase functions deploy reviews
+supabase functions deploy notifications
+supabase functions deploy admin
+supabase functions deploy store-applications
+supabase functions deploy cron-sla
+supabase functions deploy seed-admin
+```
+
+---
+
+## 3. Set Environment Secrets
+
+```bash
+# Midtrans
+supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
+
+# WhatsApp Gateway
+supabase secrets set WA_GATEWAY_URL=https://your-wa-gateway.com
+supabase secrets set WA_GATEWAY_TOKEN=your-token
+```
+
+---
+
+## 4. Build & Deploy Flutter App
+
+```bash
+cd frontend
+
+# Build APK release
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+
+# Build AAB untuk Play Store
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+```
+
+---
+
+## 5. Play Store Release
+
+1. Buka [Google Play Console](https://play.google.com/console)
+2. Upload AAB dari `frontend/build/app/outputs/bundle/release/app-release.aab`
+3. Isi "What's new" notes
+4. Submit untuk review
+
+---
 
 ## Rollback
 
-If a deployment fails:
-
 ```bash
-# Revert to previous version
-git revert HEAD
-git push
+# Rollback Edge Function
+supabase functions deploy <function-name> --legacy-bundle
 
-# Render auto-deploys the revert
+# Rollback migration
+supabase db diff --use-migra
 ```
-
-To rollback via Render Dashboard:
-1. Go to Dashboard → servisgadget-api
-2. Click "Manual Deploy" → "Deploy existing commit"
-3. Select the previous working commit
-4. Deploy

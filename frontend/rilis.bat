@@ -5,9 +5,9 @@ REM =============================================
 
 setlocal enabledelayedexpansion
 
-REM ---- Supabase Credentials (dari env) ----
-if "%SUPABASE_URL%"=="" set SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
-if "%SUPABASE_ANON_KEY%"=="" set SUPABASE_ANON_KEY=sb_publishable_sLbPJCOjGT9GRGZBosGlsQ_4cpeOMRV
+REM ---- Supabase Credentials (wajib dari env) ----
+if "%SUPABASE_URL%"=="" echo ERROR: SUPABASE_URL env tidak diset! && exit /b 1
+if "%SUPABASE_ANON_KEY%"=="" echo ERROR: SUPABASE_ANON_KEY env tidak diset! && exit /b 1
 
 REM ---- Build Type (default: apk) ----
 set BUILD_TYPE=%1

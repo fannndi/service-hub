@@ -71,7 +71,7 @@ class _PaymentUploadScreenState extends ConsumerState<PaymentUploadScreen> {
     setState(() => _loading = true);
     try {
       final userId = SupabaseService.instance.user?.id ?? '';
-      final result = await SupabaseService.instance.invoke('midtrans', body: {
+      final result = await SupabaseService.instance.invoke('midtrans/snap-token', body: {
         'orderId': order.id,
         'userId': userId,
       });
