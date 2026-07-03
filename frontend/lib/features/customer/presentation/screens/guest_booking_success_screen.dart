@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../ui/widgets/servis_dialog.dart';
 
 class GuestBookingSuccessScreen extends StatefulWidget {
   const GuestBookingSuccessScreen({
@@ -46,6 +47,32 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
     }
   }
 
+  String get _saveFormat {
+    final order = widget.orderNumber;
+    final phone = widget.phoneNumber ?? '';
+    return '$order | $phone';
+  }
+
+  Future<void> _copyAll() async {
+    await Clipboard.setData(ClipboardData(text: _saveFormat));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: const Text('Nomor pesanan + No. WA tersalin!'),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  Future<bool> _confirmExit() async {
+    final result = await showServisConfirmDialog(context,
+      title: 'Nomor Order Disimpan?',
+      message: 'Apakah nomor order ${widget.orderNumber} sudah kamu catat?\n\n'
+          'Kamu bisa cek status pesanan nanti dari halaman utama.',
+      confirmLabel: 'Ya, sudah disimpan',
+      cancelLabel: 'Belum, salin dulu',
+    );
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -54,17 +81,11 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (_activated) {
-          context.go('/welcome');
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Simpan kredensial dulu sebelum pergi!'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ));
+        if (_activated) { context.go('/welcome'); return; }
+        final ok = await _confirmExit();
+        if (ok && mounted) context.go('/welcome');
       },
       child: Scaffold(
         appBar: AppBar(
@@ -108,6 +129,17 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                       icon: const Icon(Icons.copy, size: 18),
                       label: Text(context.l10n.copy),
                     ),
+                    if (widget.phoneNumber != null) ...[
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: _copyAll,
+                        icon: const Icon(Icons.copy_all, size: 18),
+                        label: const Text('Salin Semua'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                        ),
+                      ),
+                    ],
                   ]),
                 ),
               ),
@@ -171,16 +203,10 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
               _checking
                   ? const Center(child: Padding(padding: EdgeInsets.all(8), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))))
                   : TextButton.icon(
-                      onPressed: () {
-                        if (_activated) {
-                          context.go('/welcome');
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: const Text('Simpan kredensial dulu sebelum pergi!'),
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 3),
-                          ));
-                        }
+                      onPressed: () async {
+                        if (_activated) { context.go('/welcome'); return; }
+                        final ok = await _confirmExit();
+                        if (ok && mounted) context.go('/welcome');
                       },
                       icon: Icon(_activated ? Icons.home : Icons.lock, size: 18),
                       label: Text(_activated ? 'Ke Beranda' : 'Kredensial Belum Tersimpan'),

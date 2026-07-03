@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/domain/order_status.dart';
@@ -65,6 +66,26 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     }
   }
 
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text == null) return;
+    final text = data!.text!.trim();
+    final parts = text.split('|').map((s) => s.trim()).toList();
+    if (parts.length >= 2) {
+      _orderCtl.text = parts[0];
+      _phoneCtl.text = parts[1];
+    } else {
+      _orderCtl.text = text;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Data ditempel dari clipboard'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -99,7 +120,20 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: OutlinedButton.icon(
+                onPressed: _pasteFromClipboard,
+                icon: const Icon(Icons.paste, size: 18),
+                label: Text('Tempel Otomatis', style: TextStyle(fontSize: 13)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.teal,
+                  side: BorderSide(color: Colors.teal.shade200),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               height: 56,
               child: FilledButton.icon(
