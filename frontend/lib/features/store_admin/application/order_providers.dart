@@ -27,7 +27,7 @@ class StoreOrdersController extends AsyncNotifier<PageResult<StoreOrder>> {
     final repo = ref.read(storeOrderRepositoryProvider);
     final query = ref.read(orderQueryProvider);
     final result = await repo.getOrders(status: query.status, q: query.search, page: query.page);
-    return PageResult(items: (result['items'] as List).map((j) => StoreOrder.fromJson(j)).toList(), total: result['total'] as int, page: query.page, limit: 20);
+    return PageResult(items: (result['items'] as List).map((j) => StoreOrder.fromJson(j as Map<String, dynamic>)).toList(), total: result['total'] as int, page: query.page, limit: 20);
   }
 
   Future<void> runAction(String orderId, String action) async {

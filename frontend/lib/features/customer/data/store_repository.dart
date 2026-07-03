@@ -7,13 +7,13 @@ class StoreDiscoveryRepository {
     if (brand != null && brand != 'All') q = q.eq('spareparts.brand', brand);
     if (model != null && model.isNotEmpty) q = q.ilike('spareparts.device_model', '%$model%');
     final data = await q.order('created_at', ascending: false).limit(20) as List;
-    return data.map((json) => ServiceStore.fromJson(json)).toList();
+    return (data as List).map((json) => ServiceStore.fromJson(json as Map<String, dynamic>)).toList();
   }
 
   Future<List<DeviceModelGroup>> getDeviceModels() async {
     final data = await sb.client.rpc('get_device_models');
     final list = data is List ? data : <dynamic>[];
-    return list.map((json) => DeviceModelGroup.fromJson(json)).toList();
+    return list.map((json) => DeviceModelGroup.fromJson(json as Map<String, dynamic>)).toList();
   }
 
   Future<List<StoreMatchResult>> matchStores({required String brand, required String deviceModel, required String partType}) async {
@@ -21,7 +21,7 @@ class StoreDiscoveryRepository {
       id, store_name, address, phone_number, rating_avg, total_completed,
       spareparts!inner(id, brand, device_model, part_type, part_name, price, qty, qty_reserved, status)
     ''').eq('is_active', true).eq('spareparts.brand', brand).eq('spareparts.device_model', deviceModel).eq('spareparts.part_type', partType);
-    final results = data.map((json) => StoreMatchResult.fromJson(json)).toList();
+    final results = (data as List).map((json) => StoreMatchResult.fromJson(json as Map<String, dynamic>)).toList();
     return _dedupeStores(results);
   }
 
@@ -54,6 +54,6 @@ class StoreDiscoveryRepository {
 
   Future<List<SparePart>> getSpareparts(String storeId) async {
     final data = await sb.from('spareparts').select('*').eq('store_id', storeId).eq('status', 'available');
-    return data.map((json) => SparePart.fromJson(json)).toList();
+    return (data as List).map((json) => SparePart.fromJson(json as Map<String, dynamic>)).toList();
   }
 }

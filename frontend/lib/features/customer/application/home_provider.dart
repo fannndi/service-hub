@@ -36,7 +36,7 @@ final homeSummaryProvider = FutureProvider<HomeSummary>((ref) async {
   }
 
   final orders = await sb.from('service_orders').select('id,status').eq('user_id', userId).limit(50);
-  final ordersList = orders as? List ?? [];
+  final ordersList = orders is List ? orders as List : <dynamic>[];
   final activeCount = ordersList.where((o) => !['completed', 'cancelled'].contains(o['status'])).length;
 
   final coupons = await sb.from('coupons').select('id').eq('user_id', userId).eq('is_used', false).limit(1);
@@ -45,8 +45,8 @@ final homeSummaryProvider = FutureProvider<HomeSummary>((ref) async {
 
   final summary = HomeSummary(
     activeOrders: activeCount,
-    activeCoupons: ((coupons as? List) ?? []).length,
-    activeWarranties: ((warrantyOrders as? List) ?? []).length,
+    activeCoupons: (coupons is List ? (coupons as List).length : 0),
+    activeWarranties: (warrantyOrders is List ? (warrantyOrders as List).length : 0),
   );
   await cache.set('home_$userId', {
     'activeOrders': summary.activeOrders,

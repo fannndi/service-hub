@@ -4,7 +4,7 @@ class StoreDisputeRepository {
   String get storeId => sb.storeId ?? '';
 
   Future<Map<String, dynamic>> getDisputes({String? status, int page = 1}) async {
-    final query = sb.from('disputes').select('*, user:users(full_name, phone_number)')
+    var query = sb.from('disputes').select('*, user:users(full_name, phone_number)')
       .eq('store_id', storeId);
     if (status != null) query = query.eq('status', status);
     final items = await query.order('created_at', ascending: false);

@@ -30,7 +30,7 @@ class InventoryController extends AsyncNotifier<PageResult<Sparepart>> {
     final repo = ref.read(storeInventoryRepositoryProvider);
     final query = ref.read(inventoryQueryProvider);
     final result = await repo.getSpareparts(search: query.search, brand: query.brand, deviceModel: query.deviceModel, partType: query.partType, page: query.page);
-    return PageResult(items: (result['items'] as List).map((j) => Sparepart.fromJson(j)).toList(), total: result['total'] as int, page: query.page, limit: 20);
+    return PageResult(items: (result['items'] as List).map((j) => Sparepart.fromJson(j as Map<String, dynamic>)).toList(), total: result['total'] as int, page: query.page, limit: 20);
   }
 
   Future<void> save(Map<String, dynamic> data, {String? id}) async {

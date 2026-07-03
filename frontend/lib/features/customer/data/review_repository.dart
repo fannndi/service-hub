@@ -26,6 +26,6 @@ class ReviewRepository {
     final uid = sb.user?.id;
     if (uid == null) throw Exception('Not authenticated');
     final data = await sb.from('coupons').select('*').eq('user_id', uid).eq('is_used', false);
-    return (data as List).map((json) => CouponReward.fromJson(json)).toList();
+    return (data as List).map((json) => CouponReward.fromJson(json as Map<String, dynamic>)).toList();
   }
 }

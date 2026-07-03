@@ -1,6 +1,6 @@
 # 🤖 AI Agent Test Report
 
-**Generated:** 2026-07-02 22:17:21.069504
+**Generated:** 2026-07-03 13:18:50.594854
 
 ---
 
@@ -12,12 +12,12 @@ Total:     4
 Passed:    4 ✅
 Failed:    0 ❌
 Errored:   0 ⚠️
-Duration:  39s
+Duration:  40s
 
   ✅ guest-booking: 3/3 passed
   ✅ platform-admin: 2/2 passed
   ✅ data-verification: 3/3 passed
-  ✅ complete-workflow: 5/5 passed
+  ✅ complete-workflow: 6/6 passed
 
 
 ---
@@ -42,14 +42,15 @@ Duration:  39s
 
 | Step | Status | Detail |
 |------|--------|--------|
-| verify-stores | ✅ | success = true ✓; data length (7) > 3 ✓ |
+| verify-stores | ✅ | success = true ✓; data length (9) > 3 ✓ |
 | verify-spareparts | ✅ | success = true ✓; data length (10) > 5 ✓ |
 | verify-users | ✅ | success = true ✓; data length (3) > 1 ✓ |
 
-### ✅ Simulasi lengkap — store admin Budi menerima device, diagnosa, repair, hingga selesai
+### ✅ Flow lengkap: guest booking → store admin terima device → diagnosa → selesai
 
 | Step | Status | Detail |
 |------|--------|--------|
+| create-order | ✅ | success = true ✓; data.order_id is present ✓; data.order_number is present ✓ |
 | login-store-admin | ✅ | data.email is present ✓ |
 | receive-device | ✅ | success = true ✓ |
 | set-diagnosing | ✅ | success = true ✓ |
@@ -101,7 +102,7 @@ Verifikasi data di database via service_role key
 
 ## ✅ complete-workflow
 
-Simulasi lengkap — store admin Budi menerima device, diagnosa, repair, hingga selesai
+Flow lengkap: guest booking → store admin terima device → diagnosa → selesai
 
 1. Undefined scenario
 

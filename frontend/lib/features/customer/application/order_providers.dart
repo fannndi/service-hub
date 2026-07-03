@@ -22,6 +22,6 @@ final orderTrackingProvider = StreamProvider.autoDispose.family<List<TrackingEnt
         .select('id,order_id,status,note,created_by_type,created_by_id,created_at')
         .eq('order_id', orderId)
         .order('created_at', ascending: false);
-    return (data as List?)?.map((e) => TrackingEntry.fromJson(e)).toList() ?? [];
+    return ((data as List?) ?? []).map((e) => TrackingEntry.fromJson(e as Map<String, dynamic>)).toList();
   });
 });

@@ -132,7 +132,8 @@ class ScenarioRunner {
           final table = resolvedBody['table'] as String? ?? '';
           final select = resolvedBody['select'] as String?;
           final limit = resolvedBody['limit'] as int?;
-          final data = await client.adminTable(table, select: select, limit: limit);
+          final filters = resolvedBody['filters'] as Map<String, dynamic>?;
+          final data = await client.adminTable(table, select: select, filters: filters, limit: limit);
           response = {'success': true, 'data': data};
           break;
         case 'wait':

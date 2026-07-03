@@ -12,7 +12,7 @@ class DisputesController extends AsyncNotifier<PageResult<DisputeCase>> {
   Future<PageResult<DisputeCase>> build() async {
     final repo = ref.read(storeDisputeRepositoryProvider);
     final result = await repo.getDisputes();
-    return PageResult(items: (result['items'] as List).map((j) => DisputeCase.fromJson(j)).toList(), total: result['total'] as int, page: 1, limit: 20);
+    return PageResult(items: (result['items'] as List).map((j) => DisputeCase.fromJson(j as Map<String, dynamic>)).toList(), total: result['total'] as int, page: 1, limit: 20);
   }
 
   Future<void> resolve(String disputeId, bool accept, String reason) async {
