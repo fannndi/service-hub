@@ -1,12 +1,6 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
-
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function generateCouponCode(): string {
-  let code = 'RWD-';
-  for (let i = 0; i < 8; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  return code;
-}
+import { generateCouponCode } from '../_shared/crypto.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx: any) => {

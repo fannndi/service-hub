@@ -2,6 +2,7 @@ import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendWA } from '../_shared/whatsapp.ts'
+import { generateOrderNumber } from '../_shared/crypto.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -55,7 +56,7 @@ export default {
 
       if (decision === 'store_accepted') {
         const { data: parentOrder } = await admin.from('service_orders').select('*, order_items(*)').eq('id', dispute.order_id).single();
-        const orderNumber = `SG-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-W${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+        const orderNumber = generateOrderNumber() + '-W';
 
         const { data: warrantyOrder } = await admin.from('service_orders').insert({
           user_id: dispute.user_id, store_id: dispute.store_id, order_number: orderNumber,
@@ -70,15 +71,10 @@ export default {
         for (const item of parentOrder.order_items) {
           if (!item.sparepart_id) continue;
 
-          const { data: sparepart } = await admin.from('spareparts').select('qty, qty_reserved').eq('id', item.sparepart_id).single();
-          if (!sparepart) continue;
-
-          if (sparepart.qty - sparepart.qty_reserved <= 0) {
+          const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
+          if (!reserved) {
             throw new Error('STOCK_UNAVAILABLE: Insufficient stock to reserve');
           }
-
-          const newQtyReserved = sparepart.qty_reserved + 1;
-          await admin.from('spareparts').update({ qty_reserved: newQtyReserved, updated_at: now }).eq('id', item.sparepart_id);
 
           await admin.from('order_items').insert({
             order_id: warrantyOrder.id,

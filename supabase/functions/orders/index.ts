@@ -2,22 +2,17 @@ import { withSupabase } from 'npm:@supabase/server'
 import { assertValidTransition, VALID_TRANSITIONS, ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
+import { generateOrderNumber } from '../_shared/crypto.ts'
 
-async function autoActivateGuest(userId: string, admin: any) {
+async function autoActivateGuest(userId: string, admin: any): Promise<void> {
   const { data: user } = await admin.from('users').select('*').eq('id', userId).single();
   if (!user || user.account_status === 'active') return;
   if (!user.phone_number) { console.error('autoActivateGuest: user has no phone_number'); return; }
-  const email = `${user.phone_number}@customer.servisgadget.com`;
-  const { error: authErr } = await admin.auth.admin.createUser({
-    email, password: user.password_hash, email_confirm: true,
-    user_metadata: { role: 'customer', full_name: user.full_name },
-  });
-  if (authErr) { console.error('autoActivateGuest failed:', authErr.message); return; }
   await admin.from('users').update({
-    account_status: 'active', is_first_login: true, is_credential_sent: false, updated_at: new Date().toISOString(),
+    account_status: 'active', is_first_login: true, updated_at: new Date().toISOString(),
   }).eq('id', userId);
   if (isWAConfigured()) {
-    await sendWA(user.phone_number, `Halo ${user.full_name}!\nAkun ServisGadget kamu sudah aktif!\nNomor HP: ${user.phone_number}\nPassword: ${user.password_hash}\nSegera login dan ganti passwordmu.`, admin);
+    await sendWA(user.phone_number, `Halo ${user.full_name}!\nAkun ServisGadget kamu sudah aktif!\nNomor HP: ${user.phone_number}\nSilakan login dengan password yang sudah dikirim sebelumnya.`, admin);
   }
 }
 
@@ -62,10 +57,7 @@ export default {
         }
 
         const totalEstimasi = items.reduce((sum: number, i: any) => sum + (i.item_price || 0), 0);
-        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const rand = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-        const order_number = `SG-${dateStr}-${rand}`;
+        const order_number = generateOrderNumber();
 
         const { data: order, error: orderErr } = await admin.from('service_orders').insert({
           user_id: userClaims.id, store_id, order_number, device_type, brand, device_model,
