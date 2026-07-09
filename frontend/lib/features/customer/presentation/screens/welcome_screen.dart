@@ -14,45 +14,64 @@ class WelcomeScreen extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              scheme.primaryContainer,
+              scheme.surface,
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: AppSpacing.xxl),
-                  GestureDetector(
-                    onLongPress: () => context.push('/admin/login'),
-                    child: Container(
-                      width: 88, height: 88,
-                      decoration: BoxDecoration(
-                        color: scheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                      ),
-                      child: Icon(Icons.handyman_rounded, size: 44, color: scheme.primary),
-                    ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    onPressed: () => context.push('/settings'),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(context.l10n.appName, style: theme.textTheme.headlineMedium),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    context.l10n.tagline,
-                    style: theme.textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: AppSpacing.md),
+                          Container(
+                            width: 96, height: 96,
+                            decoration: BoxDecoration(
+                              color: scheme.primary,
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: scheme.primary.withValues(alpha: 0.3),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Icon(Icons.handyman_rounded, size: 48, color: scheme.onPrimary),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(context.l10n.appName, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w800)),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            context.l10n.tagline,
+                            style: theme.textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.xxl),
                   ModernCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,7 +164,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                       child: Text(
-                        'Daftarkan Toko Baru',
+                        context.l10n.registerStore,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.primary,
                           fontWeight: FontWeight.w600,

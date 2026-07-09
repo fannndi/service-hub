@@ -56,6 +56,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: ModernCard(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
@@ -100,9 +104,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
               ]),
             ),
           ),
-        ),
-      ),
-    );
   }
 
   @override
