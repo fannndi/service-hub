@@ -36,9 +36,9 @@ class SettingsScreen extends ConsumerWidget {
             Text(l.language, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             SegmentedButton<Locale>(
-              segments: const [
-                ButtonSegment(value: Locale('id'), label: Text('Indonesia'), icon: Icon(Icons.language)),
-                ButtonSegment(value: Locale('en'), label: Text('English'), icon: Icon(Icons.language)),
+              segments: [
+                ButtonSegment(value: Locale('id'), label: Text(l.indonesian), icon: Icon(Icons.language)),
+                ButtonSegment(value: Locale('en'), label: Text(l.english), icon: Icon(Icons.language)),
               ],
               selected: {currentLocale},
               onSelectionChanged: (v) => ref.read(localeProvider.notifier).setLocale(v.first),
@@ -53,10 +53,10 @@ class SettingsScreen extends ConsumerWidget {
             Text(l.theme, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             SegmentedButton<ThemeMode>(
-              segments: const [
-                ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.settings_brightness)),
-                ButtonSegment(value: ThemeMode.light, label: Text('Terang'), icon: Icon(Icons.light_mode)),
-                ButtonSegment(value: ThemeMode.dark, label: Text('Gelap'), icon: Icon(Icons.dark_mode)),
+              segments: [
+                ButtonSegment(value: ThemeMode.system, label: Text(l.system), icon: Icon(Icons.settings_brightness)),
+                ButtonSegment(value: ThemeMode.light, label: Text(l.light), icon: Icon(Icons.light_mode)),
+                ButtonSegment(value: ThemeMode.dark, label: Text(l.dark), icon: Icon(Icons.dark_mode)),
               ],
               selected: {currentTheme},
               onSelectionChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v.first),
@@ -86,8 +86,8 @@ class SettingsScreen extends ConsumerWidget {
               decoration: BoxDecoration(color: scheme.tertiaryContainer, borderRadius: BorderRadius.circular(10)),
               child: Icon(Icons.privacy_tip_outlined, color: scheme.tertiary),
             ),
-            title: Text('Kebijakan Privasi'),
-            subtitle: Text('Lihat kebijakan privasi aplikasi'),
+            title: Text(l.privacyPolicy),
+            subtitle: Text(l.viewPrivacyPolicy),
             trailing: const Icon(Icons.open_in_new),
             onTap: () => launchUrl(Uri.parse('https://github.com/fannndi/service-hub/blob/main/PRIVACY_POLICY.md'), mode: LaunchMode.externalApplication),
           ),

@@ -26,10 +26,10 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
         child: SizedBox(
           height: 48,
           child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'active', label: Text('Aktif')),
-              ButtonSegment(value: 'completed', label: Text('Selesai')),
-              ButtonSegment(value: 'cancelled', label: Text('Dibatalkan')),
+            segments: [
+              ButtonSegment(value: 'active', label: Text(context.l10n.active)),
+              ButtonSegment(value: 'completed', label: Text(context.l10n.completed)),
+              ButtonSegment(value: 'cancelled', label: Text(context.l10n.cancelled)),
             ],
             selected: {_group},
             onSelectionChanged: (v) => setState(() => _group = v.first),

@@ -431,6 +431,17 @@ abstract class AppLocalizations {
   String get order;
   String get screen;
   String get status;
+  String get pastedFromClipboard;
+  String get pasteAutomatically;
+  String get orderNumberAndPhoneCopied;
+  String get copyAll;
+  String get activeLabel;
+  String get orderNumberPrefix;
+  String get privacyPolicy;
+  String get viewPrivacyPolicy;
+  String get registerStore;
+  String get registerStoreSubtitle;
+  String get pickSparepart;
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -886,6 +897,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get order => 'Order';
   @override String get screen => 'Layar';
   @override String get status => 'Status';
+  @override String get pastedFromClipboard => 'Data ditempel dari clipboard';
+  @override String get pasteAutomatically => 'Tempel Otomatis';
+  @override String get orderNumberAndPhoneCopied => 'Nomor pesanan + No. WA tersalin!';
+  @override String get copyAll => 'Salin Semua';
+  @override String get activeLabel => 'AKTIF';
+  @override String get orderNumberPrefix => 'Nomor Pesanan ';
+  @override String get privacyPolicy => 'Kebijakan Privasi';
+  @override String get viewPrivacyPolicy => 'Lihat kebijakan privasi aplikasi';
+  @override String get registerStore => 'Daftarkan Toko';
+  @override String get registerStoreSubtitle => 'Isi data toko dan admin. Admin akan mengonfirmasi pendaftaran.';
+  @override String get pickSparepart => 'Pilih Sparepart';
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -1311,10 +1333,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get email => 'Email';
   @override String get home => 'Home';
   @override String get profilePage => 'Profile';
-  @override String get adminHelpSubtitle => '085700375224';
-  @override String get battery => 'Battery';
-  @override String get deviceType => 'Device Type';
-  @override String get order => 'Order';
-  @override String get screen => 'Screen';
-  @override String get status => 'Status';
+  @override String get pastedFromClipboard => 'Pasted from clipboard';
+  @override String get pasteAutomatically => 'Paste Automatically';
+  @override String get orderNumberAndPhoneCopied => 'Order number + WA number copied!';
+  @override String get copyAll => 'Copy All';
+  @override String get activeLabel => 'ACTIVE';
+  @override String get orderNumberPrefix => 'Order Number ';
+  @override String get privacyPolicy => 'Privacy Policy';
+  @override String get viewPrivacyPolicy => 'View app privacy policy';
+  @override String get registerStore => 'Register Store';
+  @override String get registerStoreSubtitle => 'Fill store and admin data. Admin will confirm registration.';
+  @override String get pickSparepart => 'Select Spare Part';
 }

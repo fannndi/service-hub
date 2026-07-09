@@ -1,10 +1,12 @@
 import '../domain/customer_models.dart';
 import '../../../core/supabase_config.dart';
 import 'api_helper.dart';
+import 'phone_utils.dart';
 
 class CustomerAuthRepository {
   Future<CustomerUser> login(String phone, String password) async {
-    final email = SupabaseConfig.buildCustomerEmail(phone);
+    final normalizedPhone = normalizePhone(phone);
+    final email = SupabaseConfig.buildCustomerEmail(normalizedPhone);
     final response = await sb.signIn(email, password);
     final meta = response.user?.userMetadata ?? {};
     final uid = response.user?.id;
@@ -12,7 +14,7 @@ class CustomerAuthRepository {
     return CustomerUser(
       id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
-      phoneNumber: phone,
+      phoneNumber: normalizedPhone,
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
     );
   }
@@ -25,13 +27,19 @@ class CustomerAuthRepository {
     if (!sb.isLoggedIn || sb.role != 'customer') return null;
     final meta = sb.user?.userMetadata ?? {};
     final uid = sb.user?.id;
-    if (uid == null) throw Exception('Not authenticated');
+    if (uid == null) return null;
     return CustomerUser(
       id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
       phoneNumber: meta['phone'] as String? ?? '',
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
+      address: meta['address'] as String?,
     );
+  }
+
+  Future<CustomerUser?> getCurrentUser() async {
+    if (!sb.isLoggedIn) return null;
+    return restoreSession();
   }
 
   Future<void> updateProfile({String? fullName, String? address}) async {

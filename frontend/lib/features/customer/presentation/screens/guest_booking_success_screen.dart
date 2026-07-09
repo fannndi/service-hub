@@ -57,7 +57,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
     await Clipboard.setData(ClipboardData(text: _saveFormat));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text('Nomor pesanan + No. WA tersalin!'),
+      content: const Text(context.l10n.orderNumberAndPhoneCopied),
       behavior: SnackBarBehavior.floating,
     ));
   }
@@ -134,7 +134,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                       FilledButton.icon(
                         onPressed: _copyAll,
                         icon: const Icon(Icons.copy_all, size: 18),
-                        label: const Text('Salin Semua'),
+                        label: const Text(context.l10n.copyAll),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.teal,
                         ),
@@ -163,12 +163,12 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
-                            child: const Text('AKTIF', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                            child: Text(context.l10n.activeLabel, style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                           ),
                       ]),
                       const SizedBox(height: 12),
-                      _row(theme, 'Username', widget.phoneNumber ?? ''),
-                      _row(theme, 'Password', widget.tempPassword ?? ''),
+                      _row(theme, context.l10n.username, widget.phoneNumber ?? ''),
+                      _row(theme, context.l10n.password, widget.tempPassword ?? ''),
                       const SizedBox(height: 8),
                       Text(
                         _activated
@@ -184,7 +184,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                   FilledButton.icon(
                     onPressed: () => context.go('/login'),
                     icon: const Icon(Icons.login),
-                    label: const Text('Login Sekarang'),
+                    label: Text(context.l10n.loginNow),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       backgroundColor: Colors.green,
@@ -209,7 +209,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                         if (ok && mounted) context.go('/welcome');
                       },
                       icon: Icon(_activated ? Icons.home : Icons.lock, size: 18),
-                      label: Text(_activated ? 'Ke Beranda' : 'Kredensial Belum Tersimpan'),
+                      label: Text(_activated ? context.l10n.home : 'Kredensial Belum Tersimpan'),
                       style: TextButton.styleFrom(foregroundColor: _activated ? null : Colors.grey),
                     ),
             ],

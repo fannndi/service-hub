@@ -47,6 +47,27 @@ class CustomerUser {
       );
 }
 
+class GuestUser {
+  const GuestUser({
+    required this.id,
+    required this.phoneNumber,
+    required this.tempPassword,
+    required this.orderNumber,
+  });
+
+  final String id;
+  final String phoneNumber;
+  final String tempPassword;
+  final String orderNumber;
+
+  factory GuestUser.fromJson(Map<String, dynamic> json) => GuestUser(
+        id: readString(json, 'user_id'),
+        phoneNumber: readString(json, 'phone_number'),
+        tempPassword: readString(json, 'temp_password'),
+        orderNumber: readString(json, 'order_number'),
+      );
+}
+
 class LoginResult {
   const LoginResult(
       {required this.accessToken,

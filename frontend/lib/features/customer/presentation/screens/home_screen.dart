@@ -90,7 +90,7 @@ class HomeScreen extends ConsumerWidget {
                           child: FilledButton.icon(
                             onPressed: () => context.push('/stores'),
                             icon: const Icon(Icons.add_task_rounded, size: 18),
-                            label: const Text('Ajukan Servis', style: TextStyle(fontSize: 14)),
+                            label: const Text(context.l10n.submitService, style: TextStyle(fontSize: 14)),
                           ),
                         ),
                       ),
@@ -101,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => context.push('/orders'),
                             icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                            label: const Text('Pesanan Saya', style: TextStyle(fontSize: 14)),
+                            label: const Text(context.l10n.orders, style: TextStyle(fontSize: 14)),
                           ),
                         ),
                       ),

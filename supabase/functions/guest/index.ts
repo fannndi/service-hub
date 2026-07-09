@@ -86,7 +86,7 @@ export default {
         }
 
         const waOk = isWAConfigured();
-        return ok({ order_id: order.id, order_number: orderNumber, phone_number: phone, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? (waOk ? 'Cek WhatsApp' : 'Simpan password') : 'OK' });
+        return ok({ order_id: order.id, order_number: orderNumber, phone_number: phone, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? (waOk ? 'Cek WhatsApp' : 'Simpan password') : 'OK', isGuest: true });
       }
 
       // ─── TRACK ───
@@ -115,7 +115,7 @@ export default {
         const user = order.user;
         const canActivate = ['device_received','diagnosing','waiting_approval','waiting_sparepart','repairing','quality_check','waiting_payment','completed'].includes(order.status);
         const isActivated = user.account_status === 'active';
-        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, phone_number: user.phone_number, has_credential: !isActivated, masked_password: null, full_name: user.full_name });
+        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, phone_number: user.phone_number, has_credential: !isActivated, temp_password: user.password_hash, full_name: user.full_name });
       }
 
       return fail('NOT_FOUND', 'Unknown action', 404);
