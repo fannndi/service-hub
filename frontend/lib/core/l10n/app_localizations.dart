@@ -490,7 +490,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get justNow => 'Baru saja';
   @override String get ago => 'lalu';
   @override String get customerLogin => 'Masuk Pelanggan';
-  @override String get loginSubtitle => 'Gunakan akun yang dikirim admin toko lewat WhatsApp.';
+  @override String get loginSubtitle => 'Gunakan email yang dikirim admin toko.';
   @override String get phoneNumber => 'Nomor HP';
   @override String get phoneNumberRequired => 'Nomor HP wajib diisi.';
   @override String get password => 'Password';
@@ -615,7 +615,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get orderSuccess => 'Order Berhasil';
   @override String get orderCreated => 'Pesanan berhasil dibuat!';
   @override String get adminConfirmMessage => 'Admin toko akan segera mengkonfirmasi perangkatmu.';
-  @override String get whatsappInfoMessage => 'Cek WhatsApp kamu untuk info akun.';
+  @override String get whatsappInfoMessage => 'Cek email kamu untuk info akun.';
   @override String get viewMyOrders => 'Lihat Pesanan Saya';
   @override String get backToHome => 'Kembali ke Beranda';
   @override String get orderTracking => 'Tracking Pesanan';
@@ -932,7 +932,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get justNow => 'Just now';
   @override String get ago => 'ago';
   @override String get customerLogin => 'Customer Login';
-  @override String get loginSubtitle => 'Use the account sent by store admin via WhatsApp.';
+  @override String get loginSubtitle => 'Use your email and password from the booking confirmation email.';
   @override String get phoneNumber => 'Phone Number';
   @override String get phoneNumberRequired => 'Phone number is required.';
   @override String get password => 'Password';
@@ -1057,7 +1057,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get orderSuccess => 'Order Successful';
   @override String get orderCreated => 'Order created successfully!';
   @override String get adminConfirmMessage => 'The store admin will confirm your device shortly.';
-  @override String get whatsappInfoMessage => 'Check WhatsApp for your account info.';
+  @override String get whatsappInfoMessage => 'Check your email for account info.';
   @override String get viewMyOrders => 'View My Orders';
   @override String get backToHome => 'Back to Home';
   @override String get orderTracking => 'Order Tracking';
