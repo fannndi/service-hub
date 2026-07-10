@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:m3_expressive/m3_expressive.dart';
 import '../../application/platform_admin_providers.dart';
+import '../../application/admin_notification_provider.dart';
 import '../../domain/platform_admin_models.dart';
 import '../../../../core/supabase_service.dart';
 import '../../../../core/l10n/app_localizations.dart';
@@ -54,10 +55,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> wit
 
   @override
   Widget build(BuildContext context) {
+    final unread = ref.watch(adminUnreadCountProvider).valueOrNull ?? 0;
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.platformAdmin),
         actions: [
+          Badge(isLabelVisible: unread > 0, label: Text(unread.toString()),
+            child: IconButton(icon: const Icon(Icons.notifications), onPressed: () => context.push('/admin/notifications'))),
           IconButton(icon: const Icon(Icons.campaign_outlined), onPressed: _broadcast),
           IconButton(icon: const Icon(Icons.logout), onPressed: () async {
             await ref.read(adminAuthProvider.notifier).logout();

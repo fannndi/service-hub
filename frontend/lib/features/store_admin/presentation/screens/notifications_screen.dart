@@ -36,31 +36,48 @@ class NotificationsScreen extends ConsumerWidget {
               .map(NotificationItem.fromJson)
               .toList();
           if (items.isEmpty) return Center(child: Text(context.l10n.noNotifications));
-          return ListView(children: [
-            for (final item in items)
-              ListTile(
-                leading: Icon(
-                  item.isRead
-                      ? Icons.mark_email_read_outlined
-                      : Icons.notifications_active_outlined,
-                  color: item.isRead ? Colors.grey : null,
-                ),
-                title: Text(item.title,
-                    style: TextStyle(
-                        fontWeight: item.isRead ? FontWeight.normal : FontWeight.w600)),
-                subtitle: Text('${item.message}\n${dateText(item.createdAt)}',
-                    maxLines: 3, overflow: TextOverflow.ellipsis),
-                onTap: () async {
-                  if (!item.isRead) {
-                    await repo.markAsRead(item.id);
-                    ref.invalidate(notificationsProvider);
-                    ref.invalidate(storeUnreadCountProvider);
-                  }
-                },
-              ),
-          ]);
+          return RefreshIndicator(
+            onRefresh: () async { ref.invalidate(notificationsProvider); },
+            child: ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (_, i) {
+                final item = items[i];
+                return ListTile(
+                  leading: Icon(
+                    item.isRead
+                        ? Icons.mark_email_read_outlined
+                        : Icons.notifications_active_outlined,
+                    color: item.isRead ? Colors.grey : null,
+                  ),
+                  title: Text(item.title,
+                      style: TextStyle(
+                          fontWeight: item.isRead ? FontWeight.normal : FontWeight.w600)),
+                  subtitle: Text('${item.message}\n${_relativeTime(item.createdAt)}',
+                      maxLines: 3, overflow: TextOverflow.ellipsis),
+                  trailing: item.isRead ? null : Container(width: 8, height: 8,
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
+                  onTap: () async {
+                    if (!item.isRead) {
+                      await repo.markAsRead(item.id);
+                      ref.invalidate(notificationsProvider);
+                      ref.invalidate(storeUnreadCountProvider);
+                    }
+                  },
+                );
+              },
+            ),
+          );
         },
       ),
     );
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m lalu';
+    if (diff.inHours < 24) return '${diff.inHours}j lalu';
+    if (diff.inDays < 7) return '${diff.inDays}h lalu';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

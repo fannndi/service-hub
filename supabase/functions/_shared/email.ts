@@ -95,3 +95,13 @@ export async function sendActivationEmail(
   }
   return ok;
 }
+
+export async function sendNotificationEmail(
+  to: string, subject: string, title: string, body: string,
+): Promise<boolean> {
+  const html = baseHtml(`
+    <h2>${title}</h2>
+    <p>${body.replace(/\n/g, '<br>')}</p>
+  `);
+  return sendEmail(to, subject, html);
+}

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:m3_expressive/m3_expressive.dart';
 import '../../application/store_admin_providers.dart';
+import '../../application/notification_provider.dart';
 import '../../domain/store_admin_models.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../ui/theme/app_spacing.dart';
@@ -15,10 +16,14 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final summary = ref.watch(dashboardSummaryProvider);
+    final unread = ref.watch(storeUnreadCountProvider).valueOrNull ?? 0;
     return StoreAdminScaffold(
       title: context.l10n.dashboard,
       selectedIndex: 0,
       actions: [
+        Badge(isLabelVisible: unread > 0, label: Text(unread.toString()),
+          child: IconButton(onPressed: () => context.push('/store/notifications'),
+            icon: const Icon(Icons.notifications_outlined))),
         IconButton(
             onPressed: () =>
                 ref.read(storeAuthControllerProvider.notifier).logout(),

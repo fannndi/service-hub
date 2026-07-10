@@ -35,9 +35,13 @@ class NotificationsScreen extends ConsumerWidget {
                 label: Text(context.l10n.markAllRead),
               ),
             Expanded(
-              child: ListView(
-                children: list
-                    .map((item) => ListTile(
+              child: RefreshIndicator(
+                onRefresh: () async { ref.invalidate(notificationsProvider); },
+                child: ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (_, i) {
+                    final item = list[i];
+                    return ListTile(
                         leading: Icon(item.isRead
                             ? Icons.mark_email_read
                             : Icons.mark_email_unread,
@@ -47,8 +51,10 @@ class NotificationsScreen extends ConsumerWidget {
                                 fontWeight: item.isRead
                                     ? FontWeight.normal
                                     : FontWeight.w600)),
-                        subtitle: Text(item.message,
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                        subtitle: Text('${item.message}\n${_relativeTime(item.createdAt)}',
+                            maxLines: 3, overflow: TextOverflow.ellipsis),
+                        trailing: item.isRead ? null : Container(width: 8, height: 8,
+                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
                         onTap: () async {
                           if (!item.isRead && item.id.isNotEmpty) {
                             await repo.markAsRead(item.id);
@@ -59,13 +65,23 @@ class NotificationsScreen extends ConsumerWidget {
                           if (link != null && link.isNotEmpty && context.mounted) {
                             context.push(link);
                           }
-                        }))
-                    .toList(),
+                        });
+                  },
+                ),
               ),
             ),
           ]);
         },
       ),
     );
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m lalu';
+    if (diff.inHours < 24) return '${diff.inHours}j lalu';
+    if (diff.inDays < 7) return '${diff.inDays}h lalu';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

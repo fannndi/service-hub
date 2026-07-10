@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -68,6 +69,18 @@ export default {
         await admin.from('notifications').insert([{ user_id: order.user_id, store_id: order.store_id, role: 'customer', title: 'Pembayaran Berhasil', message: `Pembayaran untuk pesanan #${order.order_number} telah dikonfirmasi. Garansi berlaku selama ${warrantyDays} hari hingga ${warrantyExpiredAt}.`, type: 'payment', is_read: false, link_to: `/orders/${order_id}` }]);
 
         await admin.from('notifications').insert([{ user_id: null, store_id: order.store_id, role: 'store_admin', title: 'Pembayaran Berhasil', message: `Pembayaran untuk pesanan #${order.order_number} telah dikonfirmasi. Garansi berlaku selama ${warrantyDays} hari.`, type: 'payment', is_read: false, link_to: `/admin/orders/${order_id}` }]);
+
+        // Email fallback for critical notification
+        if (isEmailConfigured()) {
+          const { data: user } = await admin.from('users').select('*').eq('id', order.user_id).single();
+          if (user) {
+            const { data: authUser } = await admin.auth.admin.getUserById(order.user_id).catch(() => ({ data: null }));
+            const userEmail = authUser?.user?.email;
+            if (userEmail) {
+              await sendNotificationEmail(userEmail, 'Pembayaran Berhasil — Service Me', 'Pembayaran Berhasil', `Pembayaran untuk order #${order.order_number} sudah dikonfirmasi. Garansi ${warrantyDays} hari.`);
+            }
+          }
+        }
 
         return ok({ status: 'confirmed', warranty_days: warrantyDays, warranty_expired_at: warrantyExpiredAt });
       }

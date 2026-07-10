@@ -3,6 +3,7 @@ import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendWA } from '../_shared/whatsapp.ts'
 import { generateOrderNumber } from '../_shared/crypto.ts'
+import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -101,6 +102,16 @@ export default {
 
         const { data: store } = await admin.from('stores').select('phone_number').eq('id', dispute.store_id).single();
         await sendWA(store?.phone_number || '', `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda.`, admin);
+
+        // Email fallback for dispute resolution
+        if (isEmailConfigured()) {
+          const { data: authUser } = await admin.auth.admin.getUserById(dispute.user_id).catch(() => ({ data: null }));
+          const userEmail = authUser?.user?.email;
+          if (userEmail) {
+            await sendNotificationEmail(userEmail, 'Klaim Dispute Diterima — Service Me',
+              'Klaim Diterima', `Klaim garansi Anda diterima. Order baru ${orderNumber} telah dibuat untuk memproses perbaikan.`);
+          }
+        }
       } else {
         await admin.from('disputes').update({ status: newStatus, store_response, resolved_at: new Date().toISOString() }).eq('id', dispute_id);
         await admin.from('service_tracking').insert({ order_id: dispute.order_id, status: 'completed', note: `Klaim ditolak: ${store_response || '-'}`, created_by_type: 'store_admin', created_by_id: userClaims.id });

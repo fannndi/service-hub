@@ -7,4 +7,7 @@ final adminRoutes = <RouteBase>[
   GoRoute(
       path: '/admin/dashboard',
       builder: (_, __) => const AdminDashboardScreen()),
+  GoRoute(
+      path: '/admin/notifications',
+      builder: (_, __) => const AdminNotificationsScreen()),
 ];
