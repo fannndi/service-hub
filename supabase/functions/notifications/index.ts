@@ -19,12 +19,24 @@ export default {
         if (role !== 'platform_admin') return fail('FORBIDDEN', 'Forbidden', 403);
         const { target_role, title, message } = body as any;
         if (!target_role || !title || !message) return fail('INVALID_INPUT', 'target_role, title, message required');
-        const { data, error } = await admin.from('notifications').insert({ role: target_role, title, message, type: 'broadcast' }).select('id');
-        if (error) return fail('INSERT_FAILED', error.message);
-        return ok({ message: 'Broadcast sent' });
+
+        // H1: Batch insert per-user so each recipient sees broadcast
+        const table = target_role === 'customer' ? 'users' : 'store_admins';
+        const { data: recipients } = await admin.from(table).select('id');
+        const notifications = (recipients || []).map((r: any) => ({
+          user_id: r.id, role: target_role, title, message, type: 'broadcast',
+        }));
+        if (notifications.length > 0) {
+          const { error } = await admin.from('notifications').insert(notifications);
+          if (error) return fail('INSERT_FAILED', error.message);
+        }
+        return ok({ message: `Broadcast sent to ${notifications.length} ${target_role}(s)` });
       }
 
       if (action === 'send') {
+        // H2: Only platform_admin can send arbitrary emails
+        const senderRole = userClaims.userMetadata?.role as string;
+        if (senderRole !== 'platform_admin') return fail('FORBIDDEN', 'Forbidden', 403);
         const { email, message } = body as any;
         if (!email || !message) return fail('INVALID_INPUT', 'email and message required');
         if (!isEmailConfigured()) return fail('EMAIL_NOT_CONFIGURED', 'Email service not configured');

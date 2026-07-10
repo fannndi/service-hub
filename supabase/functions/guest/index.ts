@@ -4,16 +4,21 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { sendOrderConfirmation } from '../_shared/email.ts'
 import { generatePassword, generateOrderNumber } from '../_shared/crypto.ts'
 
+const VALID_ACTIONS = ['create-order', 'track', 'credentials'];
+
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     let isNew = false;
     let userId = '';
     let tempPassword = '';
+    const reservedSparepartIds: string[] = [];
     try {
       const body = await req.json();
       const action = body.action as string;
       const { supabaseAdmin: admin } = ctx;
+
+      if (!VALID_ACTIONS.includes(action)) return fail('NOT_FOUND', 'Unknown action', 404);
 
       // ─── CREATE ORDER ───
       if (action === 'create-order') {
@@ -24,10 +29,11 @@ export default {
         const customerEmail = (email as string).trim().toLowerCase();
         tempPassword = generatePassword();
         const now = new Date().toISOString();
-        const { data: existingFromAuth } = await admin.auth.admin.listUsers();
-        const existingAuth = existingFromAuth?.users?.find((u: { email?: string }) => u.email === customerEmail);
-        if (existingAuth) {
-          userId = existingAuth.id;
+
+        // C3: Use getUserByEmail instead of listUsers + find (paginated)
+        const { data: existingUser } = await admin.auth.admin.getUserByEmail(customerEmail).catch(() => ({ data: null }));
+        if (existingUser?.user) {
+          userId = existingUser.user.id;
           await admin.from('users').update({
             account_status: 'suspended', updated_at: now,
           }).eq('id', userId);
@@ -55,10 +61,12 @@ export default {
         const { data: store } = await admin.from('stores').select('id, phone_number').eq('id', store_id).eq('is_active', true).single();
         if (!store) return fail('STORE_NOT_ACTIVE', 'Store not active');
 
+        // C7: Track reserved sparepart IDs for rollback
         for (const item of items as any[]) {
           if (item.sparepart_id) {
             const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
             if (!reserved) return fail('STOCK_UNAVAILABLE', 'Stock unavailable');
+            reservedSparepartIds.push(item.sparepart_id);
           }
         }
 
@@ -71,9 +79,8 @@ export default {
           total_estimasi: totalEstimasi, sla_deadline: new Date(Date.now() + 86400000).toISOString(), updated_at: now,
         }).select().single();
         if (orderErr) {
-          if (isNew) {
-            await admin.auth.admin.deleteUser(userId);
-          }
+          if (isNew) await admin.auth.admin.deleteUser(userId);
+          for (const spId of reservedSparepartIds) await admin.rpc('release_stock', { p_sparepart_id: spId });
           return fail('CREATE_FAILED', orderErr.message);
         }
 
@@ -85,8 +92,7 @@ export default {
           await sendOrderConfirmation(customerEmail, tempPassword, orderNumber, customer_name as string, admin);
         }
 
-        const emailOk = Deno.env.get('RESEND_API_KEY') ? true : false;
-        return ok({ order_id: order.id, order_number: orderNumber, email: customerEmail, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? (emailOk ? 'Cek Email' : 'Simpan password') : 'OK', isGuest: true });
+        return ok({ order_id: order.id, order_number: orderNumber, email: customerEmail, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? 'Cek email untuk kredensial login' : 'OK', isGuest: true });
       }
 
       // ─── TRACK ───
@@ -94,8 +100,9 @@ export default {
         const { order_number, email: trackEmail } = body as Record<string, unknown>;
         if (!order_number || !trackEmail) return fail('INVALID_INPUT', 'order_number and email required');
         const queryEmail = (trackEmail as string).trim().toLowerCase();
-        const { data: order } = await admin.from('service_orders').select('*, user:users(id), tracking:service_tracking(*), store:stores(store_name)').eq('order_number', order_number).single();
-        if (!order || order.user.id !== queryEmail && order.user.email !== queryEmail) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
+        // C2: Select email from users table, compare correctly
+        const { data: order } = await admin.from('service_orders').select('*, user:users(id, email), tracking:service_tracking(*), store:stores(store_name)').eq('order_number', order_number).single();
+        if (!order || order.user.email !== queryEmail) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
         return ok({
           order_number: order.order_number, status: order.status, store_name: order.store.store_name,
           device_type: order.device_type, brand: order.brand, device_model: order.device_model,
@@ -110,17 +117,23 @@ export default {
         if (!order_id || !credEmail) return fail('INVALID_INPUT', 'order_id and email required');
         const queryEmail = (credEmail as string).trim().toLowerCase();
         let { data: order } = await admin.from('service_orders').select('*, user:users(*)').eq('id', order_id).maybeSingle();
-        if (!order) order = (await admin.from('service_orders').select('*, user:users(*)').eq('order_number', order_id).single()).data;
+        if (!order) order = (await admin.from('service_orders').select('*, user:users(*)').eq('order_number', order_id).maybeSingle()).data;
         if (!order || order.user.email !== queryEmail) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
         const user = order.user;
         const canActivate = ['device_received','diagnosing','waiting_approval','waiting_sparepart','repairing','quality_check','waiting_payment','completed'].includes(order.status);
         const isActivated = user.account_status === 'active';
-        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, email: user.email, has_credential: !isActivated, temp_password: user.password_hash, full_name: user.full_name });
+        // C4: Don't expose password_hash - return null instead
+        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, email: user.email, has_credential: !isActivated, temp_password: null, full_name: user.full_name });
       }
 
       return fail('NOT_FOUND', 'Unknown action', 404);
     } catch (err) {
       console.error('Guest EF error:', err);
+      // C7: Release any reserved stock on unexpected error
+      for (const spId of reservedSparepartIds) {
+        const { supabaseAdmin: admin } = ctx;
+        await admin.rpc('release_stock', { p_sparepart_id: spId }).catch(() => {});
+      }
       if (isNew && userId) {
         const { supabaseAdmin: admin } = ctx;
         await admin.auth.admin.deleteUser(userId).catch(() => {});

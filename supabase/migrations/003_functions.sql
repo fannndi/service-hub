@@ -209,6 +209,7 @@ AS $$
 DECLARE
   v_count INT := 0;
   v_order RECORD;
+  v_item RECORD;
 BEGIN
   -- Mark SLA warnings for newly breached orders
   FOR v_order IN
@@ -232,7 +233,7 @@ BEGIN
 
   -- Auto-cancel orders breached >24h
   FOR v_order IN
-    SELECT so.id, so.store_id, oi.id AS item_id, oi.sparepart_id
+    SELECT DISTINCT ON (so.id) so.id, so.store_id
     FROM public.service_orders so
     LEFT JOIN public.order_items oi ON oi.order_id = so.id
     WHERE so.sla_deadline < now() - interval '24 hours'
@@ -240,10 +241,12 @@ BEGIN
       AND so.status NOT IN ('completed', 'cancelled')
     LIMIT 50
   LOOP
-    -- Release stock
-    IF v_order.sparepart_id IS NOT NULL THEN
-      PERFORM release_stock(v_order.sparepart_id);
-    END IF;
+    -- Release stock for all items in this order
+    FOR v_item IN
+      SELECT sparepart_id FROM public.order_items WHERE order_id = v_order.id AND sparepart_id IS NOT NULL
+    LOOP
+      PERFORM release_stock(v_item.sparepart_id);
+    END LOOP;
 
     UPDATE public.service_orders
     SET status = 'cancelled',

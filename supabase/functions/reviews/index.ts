@@ -1,9 +1,11 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 import { generateCouponCode } from '../_shared/crypto.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx: any) => {
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
     if (!ctx?.userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
     const admin = ctx.supabaseAdmin;

@@ -40,8 +40,10 @@ export default {
         const { data: adminRow } = await admin.from('store_admins').select('store_id').eq('id', userClaims.id).single();
         if (!adminRow) return fail('FORBIDDEN', 'Unauthorized', 403);
 
-        const { data: payment } = await admin.from('payments').select('id, order_id').eq('id', payment_id).eq('order_id', order_id).single();
+        const { data: payment } = await admin.from('payments').select('id, order_id, status').eq('id', payment_id).eq('order_id', order_id).single();
         if (!payment) return fail('NOT_FOUND', 'Pembayaran tidak ditemukan', 404);
+        // H4: Prevent double confirmation
+        if (payment.status !== 'pending') return fail('ALREADY_CONFIRMED', 'Pembayaran sudah dikonfirmasi');
 
         const { data: order } = await admin.from('service_orders').select('id, status, user_id, store_id, order_number').eq('id', order_id).eq('store_id', adminRow.store_id).single();
         if (!order) return fail('NOT_FOUND', 'Pesanan tidak ditemukan', 404);
@@ -52,7 +54,11 @@ export default {
         const { count: confirmedPayments } = await admin.from('payments').select('*', { count: 'exact', head: true }).eq('order_id', order_id).eq('status', 'confirmed');
 
         await admin.from('service_orders').update({ payment_status: confirmedPayments === totalPayments ? 'paid' : 'partially_paid', updated_at: now }).eq('id', order_id);
-        await admin.from('service_tracking').insert({ order_id, status: order.status, note: note || 'Pembayaran dikonfirmasi', created_by_type: 'store_admin', created_by_id: userClaims.id });
+        // H5: Set order to completed after payment confirmation
+        await admin.from('service_orders').update({
+          status: 'completed', payment_status: 'paid', completed_at: new Date().toISOString(), updated_at: now,
+        }).eq('id', order_id);
+        await admin.from('service_tracking').insert({ order_id, status: 'completed', note: 'Pembayaran dikonfirmasi, order selesai', created_by_type: 'store_admin', created_by_id: userClaims.id });
 
         const { data: store } = await admin.from('stores').select('config').eq('id', adminRow.store_id).single();
         const warrantyDays = store?.config?.warranty_days || 30;

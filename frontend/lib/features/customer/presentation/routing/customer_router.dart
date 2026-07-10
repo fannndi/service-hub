@@ -116,7 +116,7 @@ final customerRoutes = <RouteBase>[
       }),
   GoRoute(path: '/coupons', builder: (_, __) => const CouponsScreen()),
   GoRoute(path: '/security', builder: (_, __) => const SecurityScreen()),
-  GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationsScreen()),
+  GoRoute(path: '/notification-preferences', builder: (_, __) => const SettingsScreen()),
 ];
 
 class _NotificationDetail extends StatelessWidget {

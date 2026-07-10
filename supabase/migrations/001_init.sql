@@ -40,20 +40,6 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ─── STORE ADMINS ───
-CREATE TABLE store_admins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  store_id UUID NOT NULL REFERENCES stores(id),
-  full_name VARCHAR(150) NOT NULL,
-  phone_number VARCHAR(20) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  is_first_login BOOLEAN NOT NULL DEFAULT false,
-  last_login_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(store_id, phone_number)
-);
-
 -- ─── STORES ───
 CREATE TABLE stores (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -69,6 +55,20 @@ CREATE TABLE stores (
   verified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ─── STORE ADMINS ───
+CREATE TABLE store_admins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id UUID NOT NULL REFERENCES stores(id),
+  full_name VARCHAR(150) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  is_first_login BOOLEAN NOT NULL DEFAULT false,
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(store_id, phone_number)
 );
 
 -- ─── STORE APPLICATIONS ───

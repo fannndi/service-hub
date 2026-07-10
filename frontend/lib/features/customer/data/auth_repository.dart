@@ -8,10 +8,19 @@ class CustomerAuthRepository {
     final meta = response.user?.userMetadata ?? {};
     final uid = response.user?.id;
     if (uid == null) throw Exception('Not authenticated');
+
+    // H9: Check account_status after login
+    final userData = await sb.from('users').select('account_status, phone_number').eq('id', uid).maybeSingle();
+    if (userData?['account_status'] == 'suspended') {
+      await sb.signOut();
+      throw Exception('Akun Anda sedang tidak aktif. Silakan hubungi toko.');
+    }
+
     return CustomerUser(
       id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
-      phoneNumber: email,
+      // H8: Use phone from DB, fallback to metadata, never email
+      phoneNumber: userData?['phone_number'] as String? ?? meta['phone'] as String? ?? email,
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
     );
   }
@@ -25,10 +34,18 @@ class CustomerAuthRepository {
     final meta = sb.user?.userMetadata ?? {};
     final uid = sb.user?.id;
     if (uid == null) return null;
+
+    // H9: Also check account_status on session restore
+    final userData = await sb.from('users').select('account_status, phone_number').eq('id', uid).maybeSingle();
+    if (userData?['account_status'] == 'suspended') {
+      await sb.signOut();
+      return null;
+    }
+
     return CustomerUser(
       id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
-      phoneNumber: meta['phone'] as String? ?? '',
+      phoneNumber: userData?['phone_number'] as String? ?? meta['phone'] as String? ?? '',
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
       address: meta['address'] as String?,
     );
