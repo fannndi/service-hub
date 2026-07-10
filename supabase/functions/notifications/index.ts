@@ -1,7 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
+import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -25,10 +25,10 @@ export default {
       }
 
       if (action === 'send') {
-        const { phone, message } = body as any;
-        if (!phone || !message) return fail('INVALID_INPUT', 'phone and message required');
-        if (!isWAConfigured()) return fail('WA_NOT_CONFIGURED', 'WhatsApp gateway not configured');
-        const sent = await sendWA(phone, message, admin);
+        const { email, message } = body as any;
+        if (!email || !message) return fail('INVALID_INPUT', 'email and message required');
+        if (!isEmailConfigured()) return fail('EMAIL_NOT_CONFIGURED', 'Email service not configured');
+        const sent = await sendNotificationEmail(email, 'Notifikasi — Service Me', 'Notifikasi', message);
         return sent ? ok({ message: 'Sent' }) : fail('SEND_FAILED', 'Failed to send notification');
       }
 

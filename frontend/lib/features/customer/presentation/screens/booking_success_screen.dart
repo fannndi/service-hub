@@ -33,7 +33,7 @@ class BookingSuccessScreen extends StatelessWidget {
                 padding: EdgeInsets.only(top: AppSpacing.md),
                 child: ModernCard(
                     padding: EdgeInsets.all(AppSpacing.md),
-                    child: Text(context.l10n.whatsappInfoMessage))),
+                    child: Text(context.l10n.emailInfoMessage))),
           const SizedBox(height: 24),
           FilledButton(
               onPressed: () => context.go('/orders'),

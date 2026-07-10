@@ -6,7 +6,6 @@ import '../../../../ui/theme/app_spacing.dart';
 
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
-import '../../data/phone_utils.dart';
 import '../../domain/customer_models.dart';
 import '../../../../core/supabase_service.dart';
 import 'service_flow_steps.dart';
@@ -103,7 +102,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
           CreateOrderRequest(
             storeId: _state.selectedStoreId!,
             fullName: _state.name.text.trim(),
-            phoneNumber: phone,
+            phoneNumber: _state.email.text.trim(),
             deviceType: _state.deviceType,
             brand: _state.selectedBrand!,
             deviceModel: _state.selectedModel!,

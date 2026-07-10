@@ -1,7 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendWA } from '../_shared/whatsapp.ts'
+import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -62,7 +62,11 @@ export default {
 
         await admin.from('store_applications').update({ status: 'approved', reviewed_by: userClaims.id, reviewed_at: new Date().toISOString() }).eq('id', application_id);
 
-        await sendWA(adminPhone, `Halo ${app.applicant_name}!\nPendaftaran toko ${app.store_name} disetujui!\nLogin: ${adminPhone}\nPassword: ${password}\nSegera ganti password setelah login.`);
+        if (isEmailConfigured()) {
+          await sendNotificationEmail(email, 'Pendaftaran Toko Disetujui — Service Me',
+            'Selamat! Toko Anda Disetujui',
+            `Halo ${app.applicant_name}!\nPendaftaran toko ${app.store_name} telah disetujui!\n\nLogin: ${email}\nPassword: ${password}\n\nSegera ganti password setelah login.`);
+        }
 
         return ok({ store_id: store.id, admin_id: authUser.user.id });
       }

@@ -1,9 +1,8 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendWA } from '../_shared/whatsapp.ts'
-import { generateOrderNumber } from '../_shared/crypto.ts'
 import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
+import { generateOrderNumber } from '../_shared/crypto.ts'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
@@ -70,7 +69,6 @@ export default {
         await admin.from('service_tracking').insert({ order_id: dispute.order_id, status: 'disputed', note: `Klaim diterima. Order garansi: ${orderNumber}`, created_by_type: 'store_admin', created_by_id: userClaims.id });
 
         for (const item of parentOrder.order_items) {
-          if (!item.sparepart_id) continue;
 
           const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
           if (!reserved) {
@@ -100,10 +98,7 @@ export default {
           link_to: `/orders/${warrantyOrder.id}`,
         });
 
-        const { data: store } = await admin.from('stores').select('phone_number').eq('id', dispute.store_id).single();
-        await sendWA(store?.phone_number || '', `Klaim garansi berhasil diterima! Order baru ${orderNumber} telah dibuat untuk memproses perbaikan perangkat Anda.`, admin);
-
-        // Email fallback for dispute resolution
+        // Email notification for dispute resolution
         if (isEmailConfigured()) {
           const { data: authUser } = await admin.auth.admin.getUserById(dispute.user_id).catch(() => ({ data: null }));
           const userEmail = authUser?.user?.email;

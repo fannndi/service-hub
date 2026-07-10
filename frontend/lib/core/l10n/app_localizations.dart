@@ -92,13 +92,13 @@ abstract class AppLocalizations {
   String get dropOffToStore;
   String get courierPickup;
   String get fullName;
-  String get whatsappNumber;
+  String get emailLabel;
   String get pickupAddress;
   String get bookingConfirmation;
   String get sparepart;
   String get complaint;
   String get name;
-  String get whatsapp;
+  String get emailContact;
   String get address;
   String get delivery;
   String get costEstimate;
@@ -149,7 +149,7 @@ abstract class AppLocalizations {
   String get orderSuccess;
   String get orderCreated;
   String get adminConfirmMessage;
-  String get whatsappInfoMessage;
+  String get emailInfoMessage;
   String get viewMyOrders;
   String get backToHome;
   String get orderTracking;
@@ -615,7 +615,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get orderSuccess => 'Order Berhasil';
   @override String get orderCreated => 'Pesanan berhasil dibuat!';
   @override String get adminConfirmMessage => 'Admin toko akan segera mengkonfirmasi perangkatmu.';
-  @override String get whatsappInfoMessage => 'Cek email kamu untuk info akun.';
+  @override String get emailInfoMessage => 'Cek email kamu untuk info akun.';
   @override String get viewMyOrders => 'Lihat Pesanan Saya';
   @override String get backToHome => 'Kembali ke Beranda';
   @override String get orderTracking => 'Tracking Pesanan';
@@ -1057,7 +1057,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get orderSuccess => 'Order Successful';
   @override String get orderCreated => 'Order created successfully!';
   @override String get adminConfirmMessage => 'The store admin will confirm your device shortly.';
-  @override String get whatsappInfoMessage => 'Check your email for account info.';
+  @override String get emailInfoMessage => 'Check your email for account info.';
   @override String get viewMyOrders => 'View My Orders';
   @override String get backToHome => 'Back to Home';
   @override String get orderTracking => 'Order Tracking';
