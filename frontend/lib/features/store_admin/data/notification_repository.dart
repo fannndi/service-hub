@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_helper.dart';
 
 class StoreNotificationRepository {
@@ -8,7 +9,7 @@ class StoreNotificationRepository {
       final data = await sb.from('notifications').select('*').eq('store_id', storeId).order('created_at', ascending: false).limit(50);
       return data;
     } catch (_) {
-    // TODO: log error
+      debugPrint('Store notifications load error: $_');
       return [];
     }
   }
@@ -18,7 +19,7 @@ class StoreNotificationRepository {
       final data = await sb.from('notifications').select('id').eq('store_id', storeId).eq('is_read', false);
       return (data as List).length;
     } catch (_) {
-    // TODO: log error
+      debugPrint('Store unread count error: $_');
       return 0;
     }
   }

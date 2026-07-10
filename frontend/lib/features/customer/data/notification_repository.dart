@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'api_helper.dart';
 
 class NotificationRepository {
@@ -22,7 +23,7 @@ class NotificationRepository {
         .eq('is_read', false);
       return (data as List).length;
     } catch (_) {
-    // TODO: log error
+      debugPrint('Unread count error: $_');
       return 0;
     }
   }

@@ -6,6 +6,13 @@ import { generatePassword, generateOrderNumber } from '../_shared/crypto.ts'
 
 const VALID_ACTIONS = ['create-order', 'track', 'credentials'];
 
+interface OrderItem {
+  sparepart_id?: string;
+  service_type?: string;
+  complaint?: string;
+  item_price?: number;
+}
+
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
@@ -62,7 +69,7 @@ export default {
         if (!store) return fail('STORE_NOT_ACTIVE', 'Store not active');
 
         // C7: Track reserved sparepart IDs for rollback
-        for (const item of items as any[]) {
+        for (const item of items as OrderItem[]) {
           if (item.sparepart_id) {
             const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
             if (!reserved) return fail('STOCK_UNAVAILABLE', 'Stock unavailable');
@@ -71,7 +78,7 @@ export default {
         }
 
         const orderNumber = generateOrderNumber();
-        const totalEstimasi = (items as any[]).reduce((s: number, i: any) => s + (i.item_price || 0), 0);
+        const totalEstimasi = (items as OrderItem[]).reduce((s: number, i: OrderItem) => s + (i.item_price || 0), 0);
 
         const { data: order, error: orderErr } = await admin.from('service_orders').insert({
           user_id: userId, store_id, order_number: orderNumber, device_type, brand, device_model,
@@ -84,7 +91,7 @@ export default {
           return fail('CREATE_FAILED', orderErr.message);
         }
 
-        await admin.from('order_items').insert((items as any[]).map((i: any) => ({ order_id: order.id, sparepart_id: i.sparepart_id || null, service_type: i.service_type, complaint: i.complaint, item_price: i.item_price || 0 })));
+        await admin.from('order_items').insert((items as OrderItem[]).map((i: OrderItem) => ({ order_id: order.id, sparepart_id: i.sparepart_id || null, service_type: i.service_type, complaint: i.complaint, item_price: i.item_price || 0 })));
         await admin.from('service_tracking').insert({ order_id: order.id, status: 'waiting_device', note: 'Order dibuat', created_by_type: 'customer', created_by_id: userId });
         await admin.from('notifications').insert({ store_id, role: 'store_admin', type: 'new_order', title: 'Pesanan Baru', message: `#${orderNumber} — ${brand} ${device_model}`, link_to: `/store/orders/${order.id}` });
 

@@ -24,7 +24,7 @@ class UploadRepository {
     final name = file is File ? p.basename(file.path) : 'upload_${DateTime.now().millisecondsSinceEpoch}';
     final path = _buildPath(uid, name, folder);
     onProgress?.call(0);
-    await sb.client.storage.from('uploads').upload(path, File(file.path as String));
+    await sb.client.storage.from('uploads').upload(path, File(file.path ?? ''));
     onProgress?.call(1);
     return sb.client.storage.from('uploads').getPublicUrl(path);
   }

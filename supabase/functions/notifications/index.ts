@@ -3,6 +3,17 @@ import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
+interface BroadcastBody {
+  target_role: string;
+  title: string;
+  message: string;
+}
+
+interface SendBody {
+  email: string;
+  message: string;
+}
+
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
@@ -17,7 +28,7 @@ export default {
       if (action === 'broadcast') {
         const role = userClaims.userMetadata?.role as string;
         if (role !== 'platform_admin') return fail('FORBIDDEN', 'Forbidden', 403);
-        const { target_role, title, message } = body as any;
+        const { target_role, title, message } = body as BroadcastBody;
         if (!target_role || !title || !message) return fail('INVALID_INPUT', 'target_role, title, message required');
 
         // H1: Batch insert per-user so each recipient sees broadcast
@@ -37,7 +48,7 @@ export default {
         // H2: Only platform_admin can send arbitrary emails
         const senderRole = userClaims.userMetadata?.role as string;
         if (senderRole !== 'platform_admin') return fail('FORBIDDEN', 'Forbidden', 403);
-        const { email, message } = body as any;
+        const { email, message } = body as SendBody;
         if (!email || !message) return fail('INVALID_INPUT', 'email and message required');
         if (!isEmailConfigured()) return fail('EMAIL_NOT_CONFIGURED', 'Email service not configured');
         const sent = await sendNotificationEmail(email, 'Notifikasi — Service Me', 'Notifikasi', message);
