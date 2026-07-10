@@ -6,23 +6,23 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ─── ENUMS ───
-CREATE TYPE account_status AS ENUM ('active', 'suspended', 'deleted');
-CREATE TYPE device_type AS ENUM ('android', 'ios');
-CREATE TYPE delivery_method AS ENUM ('walk_in', 'courier_pickup');
-CREATE TYPE order_status AS ENUM ('waiting_device', 'device_received', 'diagnosing', 'waiting_approval', 'waiting_sparepart', 'repairing', 'quality_check', 'waiting_payment', 'completed', 'cancelled', 'disputed');
-CREATE TYPE payment_status AS ENUM ('unpaid', 'partially_paid', 'paid', 'refunded');
-CREATE TYPE payment_method AS ENUM ('transfer_bank', 'qris', 'cash', 'ewallet');
-CREATE TYPE payment_type AS ENUM ('deposit', 'final_payment', 'refund');
-CREATE TYPE payment_record_status AS ENUM ('pending', 'confirmed', 'failed', 'refunded');
-CREATE TYPE sparepart_status AS ENUM ('available', 'preorder', 'discontinued');
-CREATE TYPE order_item_status AS ENUM ('pending', 'confirmed', 'replaced', 'cancelled');
-CREATE TYPE dispute_type AS ENUM ('warranty_claim', 'service_quality', 'wrong_diagnosis', 'other');
-CREATE TYPE dispute_status AS ENUM ('open', 'store_accepted', 'store_rejected', 'escalated', 'resolved', 'closed');
-CREATE TYPE created_by_type AS ENUM ('customer', 'store_admin', 'system');
-CREATE TYPE application_status AS ENUM ('pending', 'approved', 'rejected');
+DO $$ BEGIN CREATE TYPE account_status AS ENUM ('active', 'suspended', 'deleted'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE device_type AS ENUM ('android', 'ios'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE delivery_method AS ENUM ('walk_in', 'courier_pickup'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE order_status AS ENUM ('waiting_device', 'device_received', 'diagnosing', 'waiting_approval', 'waiting_sparepart', 'repairing', 'quality_check', 'waiting_payment', 'completed', 'cancelled', 'disputed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE payment_status AS ENUM ('unpaid', 'partially_paid', 'paid', 'refunded'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE payment_method AS ENUM ('transfer_bank', 'qris', 'cash', 'ewallet'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE payment_type AS ENUM ('deposit', 'final_payment', 'refund'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE payment_record_status AS ENUM ('pending', 'confirmed', 'failed', 'refunded'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE sparepart_status AS ENUM ('available', 'preorder', 'discontinued'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE order_item_status AS ENUM ('pending', 'confirmed', 'replaced', 'cancelled'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE dispute_type AS ENUM ('warranty_claim', 'service_quality', 'wrong_diagnosis', 'other'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE dispute_status AS ENUM ('open', 'store_accepted', 'store_rejected', 'escalated', 'resolved', 'closed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE created_by_type AS ENUM ('customer', 'store_admin', 'system'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE application_status AS ENUM ('pending', 'approved', 'rejected'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─── USERS (Pelanggan) ───
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name VARCHAR(150) NOT NULL,
   phone_number VARCHAR(20) NOT NULL UNIQUE,
@@ -41,7 +41,7 @@ CREATE TABLE users (
 );
 
 -- ─── STORES ───
-CREATE TABLE stores (
+CREATE TABLE IF NOT EXISTS stores (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_name VARCHAR(150) NOT NULL,
   address TEXT NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE stores (
 );
 
 -- ─── STORE ADMINS ───
-CREATE TABLE store_admins (
+CREATE TABLE IF NOT EXISTS store_admins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id UUID NOT NULL REFERENCES stores(id),
   full_name VARCHAR(150) NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE store_admins (
 );
 
 -- ─── STORE APPLICATIONS ───
-CREATE TABLE store_applications (
+CREATE TABLE IF NOT EXISTS store_applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_name VARCHAR(150) NOT NULL,
   applicant_name VARCHAR(150) NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE store_applications (
 );
 
 -- ─── SPAREPARTS ───
-CREATE TABLE spareparts (
+CREATE TABLE IF NOT EXISTS spareparts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id UUID NOT NULL REFERENCES stores(id),
   brand VARCHAR(80) NOT NULL,
@@ -102,11 +102,11 @@ CREATE TABLE spareparts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_spareparts_store ON spareparts(store_id);
-CREATE INDEX idx_spareparts_brand ON spareparts(brand, device_model, part_type);
+CREATE INDEX IF NOT EXISTS idx_spareparts_store ON spareparts(store_id);
+CREATE INDEX IF NOT EXISTS idx_spareparts_brand ON spareparts(brand, device_model, part_type);
 
 -- ─── SERVICE ORDERS ───
-CREATE TABLE service_orders (
+CREATE TABLE IF NOT EXISTS service_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id),
   store_id UUID NOT NULL REFERENCES stores(id),
@@ -136,13 +136,13 @@ CREATE TABLE service_orders (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_orders_user ON service_orders(user_id);
-CREATE INDEX idx_orders_store ON service_orders(store_id);
-CREATE INDEX idx_orders_status ON service_orders(status);
-CREATE INDEX idx_orders_created ON service_orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON service_orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_store ON service_orders(store_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON service_orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON service_orders(created_at);
 
 -- ─── ORDER ITEMS ───
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES service_orders(id) ON DELETE CASCADE,
   sparepart_id UUID REFERENCES spareparts(id),
@@ -155,7 +155,7 @@ CREATE TABLE order_items (
 );
 
 -- ─── SERVICE TRACKING ───
-CREATE TABLE service_tracking (
+CREATE TABLE IF NOT EXISTS service_tracking (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES service_orders(id),
   status order_status NOT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE service_tracking (
 CREATE INDEX idx_tracking_order ON service_tracking(order_id);
 
 -- ─── PAYMENTS ───
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES service_orders(id),
   user_id UUID NOT NULL REFERENCES users(id),
@@ -183,7 +183,7 @@ CREATE TABLE payments (
 CREATE INDEX idx_payments_order ON payments(order_id);
 
 -- ─── REVIEWS ───
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL UNIQUE REFERENCES service_orders(id),
   user_id UUID NOT NULL REFERENCES users(id),
@@ -195,7 +195,7 @@ CREATE TABLE reviews (
 );
 
 -- ─── COUPONS ───
-CREATE TABLE coupons (
+CREATE TABLE IF NOT EXISTS coupons (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id),
   review_id UUID NOT NULL UNIQUE REFERENCES reviews(id),
@@ -210,7 +210,7 @@ CREATE TABLE coupons (
 CREATE INDEX idx_coupons_user ON coupons(user_id);
 
 -- ─── DISPUTES ───
-CREATE TABLE disputes (
+CREATE TABLE IF NOT EXISTS disputes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL UNIQUE REFERENCES service_orders(id),
   user_id UUID NOT NULL REFERENCES users(id),
@@ -229,7 +229,7 @@ CREATE TABLE disputes (
 );
 
 -- ─── FAILED NOTIFICATIONS ───
-CREATE TABLE failed_notifications (
+CREATE TABLE IF NOT EXISTS failed_notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recipient_type VARCHAR(20) NOT NULL,
   recipient_id VARCHAR(255) NOT NULL,
@@ -242,7 +242,7 @@ CREATE TABLE failed_notifications (
 );
 
 -- ─── PLATFORM ADMINS ───
-CREATE TABLE platform_admins (
+CREATE TABLE IF NOT EXISTS platform_admins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(50) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
