@@ -71,7 +71,7 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
     final parts = text.split('|').map((s) => s.trim()).toList();
     if (parts.length >= 2) {
       _orderCtl.text = parts[0];
-      _phoneCtl.text = parts[1];
+      _emailCtl.text = parts[1];
     } else {
       _orderCtl.text = text;
     }

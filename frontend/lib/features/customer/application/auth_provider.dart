@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/customer_repositories.dart';
 import '../domain/customer_models.dart';
 import '../../../core/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final customerAuthRepositoryProvider = Provider<CustomerAuthRepository>((_) => CustomerAuthRepository());
 
@@ -17,7 +18,13 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   Future<CustomerUser> login(String phone, String password) async {
     final repo = ref.read(customerAuthRepositoryProvider);
     final user = await repo.login(phone, password);
-    state = AsyncData(user);
+    // C8: Update is_first_login to false in Supabase metadata on login
+    if (user.isFirstLogin) {
+      await Supabase.instance.client.auth.updateUser(UserAttributes(
+        userMetadata: {'is_first_login': false, 'full_name': user.fullName},
+      ));
+    }
+    state = AsyncData(user.copyWith(isFirstLogin: false));
     return user;
   }
 
@@ -32,6 +39,14 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
   Future<void> changePassword(String oldPw, String newPw) async {
     final repo = ref.read(customerAuthRepositoryProvider);
     await repo.changePassword(oldPw, newPw);
+    // C8: Update is_first_login to false in Supabase metadata
+    await Supabase.instance.client.auth.updateUser(UserAttributes(
+      userMetadata: {'is_first_login': false},
+    ));
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncData(current.copyWith(isFirstLogin: false));
+    }
   }
 
   Future<void> updateProfile({String? fullName, String? address}) async {

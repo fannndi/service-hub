@@ -30,7 +30,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     final user = ref.read(customerAuthProvider).valueOrNull;
     if (user != null) {
       _state.name.text = user.fullName;
-      _state.email.text = user.phoneNumber; // fallback: use phone as identifier
+      _state.email.text = ''; // L7: Email should not be prefilled from phone
       _state.address.text = user.address ?? '';
     }
   }

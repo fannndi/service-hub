@@ -27,6 +27,19 @@ class StoreAdminScaffold extends ConsumerWidget {
     ('Analitik', Icons.query_stats_outlined, '/store/analytics'),
   ];
 
+  static const drawerDestinations = [
+    ('Dashboard', Icons.dashboard_outlined, '/store/dashboard'),
+    ('Order', Icons.receipt_long_outlined, '/store/orders'),
+    ('Stok', Icons.inventory_2_outlined, '/store/inventory'),
+    ('Bayar', Icons.payments_outlined, '/store/payments'),
+    ('Pelanggan', Icons.people_outlined, '/store/customers'),
+    ('Ulasan', Icons.star_outlined, '/store/reviews'),
+    ('Dispute', Icons.warning_amber_outlined, '/store/disputes'),
+    ('Notifikasi', Icons.notifications_outlined, '/store/notifications'),
+    ('Pengaturan', Icons.settings_outlined, '/store/settings'),
+    ('Analitik', Icons.query_stats_outlined, '/store/analytics'),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
@@ -139,14 +152,14 @@ class _NavList extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          for (var i = 0; i < StoreAdminScaffold.destinations.length; i++)
+          for (var i = 0; i < StoreAdminScaffold.drawerDestinations.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.sm,
                 vertical: 2,
               ),
               child: ListTile(
-                selected: i == selectedIndex,
+                selected: i < StoreAdminScaffold.destinations.length ? i == selectedIndex : false,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
@@ -154,10 +167,10 @@ class _NavList extends StatelessWidget {
                     .colorScheme
                     .primaryContainer
                     .withValues(alpha: 0.5),
-                leading: Icon(StoreAdminScaffold.destinations[i].$2),
-                title: Text(StoreAdminScaffold.destinations[i].$1),
+                leading: Icon(StoreAdminScaffold.drawerDestinations[i].$2),
+                title: Text(StoreAdminScaffold.drawerDestinations[i].$1),
                 onTap: () =>
-                    context.go(StoreAdminScaffold.destinations[i].$3),
+                    context.go(StoreAdminScaffold.drawerDestinations[i].$3),
               ),
             ),
         ],

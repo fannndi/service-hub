@@ -41,7 +41,11 @@ export default {
         user_id: userId, review_id: review.id, code,
         amount: 10000, expired_at: expiredAt,
       });
-      if (cErr) console.error('coupon insert error:', cErr.message);
+      if (cErr) {
+        // H17: Rollback review if coupon insert fails
+        await admin.from('reviews').delete().eq('id', review.id);
+        return fail('COUPON_FAILED', 'Gagal membuat kupon reward');
+      }
 
       return ok({ review, coupon: { code, amount: 10000, expired_at: expiredAt } });
     }

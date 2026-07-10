@@ -37,6 +37,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
             child: FutureBuilder<List<dynamic>>(
               future: ref.read(sessionRepositoryProvider).getSessions(),
               builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const ListTile(
+                    leading: Icon(Icons.devices),
+                    title: Text('Memuat...'),
+                    subtitle: Text('Mengambil data sesi'),
+                  );
+                }
                 final sessions = (snapshot.data ?? [])
                     .map((j) => UserSession.fromJson(j as Map<String, dynamic>))
                     .toList();

@@ -28,8 +28,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       await ref.read(adminAuthProvider.notifier).login(_username.text.trim(), _password.text);
       if (!mounted) return;
       context.go('/admin/dashboard');
-    } catch (_) {
-      if (mounted) showServisSnackbar(context, context.l10n.invalidCredentials, type: SnackbarType.error);
+    } catch (e) {
+      if (mounted) showServisSnackbar(context, e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Gagal login', type: SnackbarType.error);
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
@@ -52,10 +52,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
-          child: ModernCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
           child: ModernCard(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -104,6 +100,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
               ]),
             ),
           ),
+        ),
+      ),
+    );
   }
 
   @override
