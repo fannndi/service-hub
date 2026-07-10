@@ -8,8 +8,8 @@ INSERT INTO _supabase_migrations (version, name) VALUES
   ('017','017_email_notifications.sql'),('018','018_add_midtrans_unique.sql')
 ON CONFLICT (version) DO NOTHING;
 
--- Run 019 trigger cleanup
-DROP FUNCTION IF EXISTS public.handle_new_user();
+-- Drop with CASCADE to remove dependent trigger too
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE v_role TEXT;
