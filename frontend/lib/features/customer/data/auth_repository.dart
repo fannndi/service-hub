@@ -1,12 +1,9 @@
 import '../domain/customer_models.dart';
 import '../../../core/supabase_config.dart';
 import 'api_helper.dart';
-import 'phone_utils.dart';
 
 class CustomerAuthRepository {
-  Future<CustomerUser> login(String phone, String password) async {
-    final normalizedPhone = normalizePhone(phone);
-    final email = SupabaseConfig.buildCustomerEmail(normalizedPhone);
+  Future<CustomerUser> login(String email, String password) async {
     final response = await sb.signIn(email, password);
     final meta = response.user?.userMetadata ?? {};
     final uid = response.user?.id;
@@ -14,7 +11,7 @@ class CustomerAuthRepository {
     return CustomerUser(
       id: uid,
       fullName: meta['full_name'] as String? ?? 'Pelanggan',
-      phoneNumber: normalizedPhone,
+      phoneNumber: email,
       isFirstLogin: meta['is_first_login'] as bool? ?? true,
     );
   }

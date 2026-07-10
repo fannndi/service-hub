@@ -1,8 +1,8 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
-import { generatePassword, generateOrderNumber, normalizePhone } from '../_shared/crypto.ts'
+import { sendOrderConfirmation } from '../_shared/email.ts'
+import { generatePassword, generateOrderNumber } from '../_shared/crypto.ts'
 
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
@@ -17,38 +17,39 @@ export default {
 
       // ─── CREATE ORDER ───
       if (action === 'create-order') {
-        const { store_id, device_type, brand, device_model, delivery_method, delivery_address, customer_name, phone_number, items } = body as Record<string, unknown>;
-        if (!store_id || !device_type || !brand || !device_model || !customer_name || !phone_number || !items?.length) {
+        const { store_id, device_type, brand, device_model, delivery_method, delivery_address, customer_name, email, items } = body as Record<string, unknown>;
+        if (!store_id || !device_type || !brand || !device_model || !customer_name || !email || !items?.length) {
           return fail('INVALID_INPUT', 'Missing required fields');
         }
-        const phone = normalizePhone(phone_number as string);
+        const customerEmail = (email as string).trim().toLowerCase();
         tempPassword = generatePassword();
-        const email = `${phone}@customer.servisgadget.com`;
         const now = new Date().toISOString();
-
-        const { data: existing } = await admin.from('users').select('id, account_status').eq('phone_number', phone).maybeSingle();
-        if (existing) {
-          userId = existing.id;
+        const { data: existingFromAuth } = await admin.auth.admin.listUsers();
+        const existingAuth = existingFromAuth?.users?.find((u: { email?: string }) => u.email === customerEmail);
+        if (existingAuth) {
+          userId = existingAuth.id;
+          await admin.from('users').update({
+            account_status: 'suspended', updated_at: now,
+          }).eq('id', userId);
         } else {
           const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
-            email, password: tempPassword, email_confirm: true,
+            email: customerEmail, password: tempPassword, email_confirm: true,
             user_metadata: { role: 'customer', full_name: customer_name },
           });
           if (authErr) return fail('CREATE_FAILED', `Auth user creation failed: ${authErr.message}`);
           userId = authUser.user.id;
+          isNew = true;
           await admin.from('users').update({
             account_status: 'suspended', is_first_login: true, is_credential_sent: false, updated_at: now,
           }).eq('id', userId);
-          isNew = true;
         }
 
         const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         const { count } = await admin.from('service_orders')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .gte('created_at', fiveMinAgo);
+          .eq('user_id', userId).gte('created_at', fiveMinAgo);
         if (count && count >= 5) {
-          return fail('RATE_LIMITED', 'Terlalu banyak pesanan. Coba lagi nanti.', 429);
+          return fail('RATE_LIMITED', 'Too many orders. Try again later.', 429);
         }
 
         const { data: store } = await admin.from('stores').select('id, phone_number').eq('id', store_id).eq('is_active', true).single();
@@ -72,7 +73,6 @@ export default {
         if (orderErr) {
           if (isNew) {
             await admin.auth.admin.deleteUser(userId);
-            await admin.from('users').delete().eq('id', userId);
           }
           return fail('CREATE_FAILED', orderErr.message);
         }
@@ -82,20 +82,20 @@ export default {
         await admin.from('notifications').insert({ store_id, role: 'store_admin', type: 'new_order', title: 'Pesanan Baru', message: `#${orderNumber} — ${brand} ${device_model}`, link_to: `/store/orders/${order.id}` });
 
         if (isNew) {
-          await sendWA(phone, `Halo ${customer_name}!\nAkun ServisGadget kamu sudah dibuat.\nNomor HP: ${phone}\nPassword: ${tempPassword}\nSegera login dan ganti passwordmu.`);
+          await sendOrderConfirmation(customerEmail, tempPassword, orderNumber, customer_name as string, admin);
         }
 
-        const waOk = isWAConfigured();
-        return ok({ order_id: order.id, order_number: orderNumber, phone_number: phone, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? (waOk ? 'Cek WhatsApp' : 'Simpan password') : 'OK', isGuest: true });
+        const emailOk = Deno.env.get('RESEND_API_KEY') ? true : false;
+        return ok({ order_id: order.id, order_number: orderNumber, email: customerEmail, is_new_customer: isNew, temp_password: isNew ? tempPassword : undefined, message: isNew ? (emailOk ? 'Cek Email' : 'Simpan password') : 'OK', isGuest: true });
       }
 
       // ─── TRACK ───
       if (action === 'track') {
-        const { order_number, phone_number } = body as Record<string, unknown>;
-        if (!order_number || !phone_number) return fail('INVALID_INPUT', 'order_number and phone_number required');
-        const phone = normalizePhone(phone_number as string);
-        const { data: order } = await admin.from('service_orders').select('*, user:users(phone_number), tracking:service_tracking(*), store:stores(store_name)').eq('order_number', order_number).single();
-        if (!order || order.user.phone_number !== phone) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
+        const { order_number, email: trackEmail } = body as Record<string, unknown>;
+        if (!order_number || !trackEmail) return fail('INVALID_INPUT', 'order_number and email required');
+        const queryEmail = (trackEmail as string).trim().toLowerCase();
+        const { data: order } = await admin.from('service_orders').select('*, user:users(id), tracking:service_tracking(*), store:stores(store_name)').eq('order_number', order_number).single();
+        if (!order || order.user.id !== queryEmail && order.user.email !== queryEmail) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
         return ok({
           order_number: order.order_number, status: order.status, store_name: order.store.store_name,
           device_type: order.device_type, brand: order.brand, device_model: order.device_model,
@@ -106,16 +106,16 @@ export default {
 
       // ─── CREDENTIALS ───
       if (action === 'credentials') {
-        const { order_id, phone_number } = body as Record<string, unknown>;
-        if (!order_id || !phone_number) return fail('INVALID_INPUT', 'order_id and phone_number required');
-        const phone = normalizePhone(phone_number as string);
+        const { order_id, email: credEmail } = body as Record<string, unknown>;
+        if (!order_id || !credEmail) return fail('INVALID_INPUT', 'order_id and email required');
+        const queryEmail = (credEmail as string).trim().toLowerCase();
         let { data: order } = await admin.from('service_orders').select('*, user:users(*)').eq('id', order_id).maybeSingle();
         if (!order) order = (await admin.from('service_orders').select('*, user:users(*)').eq('order_number', order_id).single()).data;
-        if (!order || order.user.phone_number !== phone) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
+        if (!order || order.user.email !== queryEmail) return fail('ORDER_NOT_FOUND', 'Order not found', 404);
         const user = order.user;
         const canActivate = ['device_received','diagnosing','waiting_approval','waiting_sparepart','repairing','quality_check','waiting_payment','completed'].includes(order.status);
         const isActivated = user.account_status === 'active';
-        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, phone_number: user.phone_number, has_credential: !isActivated, temp_password: user.password_hash, full_name: user.full_name });
+        return ok({ order_number: order.order_number, status: order.status, can_activate: canActivate, is_activated: isActivated, email: user.email, has_credential: !isActivated, temp_password: user.password_hash, full_name: user.full_name });
       }
 
       return fail('NOT_FOUND', 'Unknown action', 404);
@@ -124,8 +124,6 @@ export default {
       if (isNew && userId) {
         const { supabaseAdmin: admin } = ctx;
         await admin.auth.admin.deleteUser(userId).catch(() => {});
-        await admin.from('users').delete().eq('id', userId).catch(() => {});
-        console.error(`Orphan user ${userId} deleted after error`);
       }
       return fail('INTERNAL', err instanceof Error ? err.message : 'Unknown error', 500);
     }

@@ -622,7 +622,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get orderNumber => 'Nomor Pesanan';
   @override String get searching => 'Mencari...';
   @override String get checkOrderButton => 'Cek Pesanan';
-  @override String get enterOrderAndPhone => 'Masukkan nomor pesanan dan nomor WhatsApp';
+  @override String get enterOrderAndPhone => 'Masukkan nomor pesanan dan email';
   @override String get connectionFailed => 'Gagal terhubung. Coba lagi.';
   @override String get trackingHistory => 'Riwayat Tracking';
   @override String get accountAlreadyActive => 'Akun sudah aktif! Silakan login.';
@@ -1064,7 +1064,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get orderNumber => 'Order Number';
   @override String get searching => 'Searching...';
   @override String get checkOrderButton => 'Check Order';
-  @override String get enterOrderAndPhone => 'Enter order number and WhatsApp number';
+  @override String get enterOrderAndPhone => 'Enter order number and email';
   @override String get connectionFailed => 'Connection failed. Try again.';
   @override String get trackingHistory => 'Tracking History';
   @override String get accountAlreadyActive => 'Account is active! Please login.';

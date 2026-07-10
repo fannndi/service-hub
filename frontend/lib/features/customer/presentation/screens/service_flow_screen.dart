@@ -13,7 +13,6 @@ import 'service_flow_steps.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 
 // Constants for hardcoded strings
-const String _namaWajibDiisi = 'Nama dan nomor WhatsApp wajib diisi.';
 const String _alamatWajibDiisi = 'Alamat penjemputan wajib diisi untuk pickup kurir.';
 
 class ServiceFlowScreen extends ConsumerStatefulWidget {
@@ -32,7 +31,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     final user = ref.read(customerAuthProvider).valueOrNull;
     if (user != null) {
       _state.name.text = user.fullName;
-      _state.phone.text = user.phoneNumber;
+      _state.email.text = user.phoneNumber; // fallback: use phone as identifier
       _state.address.text = user.address ?? '';
     }
   }
@@ -71,7 +70,6 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
     setState(() => _state.loading = true);
     try {
       final isGuest = SupabaseService.instance.user == null;
-      final phone = normalizePhone(_state.phone.text.trim());
       final items = [
         {
           'service_type': _state.serviceType,
@@ -89,7 +87,7 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         'delivery_method': _state.delivery,
         if (_state.delivery == 'courier_pickup') 'delivery_address': _state.address.text.trim(),
         'customer_name': _state.name.text.trim(),
-        'phone_number': phone,
+        'email': _state.email.text.trim(),
         'items': items,
         if (_state.coupon.text.trim().isNotEmpty) 'coupon_code': _state.coupon.text.trim(),
       };
@@ -147,8 +145,8 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
       return;
     }
     if (_step == 3 &&
-        (_state.name.text.trim().isEmpty || _state.phone.text.trim().isEmpty)) {
-      _showFlowMessage(_namaWajibDiisi);
+        (_state.name.text.trim().isEmpty || _state.email.text.trim().isEmpty)) {
+      _showFlowMessage('Nama dan email wajib diisi.');
       return;
     }
     if (_step == 3 &&

@@ -17,7 +17,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phone = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
@@ -28,7 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final result = await ref
           .read(customerAuthProvider.notifier)
-          .login(_phone.text, _password.text);
+          .login(_email.text.trim(), _password.text);
       if (!mounted) return;
       context.go(result.isFirstLogin ? '/change-password' : '/home');
     } catch (error) {
@@ -94,16 +94,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           TextFormField(
-                            controller: _phone,
-                            keyboardType: TextInputType.phone,
+                            controller: _email,
+                            keyboardType: TextInputType.emailAddress,
+                            textCapitalization: TextCapitalization.none,
                             decoration: InputDecoration(
-                              labelText: context.l10n.phoneNumber,
-                              prefixIcon: Icon(Icons.phone_outlined),
+                              labelText: 'Email',
+                              prefixIcon: Icon(Icons.email_outlined),
                             ),
                             validator: (value) =>
                                 value == null || value.trim().isEmpty
-                                    ? context.l10n.phoneNumberRequired
-                                    : null,
+                                    ? 'Email wajib diisi.'
+                                    : !value.contains('@')
+                                        ? 'Format email tidak valid'
+                                        : null,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           TextFormField(

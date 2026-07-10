@@ -55,7 +55,7 @@ final customerRoutes = <RouteBase>[
         return GuestBookingSuccessScreen(
           orderNumber: orderNum,
           tempPassword: extra['temp_password'] as String?,
-          phoneNumber: extra['phone_number'] as String?,
+          email: (extra['email'] ?? extra['phone_number']) as String?,
         );
       }
       return BookingSuccessScreen(

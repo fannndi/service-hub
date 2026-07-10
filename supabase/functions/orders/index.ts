@@ -1,18 +1,19 @@
 import { withSupabase } from 'npm:@supabase/server'
 import { assertValidTransition, VALID_TRANSITIONS, ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendWA, isWAConfigured } from '../_shared/whatsapp.ts'
+import { sendActivationEmail, isEmailConfigured } from '../_shared/email.ts'
 import { generateOrderNumber } from '../_shared/crypto.ts'
 
 async function autoActivateGuest(userId: string, admin: any): Promise<void> {
   const { data: user } = await admin.from('users').select('*').eq('id', userId).single();
   if (!user || user.account_status === 'active') return;
-  if (!user.phone_number) { console.error('autoActivateGuest: user has no phone_number'); return; }
+  const { data: authUser, error: authErr } = await admin.auth.admin.getUserById(userId);
+  if (authErr || !authUser?.user?.email) { console.error('autoActivateGuest: cannot get auth user email'); return; }
   await admin.from('users').update({
     account_status: 'active', is_first_login: true, updated_at: new Date().toISOString(),
   }).eq('id', userId);
-  if (isWAConfigured()) {
-    await sendWA(user.phone_number, `Halo ${user.full_name}!\nAkun ServisGadget kamu sudah aktif!\nNomor HP: ${user.phone_number}\nSilakan login dengan password yang sudah dikirim sebelumnya.`, admin);
+  if (isEmailConfigured()) {
+    await sendActivationEmail(authUser.user.email, user.full_name, user.password_hash, admin);
   }
 }
 

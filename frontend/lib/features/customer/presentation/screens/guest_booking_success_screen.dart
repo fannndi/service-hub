@@ -10,12 +10,12 @@ class GuestBookingSuccessScreen extends StatefulWidget {
     super.key,
     required this.orderNumber,
     this.tempPassword,
-    this.phoneNumber,
+    this.email,
   });
 
   final String orderNumber;
   final String? tempPassword;
-  final String? phoneNumber;
+  final String? email;
 
   @override
   State<GuestBookingSuccessScreen> createState() => _GuestBookingSuccessScreenState();
@@ -35,7 +35,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
       final result = await SupabaseService.instance.invoke('guest', body: {
         'action': 'credentials',
         'order_id': widget.orderNumber,
-        'phone_number': widget.phoneNumber ?? '',
+        'email': widget.email ?? '',
       });
       final data = Map<String, dynamic>.from(result as Map? ?? {});
       if (mounted) setState(() {
@@ -49,15 +49,15 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
 
   String get _saveFormat {
     final order = widget.orderNumber;
-    final phone = widget.phoneNumber ?? '';
-    return '$order | $phone';
+    final em = widget.email ?? '';
+    return '$order | $em';
   }
 
   Future<void> _copyAll() async {
     await Clipboard.setData(ClipboardData(text: _saveFormat));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text(context.l10n.orderNumberAndPhoneCopied),
+      content: const Text('Nomor pesanan + Email tersalin!'),
       behavior: SnackBarBehavior.floating,
     ));
   }
@@ -108,7 +108,7 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
               Text(
                 _activated
                     ? 'Kamu sudah bisa login dengan kredensial di bawah.'
-                    : 'Simpan kredensial di bawah. Akun akan aktif setelah toko menerima perangkat.',
+                    : 'Kredensial sudah dikirim ke email kamu. Akun akan aktif setelah toko menerima perangkat.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
               ),
@@ -129,21 +129,19 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                       icon: const Icon(Icons.copy, size: 18),
                       label: Text(context.l10n.copy),
                     ),
-                    if (widget.phoneNumber != null) ...[
+                    if (widget.email != null) ...[
                       const SizedBox(height: 12),
                       FilledButton.icon(
                         onPressed: _copyAll,
                         icon: const Icon(Icons.copy_all, size: 18),
-                        label: const Text(context.l10n.copyAll),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                        ),
+                        label: const Text('Salin Semua'),
+                        style: FilledButton.styleFrom(backgroundColor: Colors.teal),
                       ),
                     ],
                   ]),
                 ),
               ),
-              if (widget.phoneNumber != null && hasPw) ...[
+              if (widget.email != null && hasPw) ...[
                 const SizedBox(height: 16),
                 Card(
                   color: _activated ? Colors.green.shade50 : Colors.amber.shade50,
@@ -167,13 +165,13 @@ class _GuestBookingSuccessScreenState extends State<GuestBookingSuccessScreen> {
                           ),
                       ]),
                       const SizedBox(height: 12),
-                      _row(theme, context.l10n.username, widget.phoneNumber ?? ''),
+                      _row(theme, 'Email', widget.email ?? ''),
                       _row(theme, context.l10n.password, widget.tempPassword ?? ''),
                       const SizedBox(height: 8),
                       Text(
                         _activated
                             ? 'Gunakan kredensial di atas untuk login.'
-                            : 'Kredensial ini akan aktif setelah toko menerima perangkatmu.',
+                            : 'Kredensial sudah dikirim ke email. Akun akan aktif setelah toko menerima perangkatmu.',
                         style: theme.textTheme.bodySmall?.copyWith(color: _activated ? Colors.green.shade700 : Colors.orange.shade700),
                       ),
                     ]),

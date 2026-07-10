@@ -21,7 +21,7 @@ class GuestTrackingScreen extends StatefulWidget {
 
 class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
   final _orderCtl = TextEditingController();
-  final _phoneCtl = TextEditingController();
+  final _emailCtl = TextEditingController();
   bool _loading = false;
   Map<String, dynamic>? _result;
   String? _error;
@@ -37,26 +37,24 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
   @override
   void dispose() {
     _orderCtl.dispose();
-    _phoneCtl.dispose();
+    _emailCtl.dispose();
     super.dispose();
   }
 
   Future<void> _track() async {
     final order = _orderCtl.text.trim();
-    final phone = _phoneCtl.text.trim();
-    if (order.isEmpty || phone.isEmpty) {
-      setState(() => _error = context.l10n.enterOrderAndPhone);
+    final email = _emailCtl.text.trim();
+    if (order.isEmpty || email.isEmpty) {
+      setState(() => _error = 'Masukkan nomor pesanan dan email');
       return;
     }
     setState(() { _loading = true; _error = null; _result = null; });
     try {
       final sb = SupabaseService.instance;
-      final data = await sb.invoke('guest', body: {'action': 'track', 'order_number': order, 'phone_number': phone});
+      final data = await sb.invoke('guest', body: {'action': 'track', 'order_number': order, 'email': email});
       if (data is! Map<String, dynamic>) throw Exception('Invalid response');
-      final credData = await sb.invoke('guest', body: {'action': 'credentials', 'order_id': data['order_number'], 'phone_number': phone});
-      if (credData is! Map<String, dynamic>) throw Exception('Invalid response');
       if (!mounted) return;
-      setState(() { _result = {...data, ...credData}; });
+      setState(() { _result = data; });
     } catch (e) {
       if (!mounted) return;
       final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Gagal. Coba lagi.';
@@ -113,11 +111,12 @@ class _GuestTrackingScreenState extends State<GuestTrackingScreen> {
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: _phoneCtl,
-              keyboardType: TextInputType.phone,
+              controller: _emailCtl,
+              keyboardType: TextInputType.emailAddress,
+              textCapitalization: TextCapitalization.none,
               decoration: InputDecoration(
-                labelText: context.l10n.whatsappNumber,
-                prefixIcon: const Icon(Icons.phone_outlined),
+                labelText: 'Email',
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             const SizedBox(height: 8),

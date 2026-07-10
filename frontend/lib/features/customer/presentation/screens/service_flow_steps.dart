@@ -19,7 +19,7 @@ class FlowState {
   String serviceType = 'screen_replacement';
   final complaint = TextEditingController();
   final name = TextEditingController();
-  final phone = TextEditingController();
+  final email = TextEditingController();
   final address = TextEditingController();
   final coupon = TextEditingController();
   String delivery = 'walk_in';
@@ -34,7 +34,7 @@ class FlowState {
   void dispose() {
     complaint.dispose();
     name.dispose();
-    phone.dispose();
+    email.dispose();
     address.dispose();
     coupon.dispose();
   }
@@ -411,11 +411,12 @@ class Step4Widget extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: state.phone,
-          keyboardType: TextInputType.phone,
+          controller: state.email,
+          keyboardType: TextInputType.emailAddress,
+          textCapitalization: TextCapitalization.none,
           decoration: const InputDecoration(
-              labelText: 'Nomor WhatsApp',
-              prefixIcon: Icon(Icons.phone_outlined)),
+              labelText: 'Email',
+              prefixIcon: Icon(Icons.email_outlined)),
         ),
         if (state.delivery == 'courier_pickup') ...[
           const SizedBox(height: 16),
@@ -502,7 +503,7 @@ class Step5Widget extends StatelessWidget {
             const Divider(),
             _ConfirmRow(label: 'Nama', value: state.name.text),
             const Divider(),
-            _ConfirmRow(label: 'WhatsApp', value: state.phone.text),
+            _ConfirmRow(label: 'Email', value: state.email.text),
             if (state.delivery == 'courier_pickup') ...[
               const Divider(),
               _ConfirmRow(label: 'Alamat', value: state.address.text),
