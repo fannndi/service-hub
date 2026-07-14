@@ -22,7 +22,7 @@ class StoreAuthController extends AsyncNotifier<StoreAdminSession?> {
     // C9: Update is_first_login to false in Supabase metadata on login
     if (user.isFirstLogin) {
       await Supabase.instance.client.auth.updateUser(UserAttributes(
-        userMetadata: {'is_first_login': false, 'role': 'store_admin', 'store_id': user.storeId, 'full_name': user.adminName},
+        data: {'is_first_login': false, 'role': 'store_admin', 'store_id': user.storeId, 'full_name': user.adminName},
       ));
     }
     state = AsyncData(user.copyWith(isFirstLogin: false));
@@ -33,7 +33,7 @@ class StoreAuthController extends AsyncNotifier<StoreAdminSession?> {
     await repo.changePassword(oldPw, newPw);
     // C9: Update is_first_login to false in Supabase metadata
     await Supabase.instance.client.auth.updateUser(UserAttributes(
-      userMetadata: {'is_first_login': false},
+      data: {'is_first_login': false},
     ));
     final session = state.valueOrNull;
     if (session != null) {

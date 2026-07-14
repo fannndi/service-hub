@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../core/supabase_service.dart';
 
 class AdminNotificationRepository {
@@ -6,13 +7,14 @@ class AdminNotificationRepository {
   Future<List<dynamic>> getNotifications({String? type, int page = 1}) async {
     try {
       const limit = 20;
-      var q = sb.from('notifications').select('*').order('created_at', ascending: false).range((page - 1) * limit, page * limit - 1);
+      var q = sb.from('notifications').select('*');
       if (type != null && type != 'all') {
         q = q.eq('type', type);
       }
-      final data = await q;
+      final data = await q.order('created_at', ascending: false).range((page - 1) * limit, page * limit - 1);
       return data;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('getNotifications error: $e');
       return [];
     }
   }
@@ -21,7 +23,8 @@ class AdminNotificationRepository {
     try {
       final data = await sb.from('notifications').select('id').eq('role', 'platform_admin').eq('is_read', false);
       return (data as List).length;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('getUnreadCount error: $e');
       return 0;
     }
   }
@@ -38,7 +41,8 @@ class AdminNotificationRepository {
     try {
       final data = await sb.from('store_applications').select('id').eq('status', 'pending');
       return (data as List).length;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('getRecentStoreApplications error: $e');
       return 0;
     }
   }

@@ -442,6 +442,8 @@ abstract class AppLocalizations {
   String get registerStore;
   String get registerStoreSubtitle;
   String get pickSparepart;
+  String get whatsappNumber;
+  String get whatsapp;
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -564,6 +566,8 @@ class AppLocalizationsId extends AppLocalizations {
   @override String get sparepart => 'Sparepart';
   @override String get complaint => 'Keluhan';
   @override String get name => 'Nama';
+  @override String get emailLabel => 'Email';
+  @override String get emailContact => 'Email Kontak';
   @override String get whatsapp => 'WhatsApp';
   @override String get address => 'Alamat';
   @override String get delivery => 'Pengiriman';
@@ -1310,6 +1314,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get theme => 'Theme';
   @override String get light => 'Light';
   @override String get dark => 'Dark';
+  @override String get adminHelpSubtitle => 'Contact admin for assistance';
+  @override String get battery => 'Battery';
+  @override String get deviceType => 'Device Type';
+  @override String get order => 'Order';
+  @override String get screen => 'Screen';
+  @override String get status => 'Status';
   @override String get adminHelp => 'Admin Help';
   @override String get chatWhatsapp => 'Chat WhatsApp';
   @override String get selectLanguage => 'Select Language';
@@ -1332,6 +1342,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override String get phone => 'Phone';
   @override String get email => 'Email';
   @override String get home => 'Home';
+  @override String get emailLabel => 'Email';
+  @override String get emailContact => 'Email Contact';
   @override String get profilePage => 'Profile';
   @override String get pastedFromClipboard => 'Pasted from clipboard';
   @override String get pasteAutomatically => 'Paste Automatically';

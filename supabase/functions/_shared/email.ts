@@ -1,13 +1,13 @@
 const RESEND_KEY = () => Deno.env.get('RESEND_API_KEY');
-const EMAIL_FROM = () => Deno.env.get('EMAIL_FROM') ?? 'Service Me <noreply@serviceme.app>';
+const EMAIL_FROM = () => Deno.env.get('EMAIL_FROM') ?? 'onboarding@resend.dev';
 
 export function isEmailConfigured(): boolean {
   return !!RESEND_KEY();
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
   const key = RESEND_KEY();
-  if (!key) return false;
+  if (!key) return { ok: false, error: 'RESEND_API_KEY not configured' };
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -20,14 +20,16 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
     if (!res.ok) {
       const err = await res.text();
       console.error('Resend error:', res.status, err);
-      return false;
+      return { ok: false, error: `Resend ${res.status}: ${err}` };
     }
-    return true;
+    return { ok: true };
   } catch (err) {
     console.error('Email send failed:', err);
-    return false;
+    return { ok: false, error: `Exception: ${err}` };
   }
 }
+
+
 
 function baseHtml(body: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -61,15 +63,15 @@ export async function sendOrderConfirmation(
     <p>⚠️ <strong>Segera login dan ganti password</strong> setelah akun aktif.</p>
     <p>Akun akan aktif setelah toko menerima perangkatmu.</p>
   `);
-  const ok = await sendEmail(email, `Pesanan #${orderNumber} — Service Me`, html);
-  if (!ok && admin) {
-    await admin.from('failed_notifications').insert({
-      recipient_type: 'email', recipient_id: email, message_type: 'transactional',
+  const result = await sendEmail(email, `Pesanan #${orderNumber} — Service Me`, html);
+  if (!result.ok && admin) {
+    try { await admin.from('failed_notifications').insert({
+      recipient_type: 'email', recipient_id: email, channel: 'email', message_type: 'transactional',
       payload: { subject: `Pesanan #${orderNumber}`, order_number: orderNumber },
-      attempt_count: 1, last_error: 'Resend send failed',
-    }).catch(() => {});
+      attempt_count: 1, last_error: result.error || 'unknown',
+    }); } catch (_) {}
   }
-  return ok;
+  return result.ok;
 }
 
 export async function sendActivationEmail(
@@ -86,14 +88,14 @@ export async function sendActivationEmail(
     </div>
     <p>Segera login dan ganti passwordmu untuk keamanan.</p>
   `);
-  const ok = await sendEmail(email, 'Akun Aktif! — Service Me', html);
-  if (!ok && admin) {
-    await admin.from('failed_notifications').insert({
-      recipient_type: 'email', recipient_id: email, message_type: 'transactional',
-      payload: { subject: 'Akun Aktif' }, attempt_count: 1, last_error: 'Resend send failed',
-    }).catch(() => {});
+  const result = await sendEmail(email, 'Akun Aktif! — Service Me', html);
+  if (!result.ok && admin) {
+    try { await admin.from('failed_notifications').insert({
+      recipient_type: 'email', recipient_id: email, channel: 'email', message_type: 'transactional',
+      payload: { subject: 'Akun Aktif' }, attempt_count: 1, last_error: result.error || 'unknown',
+    }); } catch (_) {}
   }
-  return ok;
+  return result.ok;
 }
 
 export async function sendNotificationEmail(
@@ -103,5 +105,6 @@ export async function sendNotificationEmail(
     <h2>${title}</h2>
     <p>${body.replace(/\n/g, '<br>')}</p>
   `);
-  return sendEmail(to, subject, html);
+  const result = await sendEmail(to, subject, html);
+  return result.ok;
 }

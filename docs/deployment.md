@@ -1,33 +1,43 @@
-# Deployment Guide — ServisGadget (Serverless)
+# Deployment Guide — Service Hub
 
 ## Prerequisites
 
 - Supabase CLI (`npm install -g supabase`)
 - Flutter SDK 3.4+
+- Node.js 18+
 - Supabase project (free tier)
-- Midtrans account (sandbox for development)
+- Midtrans account (sandbox for dev, production for live)
+- Resend.com account (verified domain)
 
 ---
 
-## 1. Initial Setup
+## Step 1: Link Supabase Project
 
 ```bash
-# Login ke Supabase
 supabase login
 
-# Link project
-supabase link --project-ref eboplbemgtvmviwhdlfa
+# Link local project to remote Supabase project
+supabase link --project-ref <PROJECT_REF>
+```
 
-# Push migrations
+`<PROJECT_REF>` dapat ditemukan di Supabase Dashboard → Project Settings → General → Reference ID.
+
+---
+
+## Step 2: Push Migrations
+
+```bash
 supabase db push
 ```
 
+Menjalankan semua file migrasi dari `supabase/migrations/` ke database Supabase. Termasuk pembuatan tabel, enum, stored procedures, dan RLS policies.
+
 ---
 
-## 2. Deploy Edge Functions
+## Step 3: Deploy Edge Functions
 
 ```bash
-# Deploy semua fungsi
+# Deploy semua fungsi sekaligus
 supabase functions deploy guest
 supabase functions deploy orders
 supabase functions deploy payments
@@ -41,68 +51,63 @@ supabase functions deploy cron-sla
 supabase functions deploy seed-admin
 ```
 
+Catatan: Fungsi `guest`, `cron-sla`, dan `seed-admin` menggunakan `--no-verify-jwt` karena tidak memerlukan autentikasi.
+
 ---
 
-## 3. Set Environment Secrets
+## Step 4: Set Environment Secrets
 
 ```bash
 # Midtrans
 supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
 
-# WhatsApp Gateway
-supabase secrets set WA_GATEWAY_URL=https://your-wa-gateway.com
-supabase secrets set WA_GATEWAY_TOKEN=your-token
+# Resend.com email
+supabase secrets set RESEND_API_KEY=re_xxx
+supabase secrets set EMAIL_FROM="Service Hub <noreply@servicehub.app>"
 ```
+
+Semua secret ini diakses di Edge Functions via `Deno.env.get()`.
 
 ---
 
-## 4. Build & Deploy Flutter App
+## Step 5: Build Flutter APK
 
 ```bash
 cd frontend
 
-# Build APK release
 flutter build apk --release \
-  --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
-
-# Build AAB untuk Play Store
-flutter build appbundle --release \
-  --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+  --dart-define=SUPABASE_URL=https://<PROJECT_REF>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY>
 ```
+
+`SUPABASE_URL` dan `SUPABASE_ANON_KEY` dapat ditemukan di Supabase Dashboard → Project Settings → API.
+
+APK output: `frontend/build/app/outputs/flutter-apk/app-release.apk`
 
 ---
 
-## 5. Apply RPC Fix (SQL Editor)
-
-Karena Management API tidak mendukung SQL query di free tier, jalankan via Supabase Dashboard:
-
-1. Buka https://supabase.com/dashboard/project/eboplbemgtvmviwhdlfa/sql/new
-2. Copy paste isi file `supabase/migrations/016_fix_rpc_and_seed.sql`
-3. Run — ini akan fix `reserve_stock`, `consume_stock`, `release_stock`, `swap_sparepart`
-
-## 6. Deploy Guest Function (tanpa JWT)
+## Step 6: Build App Bundle untuk Play Store
 
 ```bash
-supabase functions deploy guest --no-verify-jwt
+cd frontend
+
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=https://<PROJECT_REF>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY>
 ```
 
-## 7. Play Store Release
+AAB output: `frontend/build/app/outputs/bundle/release/app-release.aab`
 
-1. Buka [Google Play Console](https://play.google.com/console)
-2. Upload AAB dari `frontend/build/app/outputs/bundle/release/app-release.aab`
-3. Isi "What's new" notes
-4. Submit untuk review
+Upload file `.aab` ini ke Google Play Console → Production → Create new release.
 
 ---
 
 ## Rollback
 
 ```bash
-# Rollback Edge Function
+# Rollback Edge Function ke versi sebelumnya
 supabase functions deploy <function-name> --legacy-bundle
 
-# Rollback migration
+# Rollback database migration
 supabase db diff --use-migra
 ```

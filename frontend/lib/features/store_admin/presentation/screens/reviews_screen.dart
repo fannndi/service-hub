@@ -61,7 +61,7 @@ class _ReviewCardState extends ConsumerState<_ReviewCard> {
       await SupabaseService.instance.from('reviews').update({'store_response': _replyCtl.text.trim()}).eq('id', reviewId);
       ref.invalidate(reviewsProvider);
       setState(() { _replying = false; _replyCtl.clear(); });
-    } catch (_) {} finally {
+    } catch (e) { debugPrint('_sendReply error: $e'); } finally {
       if (mounted) setState(() => _loading = false);
     }
   }

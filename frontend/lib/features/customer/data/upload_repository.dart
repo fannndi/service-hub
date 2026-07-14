@@ -10,21 +10,15 @@ class UploadRepository {
     return '$uid/${folder}_$ts/$safe';
   }
 
-  Future<String> getPresignedUrl(String fileName, String mimeType, String folder) async {
-    final uid = sb.user?.id;
-    if (uid == null) throw Exception('Not authenticated');
-    final path = _buildPath(uid, fileName, folder);
-    await sb.client.storage.from('uploads').createSignedUploadUrl(path);
-    return sb.client.storage.from('uploads').getPublicUrl(path);
-  }
-
   Future<String> uploadFile(dynamic file, String folder, void Function(double)? onProgress) async {
+    if (file is File && file.lengthSync() > 5 * 1024 * 1024) throw Exception('File terlalu besar. Maksimal 5MB.');
     final uid = sb.user?.id;
     if (uid == null) throw Exception('Not authenticated');
     final name = file is File ? p.basename(file.path) : 'upload_${DateTime.now().millisecondsSinceEpoch}';
     final path = _buildPath(uid, name, folder);
     onProgress?.call(0);
-    await sb.client.storage.from('uploads').upload(path, File(file.path ?? ''));
+    final f = file is File ? file : File(file.path?.toString() ?? '');
+    await sb.client.storage.from('uploads').upload(path, f);
     onProgress?.call(1);
     return sb.client.storage.from('uploads').getPublicUrl(path);
   }

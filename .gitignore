@@ -15,3 +15,9 @@ secrets/
 data.md
 *.keystore
 key.properties
+
+# Build artifacts
+frontend/android/build/
+frontend/build/
+frontend/.dart_tool/
+

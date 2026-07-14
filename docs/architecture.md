@@ -1,48 +1,65 @@
-﻿# ServisGadget — Architecture
+﻿# Service Hub — Architecture
 
-> **Versi:** 3.0 — 100% Serverless Supabase
+> **Stack:** Flutter + Supabase (100% serverless)
 > **Status:** Production Ready
 
 ---
 
 ## 1. System Overview
 
-ServisGadget adalah platform marketplace servis gadget dua sisi:
-- **Customer**: Booking perbaikan tanpa daftar akun (stealth account)
-- **Store Admin**: Kelola order, diagnosa, stok, pembayaran dari mobile app
-- **Platform Admin**: Buat toko, set device types, kelola akun
+Service Hub adalah platform marketplace servis gadget tiga peran:
+
+- **Customer**: Booking perbaikan, tracking, bayar via Midtrans
+- **Store Admin**: Kelola order, diagnosa, stok sparepart, konfirmasi pembayaran
+- **Platform Admin**: Buat toko, set device types, kelola semua akun
 
 ---
 
-## 2. Tech Stack
+## 2. High-Level Flow
+
+```
+User → Supabase Auth → Edge Function → PostgreSQL + Storage
+                      → Midtrans API (payment)
+                      → Resend API (email notification)
+```
+
+Semua backend logic jalan di Supabase Edge Functions. Frontend Flutter invoke langsung via SDK. Tidak ada server, VPS, atau backend framework terpisah.
+
+---
+
+## 3. Tech Stack
+
+### Frontend
+
+| Component | Technology |
+|-----------|-----------|
+| Framework | Flutter 3.4+ / Dart 3.x |
+| State Management | Riverpod 2.6.1 |
+| Routing | GoRouter 14.8.1 |
+| Supabase SDK | supabase_flutter 2.8.1 |
+| Build Output | APK + App Bundle (Play Store) |
 
 ### Backend (Serverless)
+
 | Component | Technology |
 |-----------|-----------|
 | Runtime | Supabase Edge Functions (Deno / TypeScript) |
 | Database | Supabase PostgreSQL 16 |
 | Auth | Supabase Auth (email/password) |
-| Storage | Supabase Storage |
-| Payments | Midtrans Snap API via Edge Function |
-| Notifications | WhatsApp Gateway via Edge Function |
+| Storage | Supabase Storage (file uploads) |
+| Payments | Midtrans Snap API |
+| Email | Resend.com API |
 
-### Frontend
-| Component | Version |
-|-----------|---------|
-| Flutter | 3.4+ |
-| Dart | 3.x |
-| State Management | Riverpod 2.6.1 |
-| Routing | GoRouter 14.8.1 |
-| Supabase SDK | supabase_flutter 2.8.1 |
+### Infrastructure
 
-### Infrastruktur
-- **Zero server**: Tidak ada VPS, Docker, atau NestJS
+- **Zero server**: Tidak ada VPS, Docker, atau backend framework (NestJS/Express)
 - **Zero Redis**: Semua state di PostgreSQL + RLS
-- **Zero CI/CD**: Deploy manual via Supabase CLI + Flutter build
+- **Zero Prisma**: Query langsung via Supabase SDK / Edge Function `supabase-js`
+- **Zero R2**: File di Supabase Storage
 
 ---
 
-## 3. Backend Architecture
+## 4. Backend Architecture
 
 ### Supabase Edge Functions (11 functions)
 
@@ -51,14 +68,16 @@ ServisGadget adalah platform marketplace servis gadget dua sisi:
 | `guest` | none | Guest booking + tracking + credential check |
 | `orders` | user | Order CRUD, status transitions, stock management |
 | `payments` | user | Manual payment confirmation by store admin |
-| `midtrans` | snap: user / notification: none | Midtrans Snap token + webhook handler |
+| `midtrans` | user / none (webhook) | Midtrans Snap token + webhook handler |
 | `disputes` | user | Warranty claim creation + resolution |
 | `reviews` | user | Review creation + coupon generation |
-| `notifications` | user | Broadcast notifications |
+| `notifications` | user | Broadcast notifications + email via Resend |
 | `admin` | user + role check | Platform admin: manage stores, users, applications |
 | `store-applications` | none | Store registration application |
 | `cron-sla` | none (cron) | SLA monitoring every 30 seconds |
 | `seed-admin` | none | One-time admin seeding |
+
+Deploy via: `supabase functions deploy <name>`
 
 ### Database (17 tables + 22 enums + 10 stored procedures)
 
@@ -78,85 +97,72 @@ ServisGadget adalah platform marketplace servis gadget dua sisi:
 | `coupons` | Discount coupons from reviews |
 | `disputes` | Warranty claims |
 | `notifications` | In-app notifications |
-| `failed_notifications` | Failed WhatsApp delivery queue |
+| `failed_notifications` | Failed delivery queue |
 | `shipments` | Courier shipping |
 | `user_sessions` | Active login sessions |
 
-### RLS Policies (50+ policies for 4 roles)
-- **anon**: Read-only: active stores, available spareparts, public reviews
-- **customer**: Own data only via `auth.uid()`
-- **store_admin**: Store-scoped access via `store_admins` join
-- **platform_admin**: Full access to all tables
+### RLS Policies (50+ policies, 4 roles)
 
-### State Machine (Order Status)
+| Role | Scope |
+|------|-------|
+| `anon` | Read-only: active stores, available spareparts, public reviews |
+| `customer` | Own data only via `auth.uid()` |
+| `store_admin` | Store-scoped access via `store_admins` join |
+| `platform_admin` | Full access to all tables |
+
+### Order State Machine
+
 ```
 waiting_device → device_received → diagnosing → waiting_approval
     → repairing → quality_check → waiting_payment → completed → disputed
 ```
-Setiap transisi divalidasi. Status dapat dibatalkan (`cancelled`) dari hampir semua state.
+
+Setiap transisi divalidasi di Edge Function. Status dapat dibatalkan (`cancelled`) dari hampir semua state.
 
 ---
 
-## 4. Frontend Architecture
+## 5. Frontend Architecture
 
 ### Feature Structure
+
 ```
 frontend/lib/
-├── main.dart                          App entry, GoRouter, auth redirect
-├── core/                              Supabase service, config, shared enums
-├── shared_widgets/                    StatusBadge, ErrorState, EmptyState, formatters
-├── ui/                                Theme, widgets (ModernCard, Shimmer, etc.)
+├── main.dart                       App entry, GoRouter, auth redirect
+├── core/                           Supabase service, config, shared enums
+├── shared_widgets/                 StatusBadge, ErrorState, EmptyState, formatters
+├── ui/                             Theme, widgets (ModernCard, Shimmer, etc.)
 └── features/
-    ├── customer/                      26 screens, 10+ providers
-    ├── store_admin/                   17 screens, 11+ providers
-    └── platform_admin/                2 screens, 3 providers
+    ├── customer/                   26 screens, 10+ Riverpod providers
+    ├── store_admin/                17 screens, 11+ Riverpod providers
+    └── platform_admin/             2 screens, 3 Riverpod providers
 ```
 
-### Frontend → Supabase Connection
-- **Database**: Direct via `supabase_flutter` SDK (RLS protections)
+### Frontend → Supabase
+
+- **Database**: Direct via `supabase_flutter` SDK — RLS protects all queries
 - **Edge Functions**: Via `SupabaseService.instance.invoke()`
 - **Auth**: Via `SupabaseService.instance.signIn()` with synthetic email convention
 
----
+### State Management (Riverpod)
 
-## 5. Security Model
-
-| Check | Implementation | Severity |
-|-------|---------------|----------|
-| Row-level security | 50+ RLS policies on all tables | CRITICAL |
-| JWT authentication | Supabase Auth | CRITICAL |
-| State machine validation | Edge Functions + DB procedures | HIGH |
-| Stock atomicity | `reserve_stock` / `consume_stock` RPCs | HIGH |
-| Payment verification | HMAC-SHA512 signature | HIGH |
-| JWT separation | 3 roles with different secrets | CRITICAL |
-| SLA monitoring | Auto-cancel with stock rollback | MEDIUM |
+- `StateNotifierProvider` untuk form state dan mutable data
+- `FutureProvider` / `StreamProvider` untuk read-only data dari Supabase
+- Auto-dispose pattern untuk resource cleanup
 
 ---
 
-## 6. Deployment
+## 6. Security Model
 
-```bash
-# 1. Link Supabase project
-supabase link --project-ref <PROJECT_REF>
-
-# 2. Push SQL migrations
-supabase db push
-
-# 3. Deploy Edge Functions
-supabase functions deploy guest orders payments midtrans disputes reviews notifications admin store-applications cron-sla
-
-# 4. Set secrets
-supabase secrets set MIDTRANS_SERVER_KEY=...
-supabase secrets set WA_GATEWAY_URL=...
-supabase secrets set WA_GATEWAY_TOKEN=...
-
-# 5. Build Flutter APK
-cd frontend
-flutter build apk --release \
-  --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
-```
+| Check | Implementation |
+|-------|---------------|
+| Row-level security | 50+ RLS policies on all tables |
+| JWT authentication | Supabase Auth (3 role separation) |
+| State machine validation | Edge Functions + DB procedures |
+| Stock atomicity | `reserve_stock` / `consume_stock` RPCs |
+| Payment verification | Midtrans HMAC-SHA512 signature |
+| Email delivery | Resend.com API key (server-side only) |
+| SLA monitoring | Auto-cancel with stock rollback |
 
 ---
 
-*Architecture v3.0 — 100% Serverless Supabase — ServisGadget Production Ready*
+*Architecture — 100% Serverless Supabase — Service Hub*

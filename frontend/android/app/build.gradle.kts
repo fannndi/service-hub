@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.gms.google-services")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -46,9 +47,15 @@ android {
     defaultConfig {
         applicationId = "com.ti23a4.serviceme"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    dependencies {
+        implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
+        implementation("com.google.firebase:firebase-messaging")
+        implementation("com.google.firebase:firebase-analytics")
     }
 
     if (hasKeystore) {

@@ -1,3 +1,19 @@
 [api]
 enabled = true
 port = 54321
+
+[auth]
+enabled = true
+
+[functions]
+guest.verify_jwt = false
+store-applications.verify_jwt = false
+midtrans.verify_jwt = false
+cron-sla.verify_jwt = false
+seed-admin.verify_jwt = false
+orders.verify_jwt = true
+payments.verify_jwt = true
+disputes.verify_jwt = true
+reviews.verify_jwt = true
+notifications.verify_jwt = true
+admin.verify_jwt = true

@@ -21,7 +21,7 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
     // C8: Update is_first_login to false in Supabase metadata on login
     if (user.isFirstLogin) {
       await Supabase.instance.client.auth.updateUser(UserAttributes(
-        userMetadata: {'is_first_login': false, 'full_name': user.fullName},
+        data: {'is_first_login': false, 'full_name': user.fullName},
       ));
     }
     state = AsyncData(user.copyWith(isFirstLogin: false));
@@ -41,7 +41,7 @@ class CustomerAuthNotifier extends AsyncNotifier<CustomerUser?> {
     await repo.changePassword(oldPw, newPw);
     // C8: Update is_first_login to false in Supabase metadata
     await Supabase.instance.client.auth.updateUser(UserAttributes(
-      userMetadata: {'is_first_login': false},
+      data: {'is_first_login': false},
     ));
     final current = state.valueOrNull;
     if (current != null) {

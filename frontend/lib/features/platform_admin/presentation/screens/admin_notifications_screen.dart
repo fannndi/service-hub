@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:m3_expressive/m3_expressive.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../data/admin_notification_repository.dart';
 import '../../application/admin_notification_provider.dart';
 
 class AdminNotificationsScreen extends ConsumerStatefulWidget {
@@ -117,7 +118,8 @@ class _AdminNotificationsScreenState extends ConsumerState<AdminNotificationsScr
       if (diff.inHours < 24) return '${diff.inHours}j lalu';
       if (diff.inDays < 7) return '${diff.inDays}h lalu';
       return '${dt.day}/${dt.month}/${dt.year}';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('_relativeTime error: $e');
       return '';
     }
   }

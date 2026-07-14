@@ -29,6 +29,7 @@ export default {
 
       // ─── CREATE ORDER ───
       if (action === 'create-order') {
+        console.error('DEBUG admin keys:', Object.keys(admin).join(','));
         const { store_id, device_type, brand, device_model, delivery_method, delivery_address, customer_name, email, items } = body as Record<string, unknown>;
         if (!store_id || !device_type || !brand || !device_model || !customer_name || !email || !items?.length) {
           return fail('INVALID_INPUT', 'Missing required fields');
@@ -37,25 +38,26 @@ export default {
         tempPassword = generatePassword();
         const now = new Date().toISOString();
 
-        // C3: Use getUserByEmail instead of listUsers + find (paginated)
-        const { data: existingUser } = await admin.auth.admin.getUserByEmail(customerEmail).catch(() => ({ data: null }));
-        if (existingUser?.user) {
-          userId = existingUser.user.id;
-          await admin.from('users').update({
-            account_status: 'suspended', updated_at: now,
-          }).eq('id', userId);
-        } else {
-          const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
-            email: customerEmail, password: tempPassword, email_confirm: true,
-            user_metadata: { role: 'customer', full_name: customer_name },
-          });
-          if (authErr) return fail('CREATE_FAILED', `Auth user creation failed: ${authErr.message}`);
-          userId = authUser.user.id;
-          isNew = true;
-          await admin.from('users').update({
-            account_status: 'suspended', is_first_login: true, is_credential_sent: false, updated_at: now,
-          }).eq('id', userId);
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+        const signUpRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+          method: 'POST',
+          headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: customerEmail, password: tempPassword, email_confirm: true, user_metadata: { role: 'customer', full_name: customer_name } }),
+        });
+        const signUpBody = await signUpRes.json();
+        if (!signUpRes.ok) {
+          if (signUpBody.msg?.includes('already') || signUpBody.msg?.includes('exists')) {
+            return fail('EMAIL_EXISTS', 'Email sudah terdaftar. Silakan login.');
+          }
+          return fail('CREATE_FAILED', `Auth user creation failed: ${signUpBody.msg || signUpRes.statusText}`);
         }
+        userId = signUpBody.id;
+        if (!userId) return fail('CREATE_FAILED', 'Auth user created but no ID returned');
+        isNew = true;
+        await admin.from('users').update({
+          account_status: 'suspended', is_first_login: true, is_credential_sent: false, updated_at: now,
+        }).eq('id', userId);
 
         const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         const { count } = await admin.from('service_orders')
@@ -77,6 +79,11 @@ export default {
           }
         }
 
+        for (const i of items as OrderItem[]) {
+          if (typeof i.item_price !== 'number' || i.item_price < 0) {
+            return fail('INVALID_PRICE', 'Item price must be non-negative');
+          }
+        }
         const orderNumber = generateOrderNumber();
         const totalEstimasi = (items as OrderItem[]).reduce((s: number, i: OrderItem) => s + (i.item_price || 0), 0);
 
@@ -139,11 +146,11 @@ export default {
       // C7: Release any reserved stock on unexpected error
       for (const spId of reservedSparepartIds) {
         const { supabaseAdmin: admin } = ctx;
-        await admin.rpc('release_stock', { p_sparepart_id: spId }).catch(() => {});
+        try { await admin.rpc('release_stock', { p_sparepart_id: spId }); } catch (_) {}
       }
       if (isNew && userId) {
         const { supabaseAdmin: admin } = ctx;
-        await admin.auth.admin.deleteUser(userId).catch(() => {});
+        try { await admin.auth.admin.deleteUser(userId); } catch (_) {}
       }
       return fail('INTERNAL', err instanceof Error ? err.message : 'Unknown error', 500);
     }

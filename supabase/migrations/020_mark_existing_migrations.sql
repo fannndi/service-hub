@@ -17,6 +17,5 @@ INSERT INTO _supabase_migrations (version, name, timestamp) VALUES
   ('017', '017_email_notifications.sql', now()),
   ('018', '018_add_midtrans_unique.sql', now()),
   ('019', '019_trigger_cleanup.sql', now()),
-  ('999', '999_create_test_users.sql', now()),
-  ('999', '999_reset_and_seed.sql', now())
+  ('999', '999_create_test_users.sql', now())
 ON CONFLICT (version) DO NOTHING;

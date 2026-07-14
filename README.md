@@ -1,127 +1,229 @@
-﻿# ServisGadget
+﻿# Service Me (ServisGadget)
 
-> Platform marketplace servis gadget dua sisi — **100% serverless. Tanpa VPS.**
+> Gadget repair marketplace — 100% serverless on Supabase. No VPS, no Docker, no NestJS.
+
+Platform dua sisi: customer booking servis gadget, store admin mengelola perbaikan, platform admin mengawasi toko.
+
+---
 
 ## Tech Stack
 
-| Layer | Tech | Biaya |
-|-------|------|-------|
-| Backend | Supabase (Edge Functions + PostgreSQL + Auth + Storage) | ✅ Free tier |
-| Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14 | ✅ Gratis |
-| Auth | Supabase Auth — 3 roles (customer, store_admin, platform_admin) | ✅ Included |
-| Payments | Midtrans via Edge Function | ✅ Per transaksi |
-| Infra | **Tidak perlu server/Docker/NestJS** | **$0/bulan** |
+| Layer | Tech |
+|-------|------|
+| Frontend | Flutter 3.4+, Dart 3, Riverpod 2.6, GoRouter 14 |
+| Backend | Supabase (Edge Functions + Auth + PostgreSQL + Storage) |
+| Auth | Supabase Auth — email-based, 3 roles |
+| Payments | Midtrans Snap (sandbox) via Edge Function webhook |
+| Email | Resend.com (transactional — confirmation, activation, notifications) |
+| Push | Firebase Cloud Messaging |
+| Crash | Firebase Crashlytics |
+| Font | Google Fonts |
+
+### Edge Functions (11)
+
+| Function | Auth | Purpose |
+|----------|------|---------|
+| `guest` | None | Booking tanpa login, tracking guest, resend credentials |
+| `orders` | JWT | Create order, diagnosis, approve/reject, status transitions |
+| `payments` | JWT | Upload payment proof (customer), confirm payment (store admin) |
+| `midtrans` | None | Generate Snap token, process Midtrans webhook |
+| `disputes` | JWT | Create warranty claim, store accept/reject |
+| `reviews` | JWT | Create review + auto-generate coupon reward |
+| `notifications` | JWT | Broadcast to role, send email (platform admin only) |
+| `admin` | JWT | Approve stores, manage users, delete accounts |
+| `store-applications` | None | Submit store registration |
+| `cron-sla` | CRON_SECRET | Auto-cancel orders past SLA deadline |
+| `seed-admin` | None | One-shot platform admin creation |
 
 ---
 
-## Quick Start (5 menit)
+## Architecture
 
-```bash
-# 1. Clone
-git clone https://github.com/fannndi/service-hub.git && cd service-hub
-
-# 2. Deploy ke Supabase
-npx supabase login
-npx supabase link --project-ref eboplbemgtvmviwhdlfa
-npx supabase db push                              # Migrate database
-npx supabase functions deploy orders guest payments midtrans disputes reviews notifications admin store-applications cron-sla
-npx supabase secrets set MIDTRANS_SERVER_KEY=xxx WA_GATEWAY_URL=xxx WA_GATEWAY_TOKEN=xxx
-
-# 3. Build APK
-cd frontend
-flutter build apk --release \
-  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_xxxx
-
-# 4. Install APK ke HP
 ```
+┌─────────────────────────────────────────────────────────────┐
+│                       Flutter App                           │
+│  (Riverpod + GoRouter + supabase_flutter)                   │
+│  27 Customer · 16 Store Admin · 3 Platform Admin screens    │
+└───────┬──────────────────────────────┬──────────────────────┘
+        │                              │
+        ▼                              ▼
+┌───────────────┐          ┌──────────────────────┐
+│  Supabase DB  │          │   Supabase Auth       │
+│  (PostgreSQL) │◄─RLS──►  │   (email + password)  │
+│  15+ tables   │          │   3 roles             │
+│  21 migrations│          └──────────────────────┘
+└───────┬───────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────────────────┐
+│                Edge Functions (11 Deno/TS)                   │
+│  guest  │  orders  │  payments  │  midtrans  │  disputes    │
+│  reviews │ notifications │ admin │ store-applications        │
+│  cron-sla │ seed-admin                                       │
+│  ┌────────────────────────────────────┐                      │
+│  │ _shared/                           │                      │
+│  │  helpers.ts — state machine + responses                   │
+│  │  cors.ts    — CORS headers                                │
+│  │  crypto.ts  — order number + password + coupon generation │
+│  │  email.ts   — Resend.com integration                      │
+│  └────────────────────────────────────┘                      │
+└──────────────────────────────────────────────────────────────┘
+        │                              │
+        ▼                              ▼
+┌──────────────┐          ┌──────────────────────┐
+│ Supabase     │          │  Midtrans Snap       │
+│ Storage      │          │  (sandbox)           │
+│ (proofs,     │          │  token + webhook     │
+│  avatars)    │          └──────────────────────┘
+└──────────────┘
+```
+
+### Key Design Decisions
+
+- **RLS over app-level auth**: Flutter reads DB directly via Supabase client with RLS policies. Edge Functions use service_role for admin operations.
+- **Guest booking flow**: Customer books without account → auto-creates suspended user → store "device_received" triggers auto-activation → email sends credentials.
+- **Idempotent payments**: Midtrans webhook dedup by `midtrans_transaction_id` unique constraint.
+- **SLA enforcement**: `cron-sla` Edge Function checks stalled orders and auto-cancels past deadline.
 
 ---
 
-## Fitur
+## Features
 
-### 👤 Customer (27 layar)
-Booking servis, lacak pesanan (tanpa login), upload pembayaran, review, klaim garansi.
+### Customer (27 screens)
 
-### 🏪 Store Admin (16 layar)
-Dashboard, manajemen order, diagnosis, inventory sparepart, payment confirmation, analytics.
+Booking, tracking, upload payment, review, warranty claim, guest tracking, profile, settings, notifications, coupons, session management.
 
-### 🛡️ Platform Admin (2 layar)
-Login + dashboard, kelola toko, manage users.
+### Store Admin (16 screens)
 
----
+Dashboard, order management, diagnosis, inventory, sparepart CRUD, payment confirmation, analytics, disputes, reviews, tracking.
 
-## Alur Utama: Guest Booking → Aktifasi Akun
+### Platform Admin (3 screens)
 
-Aplikasi ini punya mekanisme unik: **user bisa booking tanpa daftar akun**.
-
-```
-👤 User: Buka app → Ajukan Servis → Isi form → Booking
-   ↓
-⚡ Edge Function `guest` (action: create-order)
-   ├── Auto-buat user di DB (status: suspended)
-   ├── Generate password random
-   └── Order tersimpan
-   ↓
-👤 User: Dapat nomor order → Lacak via Guest Tracking
-   ↓
-🏪 Store Admin: Terima device → Update status → `device_received`
-   ↓
-⚡ Edge Function `orders` (action: status)
-   └── Auto-activate: create Supabase Auth user + WA notif
-   ↓
-👤 User: Akun aktif → Login pakai phone + password
-```
-
-**11 state order machine:**
-```
-pending → waiting_device → device_received → diagnosing → waiting_approval
-→ waiting_sparepart → repairing → quality_check → waiting_payment
-→ completed → [disputed → resolved/cancelled]
-```
+Login, dashboard, store management, user management, notifications.
 
 ---
 
-## Arsitektur
+## Database Schema
 
-```
-Flutter App ──┬── Supabase Auth (login 3 roles, native)
-              ├── Supabase DB (langsung via RLS — SELECT/INSERT aman)
-              ├── Edge Functions (11 function, business logic)
-              │     ├── guest       — Booking tanpa auth
-              │     ├── orders      — Order lifecycle + auto-activate
-              │     ├── payments    — Payment CRUD
-              │     ├── midtrans    — Midtrans Snap + webhook
-              │     ├── disputes    — Klaim garansi
-              │     ├── reviews     — Review + rating
-              │     ├── notifications — In-app + WhatsApp
-              │     ├── admin       — Platform admin
-              │     ├── store-applications — Registrasi toko
-              │     └── cron-sla    — Auto-cancel SLA breach
-              └── Supabase Storage — Upload file (bukti bayar, avatar)
-```
+### Enums
 
-### Kenapa Serverless?
+| Enum | Values |
+|------|--------|
+| `account_status` | active, suspended, deleted |
+| `device_type` | android, ios |
+| `delivery_method` | walk_in, courier_pickup |
+| `order_status` | 11 states (see state machine) |
+| `payment_status` | unpaid, partially_paid, paid, refunded |
+| `payment_method` | transfer_bank, qris, cash, ewallet, midtrans |
+| `payment_type` | deposit, final_payment, refund |
+| `payment_record_status` | pending, confirmed, failed, refunded |
+| `sparepart_status` | available, preorder, discontinued |
+| `order_item_status` | pending, confirmed, replaced, cancelled |
+| `dispute_type` | warranty_claim, service_quality, wrong_diagnosis, other |
+| `dispute_status` | open, store_accepted, store_rejected, escalated, resolved, closed |
+| `created_by_type` | customer, store_admin, system |
+| `application_status` | pending, approved, rejected |
 
-| Traditional | ServisGadget |
-|-------------|-------------|
-| Sewa VPS $5-20/bulan | **$0** — Supabase free tier |
-| Install Node.js, Redis, Docker | **Tidak perlu** |
-| Update OS, security patches | **Otomatis** oleh Supabase |
-| Scaling manual | **Auto-scale** |
-| Monitoring sendiri | **Built-in** dashboard |
+### Core Tables
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `users` | Customer accounts | phone_number (unique), account_status, is_first_login |
+| `stores` | Repair stores | store_name, config (JSONB — warranty_days, etc) |
+| `store_admins` | Staff per store | store_id (FK), is_active |
+| `store_applications` | Store registration queue | status, business_license_url, id_card_url |
+| `service_orders` | Service orders | user_id, store_id, status, order_number (unique), final_price, sla_deadline |
+| `order_items` | Line items per order | sparepart_id, service_type, complaint, item_price, final_item_price |
+| `service_tracking` | Status history per order | status, note, created_by_type |
+| `spareparts` | Inventory per store | qty, qty_reserved, price, brand, device_model |
+| `payments` | Payment records | amount, status, proof_url, midtrans fields |
+| `reviews` | Customer reviews | rating (1-5), comment, is_public |
+| `coupons` | Review reward coupons | code (unique), amount, is_used, expired_at |
+| `disputes` | Warranty claims | dispute_type, status, evidence_urls (JSONB) |
+| `notifications` | In-app notifications | role, type, title, message, is_read |
+| `platform_admins` | Super admin accounts | username (unique) |
+| `failed_notifications` | Email send failure log | payload (JSONB), attempt_count |
+
+### RLS
+
+All tables have RLS enabled. Flutter client queries go through per-row policies:
+- Customers see only their own orders/payments/reviews
+- Store admins see only their store's data (via `store_id` from `store_admins`)
+- Platform admins use Edge Functions exclusively (no direct DB access from app)
 
 ---
 
-## Auth 3 Role
+## Order State Machine
 
-| Role | Email Format | Login via |
-|------|-------------|-----------|
-| Customer | `{phone}@customer.servisgadget.com` | Supabase Auth |
-| Store Admin | `{phone}@store.servisgadget.com` | Supabase Auth |
-| Platform Admin | `{username}@servisgadget.com` | Supabase Auth |
+```
+pending ──→ waiting_device ──→ device_received ──→ diagnosing ──→ waiting_approval
+                  │                  │                  │               │
+                  │                  │                  │               │
+                  ▼                  ▼                  ▼               ▼
+              cancelled          cancelled          cancelled       cancelled
+                                                                        │
+                                                                        ▼
+                                                              ┌─────────────────┐
+                                                              │  waiting_approval│
+                                                              └────────┬────────┘
+                                                                       │
+                                                  ┌────────────────────┤
+                                                  ▼                    ▼
+                                          repairing ◄─── waiting_sparepart
+                                              │
+                                              ▼
+                                        quality_check
+                                              │
+                                              ▼
+                                       waiting_payment ──→ completed ──→ disputed
+                                              │                  │            │
+                                              ▼                  ▼            ▼
+                                          cancelled        (done)      resolved / cancelled
+```
 
-Semua login pakai **Supabase Auth native** — tidak ada backend custom.
+Valid transitions (enforced in `_shared/helpers.ts`):
+
+| From | To |
+|------|----|
+| `waiting_device` | device_received, cancelled |
+| `device_received` | diagnosing, cancelled |
+| `diagnosing` | waiting_approval, cancelled |
+| `waiting_approval` | repairing, waiting_sparepart, cancelled |
+| `waiting_sparepart` | repairing, cancelled |
+| `repairing` | quality_check, cancelled |
+| `quality_check` | waiting_payment, cancelled |
+| `waiting_payment` | completed, cancelled |
+| `completed` | disputed |
+| `disputed` | completed |
+
+**SLA**: Most states have 24h SLA deadline enforced by `cron-sla` Edge Function. `waiting_payment` has 48h. Breach auto-cancels.
+
+---
+
+## Auth Roles
+
+| Role | Email Format | Access |
+|------|-------------|--------|
+| Customer | `{phone}@customer.servisgadget.com` | Own orders, payments, reviews |
+| Store Admin | `{phone}@store.servisgadget.com` | Store orders, inventory, analytics |
+| Platform Admin | `{username}@servisgadget.com` | All stores, applications, users |
+
+Supabase Auth native — no custom auth backend. Role stored in `user_metadata.role`. Edge Functions verify via JWT claims.
+
+### Guest Booking Flow
+
+```
+User opens app → fills booking form → Edge Function `guest` (create-order)
+  → Auto-create Supabase Auth user (suspended)
+  → Order saved with status `waiting_device`
+  → Email sent with temp password
+
+Store receives device → updates status to `device_received`
+  → Edge Function `orders` auto-activates user
+  → Email sent with activation credentials
+
+User can now login with their email + password
+```
 
 ---
 
@@ -129,12 +231,18 @@ Semua login pakai **Supabase Auth native** — tidak ada backend custom.
 
 ### Supabase Secrets (`supabase secrets set`)
 
-| Variable | Kegunaan |
-|----------|----------|
-| `MIDTRANS_SERVER_KEY` | Midtrans payment server key |
-| `MIDTRANS_CLIENT_KEY` | Midtrans client key |
-| `WA_GATEWAY_URL` | WhatsApp gateway URL |
-| `WA_GATEWAY_TOKEN` | WhatsApp gateway token |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Yes | Supabase anon/publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Admin operations in Edge Functions |
+| `MIDTRANS_SERVER_KEY` | Yes | Midtrans server key (for webhook verification) |
+| `MIDTRANS_CLIENT_KEY` | Yes | Midtrans client key |
+| `RESEND_API_KEY` | No | Resend.com API key (transactional email) |
+| `EMAIL_FROM` | No | Sender address (default: onboarding@resend.dev) |
+| `CRON_SECRET` | No | Protects cron-sla endpoint |
+| `SEED_ADMIN_PASSWORD` | No | Seed admin initial password |
+| `SEED_ADMIN_SECRET` | No | Protects seed-admin endpoint |
 
 ### Flutter Build Args
 
@@ -146,47 +254,108 @@ flutter build apk --release \
 
 ---
 
-## Deployment
+## Setup
 
-### 1. Database + Edge Functions
+### Prerequisites
+
+- Flutter 3.4+ / Dart 3
+- Supabase CLI
+- Midtrans account (sandbox)
+- Resend.com account (optional, for email)
+
+### 1. Clone & Link
 
 ```bash
-supabase functions deploy orders guest payments midtrans disputes reviews notifications admin store-applications cron-sla
-supabase db push
-supabase secrets set MIDTRANS_SERVER_KEY=xxx
+git clone https://github.com/fannndi/service-hub.git && cd service-hub
+npx supabase login
+npx supabase link --project-ref eboplbemgtvmviwhdlfa
 ```
 
-### 2. Build APK
+### 2. Deploy Database
+
+```bash
+npx supabase db push
+```
+
+Applies all 21 migrations (schema, RLS, functions, triggers, seed data).
+
+### 3. Deploy Edge Functions
+
+```bash
+npx supabase functions deploy \
+  guest orders payments midtrans disputes reviews \
+  notifications admin store-applications cron-sla seed-admin
+```
+
+### 4. Set Secrets
+
+```bash
+npx supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
+npx supabase secrets set MIDTRANS_CLIENT_KEY=Mid-client-xxx
+npx supabase secrets set RESEND_API_KEY=re_xxx
+npx supabase secrets set EMAIL_FROM="Service Me <noreply@serviceme.app>"
+npx supabase secrets set CRON_SECRET=your-cron-secret
+npx supabase secrets set SEED_ADMIN_PASSWORD=admin123
+```
+
+### 5. Seed Platform Admin
+
+```bash
+curl -X POST https://eboplbemgtvmviwhdlfa.supabase.co/functions/v1/seed-admin
+```
+
+### 6. Build APK
 
 ```bash
 cd frontend
 flutter build apk --release \
-  --dart-define=SUPABASE_URL=... \
-  --dart-define=SUPABASE_ANON_KEY=...
+  --dart-define=SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_xxxx
 ```
 
 Output: `build/app/outputs/flutter-apk/app-release.apk`
 
-### 3. Play Store
+---
+
+## Deployment
+
+### Supabase (production)
 
 ```bash
-flutter build appbundle --release --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+npx supabase db push
+npx supabase functions deploy guest orders payments midtrans disputes reviews notifications admin store-applications cron-sla
+npx supabase secrets set MIDTRANS_SERVER_KEY=xxx RESEND_API_KEY=re_xxx
 ```
 
-Upload `app-release.aab` ke Play Console. Biaya: $25 developer fee (sekali).
+Update `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Flutter build args.
+
+### Play Store
+
+```bash
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=... \
+  --dart-define=SUPABASE_ANON_KEY=...
+```
+
+Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 
 ---
 
 ## Testing
 
-| Jenis | Jumlah | Status |
-|-------|--------|--------|
+| Type | Count | Status |
+|------|-------|--------|
 | Backend unit | 57 | ✅ |
 | Backend security | 30 | ✅ |
 | Backend integration | 65 | ✅ |
 | Frontend widget | 9 | ✅ |
 | Frontend model | 14 | ✅ |
-| **Total** | **175** | ✅ **ALL PASSING** |
+| **Total** | **175** | ✅ ALL PASSING |
+
+```bash
+cd frontend
+flutter test
+```
 
 ---
 
@@ -194,14 +363,35 @@ Upload `app-release.aab` ke Play Console. Biaya: $25 developer fee (sekali).
 
 ```
 service-hub/
-├── frontend/lib/                Flutter app (45 screens)
-│   ├── features/customer/       Customer: 25 screens + 10 providers
-│   ├── features/store_admin/    Store Admin: 16 screens + 11 providers
-│   └── features/platform_admin/ Platform Admin: 2 screens
+├── frontend/lib/
+│   ├── core/
+│   │   ├── cache/               Local caching layer
+│   │   ├── data/                Repository implementations
+│   │   ├── domain/              Domain models (order_status, etc)
+│   │   ├── l10n/                Localization
+│   │   ├── widgets/             Shared widgets
+│   │   ├── supabase_config.dart Supabase URL + key + email builders
+│   │   └── supabase_service.dart Supabase client singleton
+│   └── features/
+│       ├── customer/            27 screens, providers, domain
+│       ├── store_admin/         16 screens, 11 providers, domain
+│       └── platform_admin/      3 screens, providers, domain
 ├── supabase/
-│   ├── migrations/              15 SQL files (schema, RLS, functions)
-│   └── functions/               11 Edge Functions
-├── docs/                        PRD, architecture, testing report
+│   ├── migrations/              21 SQL migrations
+│   └── functions/
+│       ├── _shared/             cors.ts, crypto.ts, email.ts, helpers.ts
+│       ├── guest/               Guest booking + tracking
+│       ├── orders/              Order CRUD + lifecycle
+│       ├── payments/            Payment CRUD + confirmation
+│       ├── midtrans/            Snap token + webhook
+│       ├── disputes/            Warranty claims
+│       ├── reviews/             Reviews + coupon generation
+│       ├── notifications/       Broadcast + email
+│       ├── admin/               Platform admin operations
+│       ├── store-applications/  Store registration
+│       ├── cron-sla/            SLA breach auto-cancel
+│       └── seed-admin/          One-shot admin seeder
+├── docs/                        PRD, architecture, testing reports
 └── scripts/                     Build helpers
 ```
 
@@ -209,9 +399,10 @@ service-hub/
 
 ## Docs
 
-| File | Isi |
-|------|-----|
+| File | Content |
+|------|---------|
 | `docs/PRD/00_MASTER_PRD.md` | Product requirements |
 | `docs/architecture.md` | System architecture |
 | `docs/testing/verification-report.md` | 175 test results |
 | `CHANGELOG.md` | Version history |
+| `PRIVACY_POLICY.md` | Privacy policy |

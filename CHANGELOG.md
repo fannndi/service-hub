@@ -388,3 +388,44 @@
 ---
 
 **Status: All 3 phases complete — merged into `main`.**
+
+---
+
+## v1.0.1+2 — 2026-07-14 — Production Hardening + Supabase Serverless Migration
+
+### Added
+- **Firebase integration**: FCM + Crashlytics deps, google-services.json, ProGuard keep rules
+- **Account deletion**: UI in Profile screen + `delete-account` action in admin Edge Function
+- **App icon**: 1024×1024 PNG generated, adaptive icons via flutter_launcher_icons
+- **Phone field**: Added `phone` controller to service flow (separate from email)
+- **5MB upload limit**: File size validation in upload_repository.dart
+- **Null safety**: Guards before `!` operators in service_flow_screen
+- **Missing DB indexes**: 6 indexes (order_items, payments, reviews, shipments, user_sessions)
+- **CHECK constraints**: 6 new constraints (amount>0, price>0, rating_avg, penalty_points, etc.)
+- **RLS policies**: 8 new policies (order_items INSERT, reviews store_admin, coupons INSERT/UPDATE, platform_admin)
+- **Unique constraints**: store_applications.phone_number, stores.phone_number
+- **autoDispose**: home_provider autoDispose to prevent memory leak
+- **Resend.com email**: WhatsApp/Fonnte fully replaced with Resend transactional email
+- **Secret header auth**: seed-admin endpoint now requires `x-seed-admin-secret`
+
+### Fixed
+- **CRITICAL: Auth signup 500** — `handle_new_user()` trigger fixed: phone_number using SHA256 hash instead of `SPLIT_PART(email)` to avoid UNIQUE violations
+- **CRITICAL: Guest email spam** — `guest/index.ts` blocks duplicate emails for unauthenticated requests
+- **CRITICAL: Wrong password in activation email** — `orders/index.ts` now generates new temp password on activation instead of sending `'supabase-managed'` placeholder
+- **CRITICAL: delete-account orphan records** — `admin/index.ts` now fetches order IDs first, then deletes tracking/items by `order_id`
+- **HIGH: Stock leak in orders** — price validation + coupon check now before stock reservation; rollback on failure
+- **HIGH: `auto_cancel_sla` type mismatch** — updated to use `SET search_path = ''` with schema-prefixed queries
+- **HIGH: SECURITY DEFINER functions public** — revoked EXECUTE from anon/authenticated for 12 sensitive RPCs
+- **HIGH: RLS user_metadata** — 14 policies recreating using table lookup (not auth.jwt())
+- **HIGH: `.catch()` deprecated** — replaced all `.catch()` with try/catch in email.ts and guest/index.ts
+- **HIGH: Booking extra type** — `booking_form_screen` passes `Map` not `bool` as route extra
+- **L10n**: Added missing `whatsappNumber`/`whatsapp` to abstract class
+- **Logout redirect**: `/welcome` instead of `/login`
+- **`cached_network_image`**: Removed from pubspec (unused, +50KB APK)
+
+### Infrastructure
+- **Migrations 020-024**: Applied to remote Supabase DB
+- **Edge Functions**: All 11 functions deployed with latest fixes
+- **Secrets set**: MIDTRANS_SERVER_KEY, EMAIL_FROM, RESEND_API_KEY
+- **`supabase db lint`**: Zero errors (user_metadata, SECURITY DEFINER, search_path)
+- **Documentation**: README, PRD, architecture, deployment, run-guide, verification report — all rewritten to reflect 100% Supabase serverless architecture**

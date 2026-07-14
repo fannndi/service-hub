@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/admin_notification_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase_service.dart';
 
 final adminNotificationRepositoryProvider = Provider<AdminNotificationRepository>((_) => AdminNotificationRepository());
@@ -27,12 +27,11 @@ final adminRealtimeProvider = StreamProvider.autoDispose<int>((ref) {
   final controller = StreamController<int>();
   final channel = Supabase.instance.client
     .channel('admin-notifications')
-    .on('postgres_changes',
-        event: 'INSERT',
+    .onPostgresChanges(
+        event: PostgresChangeEvent.insert,
         schema: 'public',
         table: 'notifications',
-        filter: null,
-        (payload) {
+        callback: (payload) {
       ref.invalidate(adminNotificationsProvider);
       ref.invalidate(adminUnreadCountProvider);
     })

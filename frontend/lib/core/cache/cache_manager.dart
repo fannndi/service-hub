@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'cache_config.dart';
 
@@ -21,7 +22,7 @@ class CacheManager {
         'ttlSeconds': (ttl ?? CacheConfig.stores).inSeconds,
       };
       await prefs.setString('cache_$key', jsonEncode(entry));
-    } catch (_) {}
+    } catch (e) { debugPrint('CacheManager.set error: $e'); }
   }
 
   T? get<T>(String key) {
@@ -52,7 +53,8 @@ class CacheManager {
       final decoded = jsonDecode(entry['data'] as String);
       _memoryCache[key] = _MemoryEntry(data: decoded, cachedAt: cachedAt);
       return decoded as T;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('CacheManager.getAsync error: $e');
       return null;
     }
   }
@@ -62,7 +64,7 @@ class CacheManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cache_$key');
-    } catch (_) {}
+    } catch (e) { debugPrint('CacheManager.invalidate error: $e'); }
   }
 
   Future<void> clear() async {
@@ -73,7 +75,7 @@ class CacheManager {
       for (final key in keys) {
         await prefs.remove(key);
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('CacheManager.clear error: $e'); }
   }
 
   dynamic _toJsonSafe(dynamic value) {

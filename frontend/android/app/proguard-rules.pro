@@ -31,6 +31,18 @@
 -keep class com.google.android.play.core.** { *; }
 -dontwarn com.google.android.play.core.**
 
+# Firebase Crashlytics + Messaging
+-keep class com.google.firebase.crashlytics.** { *; }
+-keep class com.google.firebase.messaging.** { *; }
+-keep class com.google.firebase.** { *; }
+
+# Supabase/Dio JSON models
+-keep class com.ti23a4.serviceme.** { *; }
+-keepattributes *Annotation*, Signature, EnclosingMethod
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
 # Generic Android rules
 -dontwarn javax.annotation.**
 -dontwarn sun.misc.Unsafe

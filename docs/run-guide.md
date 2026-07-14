@@ -1,91 +1,99 @@
-﻿# Run Guide — ServisGadget (100% Serverless)
+﻿# Run Guide — Service Hub (100% Serverless)
 
-## 0. Prasyarat
+## 0. Prerequisites
+
 - Flutter SDK 3.4+
 - Supabase CLI (`npm install -g supabase`)
-- Android Emulator atau HP fisik
+- Android Emulator or physical device
 
 ## 1. Setup Project
 
 ```bash
-# Clone repo
 git clone https://github.com/fannndi/service-hub.git
-cd service-hub
-
-# Setup frontend
-cd frontend
+cd service-hub/frontend
 flutter pub get
 ```
 
-## 2. Setup Env Variables
+## 2. Environment Variables
 
-Buat `.env` dari contoh yang ada (atau minta dari tim):
 ```env
 SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
-SUPABASE_ANON_KEY=sb_publishable_xxxx
+SUPABASE_ANON_KEY=<your-anon-key>
 ```
+
+> No local Supabase stack. Project uses a **remote Supabase instance**. No Docker, no local PostgreSQL.
 
 ## 3. Run Flutter App
 
-### Emulator
 ```bash
 cd frontend
-flutter run --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+flutter run --dart-define=SUPABASE_URL=%SUPABASE_URL% ^
+  --dart-define=SUPABASE_ANON_KEY=%SUPABASE_ANON_KEY%
 ```
 
-### HP Fisik
+For release mode on a physical device:
+
 ```bash
-flutter run --release --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+flutter run --release --dart-define=SUPABASE_URL=%SUPABASE_URL% ^
+  --dart-define=SUPABASE_ANON_KEY=%SUPABASE_ANON_KEY%
 ```
 
-## 4. Build APK/AAB
+### Using scripts
+
+| Script | Function |
+|--------|----------|
+| `scripts/run_emulator.bat` | Run on emulator-5554 (debug) |
+| `scripts/build_apk.bat` | Build release APK |
+| `scripts/build_appbundle.bat` | Build Play Store AAB |
+| `scripts/build.bat` | Build APK (reads `.env` automatically) |
+
+Scripts expect `SUPABASE_URL` and `SUPABASE_ANON_KEY` in environment or `.env` at repo root.
+
+## 4. Run Tests
 
 ```bash
 cd frontend
-
-# APK release (testing)
-flutter build apk --release \
-  --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
-
-# AAB (Play Store)
-flutter build appbundle --release \
-  --dart-define=SUPABASE_URL=$SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+flutter test
 ```
 
-## 5. Deploy Backend (Edge Functions)
+23 tests across 4 test files.
+
+## 5. Link to Remote Supabase
 
 ```bash
-# Login ke Supabase
-supabase login
-
-# Link project
 supabase link --project-ref eboplbemgtvmviwhdlfa
-
-# Push migrations
-supabase db push
-
-# Deploy semua Edge Functions
-supabase functions deploy guest orders payments midtrans disputes reviews notifications admin store-applications cron-sla
-
-# Set environment secrets
-supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
-supabase secrets set WA_GATEWAY_URL=...
-supabase secrets set WA_GATEWAY_TOKEN=...
 ```
 
-## 6. Login
+## 6. Deploy Edge Functions
 
-| Halaman | Route | Kredensial |
-|---------|-------|------------|
-| Admin Platform | `/admin/login` | `admin` / `admin123` |
-| Pelanggan | `/login` | HP + password (atau guest) |
-| Toko | `/store-login` | Dibuat oleh Admin Platform |
+```bash
+# Deploy all at once
+supabase functions deploy admin cron-sla disputes guest midtrans ^
+  notifications orders payments reviews seed-admin store-applications
 
-## 7. Arsitektur
+# Set secrets
+supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
+supabase secrets set RESEND_API_KEY=re_xxx
+supabase secrets set EMAIL_FROM="Service Me <noreply@serviceme.app>"
+```
+
+## 7. Test Edge Functions (curl / PowerShell)
+
+```powershell
+# Health check
+curl -X POST https://eboplbemgtvmviwhdlfa.supabase.co/functions/v1/orders `
+  -H "Authorization: Bearer $SUPABASE_ANON_KEY" `
+  -H "Content-Type: application/json" `
+  -d '{\"action\":\"ping\"}'
+
+# With service role (admin operations)
+curl -X POST https://eboplbemgtvmviwhdlfa.supabase.co/functions/v1/admin `
+  -H "Authorization: Bearer $SERVICE_ROLE_KEY" `
+  -H "Content-Type: application/json" `
+  -d '{\"action\":\"list_stores\"}'
+```
+
+## Architecture
 
 ```
 Flutter App → Supabase SDK
@@ -94,4 +102,4 @@ Flutter App → Supabase SDK
   └── Supabase Auth — login/session
 ```
 
-Tidak ada backend server. Semua serverless via Supabase.
+No backend server. 100% serverless via Supabase.

@@ -136,7 +136,7 @@ class _BookingFormScreenState extends ConsumerState<BookingFormScreen> {
       final result = await ref.read(orderRepositoryProvider).createOrder(req);
       if (!mounted) return;
       context.go('/booking-success/${result.orderNumber}',
-          extra: result.isNewCustomer);
+          extra: {'isNewCustomer': result.isNewCustomer});
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context)

@@ -43,7 +43,7 @@ We share your information only with:
 
 - **Repair shops**: Your name, phone number, and device details are shared with the shop you select for service
 - **Supabase**: Our backend infrastructure provider (see [Supabase Privacy Policy](https://supabase.com/privacy))
-- **WhatsApp (Fonnte)**: For sending order notifications via WhatsApp
+- **Resend.com**: For sending transactional email notifications (order confirmations, account activation)
 - **Midtrans**: For payment processing (see [Midtrans Privacy Policy](https://midtrans.com/privacy))
 
 We do not sell your personal information to third parties.

@@ -99,7 +99,8 @@ async function processNotification(body: Record<string, unknown>, admin: any) {
     });
     if (e3) return fail('DB_ERROR', e3.message);
 
-    const warrantyDays = 30;
+    const { data: store } = await admin.from('stores').select('config').eq('id', order.store_id).single();
+    const warrantyDays = (store?.config as Record<string, any>)?.['warranty_days'] ?? 30;
     const warrantyExpiredAt = new Date(Date.now() + warrantyDays * 24 * 60 * 60 * 1000).toISOString();
     await admin.from('service_orders').update({
       warranty_days: warrantyDays, warranty_expired_at: warrantyExpiredAt,

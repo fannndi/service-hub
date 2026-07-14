@@ -148,6 +148,30 @@ export default {
         return ok({ store_id: store.id, admin_id: authUser.user.id });
       }
 
+      // ─── DELETE ACCOUNT ───
+      if (action === 'delete-account') {
+        const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+        if (!token) return fail('UNAUTHORIZED', 'No token', 401);
+        const { data: { user }, error: authErr } = await admin.auth.getUser(token);
+        if (authErr || !user) return fail('UNAUTHORIZED', 'Invalid token', 401);
+        const userId = user.id;
+        const { data: orderIds } = await admin.from('service_orders').select('id').eq('user_id', userId);
+        const ids = (orderIds || []).map((o: any) => o.id);
+        await admin.from('disputes').delete().eq('user_id', userId);
+        await admin.from('reviews').delete().eq('user_id', userId);
+        await admin.from('coupons').delete().eq('user_id', userId);
+        await admin.from('payments').delete().eq('user_id', userId);
+        if (ids.length > 0) {
+          await admin.from('service_tracking').delete().in('order_id', ids);
+          await admin.from('order_items').delete().in('order_id', ids);
+        }
+        await admin.from('service_orders').delete().eq('user_id', userId);
+        await admin.from('user_sessions').delete().eq('user_id', userId);
+        await admin.from('users').delete().eq('id', userId);
+        await admin.auth.admin.deleteUser(userId);
+        return ok({ message: 'Account deleted' });
+      }
+
       return fail('NOT_FOUND', 'Unknown action', 404);
     } catch (err: any) {
       return fail(err.code || 'INTERNAL', err.message, 500);

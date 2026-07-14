@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/supabase_service.dart';
 import '../../../../ui/theme/app_spacing.dart';
 import '../../../../ui/widgets/modern_card.dart';
+import '../../../../ui/widgets/servis_snackbar.dart';
 import '../../application/customer_providers.dart';
 import '../../data/customer_repositories.dart';
 import '../widgets/customer_widgets.dart';
@@ -136,7 +138,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               title: Text(context.l10n.logout, style: TextStyle(color: scheme.error)),
               onTap: () async {
                 await ref.read(customerAuthProvider.notifier).logout();
-                if (context.mounted) context.go('/login');
+                if (context.mounted) context.go('/welcome');
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ModernCard(
+            child: ListTile(
+              leading: Icon(Icons.delete_forever, color: scheme.error),
+              title: Text('Hapus Akun', style: TextStyle(color: scheme.error)),
+              subtitle: Text('Hapus data akun dan riwayat pesanan', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Hapus Akun'),
+                    content: const Text('Semua data Anda akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Hapus Akun Saya')),
+                    ],
+                  ),
+                );
+                if (confirm != true || !context.mounted) return;
+                try {
+                  await SupabaseService.instance.invoke('admin', body: {'action': 'delete-account'});
+                  await ref.read(customerAuthProvider.notifier).logout();
+                  if (context.mounted) showServisSnackbar(context, 'Akun berhasil dihapus', type: SnackbarType.success);
+                  if (context.mounted) context.go('/welcome');
+                } catch (e) {
+                  if (context.mounted) showServisSnackbar(context, 'Gagal hapus akun: hubungi admin', type: SnackbarType.error);
+                }
               },
             ),
           ),

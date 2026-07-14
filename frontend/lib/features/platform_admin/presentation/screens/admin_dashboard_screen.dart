@@ -100,7 +100,7 @@ class _ApplicationsTabState extends ConsumerState<_ApplicationsTab> {
     try {
       final result = await SupabaseService.instance.invoke('admin', body: {'action': 'applications'});
       _apps = (result as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) { _apps = []; }
+    } catch (e) { debugPrint('_fetch applications error: $e'); _apps = []; }
     if (mounted) setState(() => _loading = false);
   }
 
@@ -132,7 +132,7 @@ class _ApplicationsTabState extends ConsumerState<_ApplicationsTab> {
       await SupabaseService.instance.invoke('admin', body: {'action': 'reject', 'application_id': id});
       if (mounted) showServisSnackbar(context, 'Ditolak', type: SnackbarType.success);
       _fetch();
-    } catch (_) {}
+    } catch (e) { debugPrint('_reject error: $e'); }
   }
 
   @override

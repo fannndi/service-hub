@@ -26,12 +26,12 @@ final unreadCountStreamProvider = StreamProvider.autoDispose<int>((ref) {
 
   final channel = Supabase.instance.client
     .channel('customer-notifications-$uid')
-    .on('postgres_changes',
-        event: 'INSERT',
+    .onPostgresChanges(
+        event: PostgresChangeEvent.insert,
         schema: 'public',
         table: 'notifications',
-        filter: 'user_id=eq.$uid',
-        (payload) {
+        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'user_id', value: uid),
+        callback: (payload) {
       ref.invalidate(notificationsProvider);
       ref.invalidate(unreadCountProvider);
     })

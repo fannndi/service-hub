@@ -19,6 +19,7 @@ class FlowState {
   String serviceType = 'screen_replacement';
   final complaint = TextEditingController();
   final name = TextEditingController();
+  final phone = TextEditingController();
   final email = TextEditingController();
   final address = TextEditingController();
   final coupon = TextEditingController();
@@ -34,6 +35,7 @@ class FlowState {
   void dispose() {
     complaint.dispose();
     name.dispose();
+    phone.dispose();
     email.dispose();
     address.dispose();
     coupon.dispose();
@@ -408,6 +410,15 @@ class Step4Widget extends StatelessWidget {
           decoration: const InputDecoration(
               labelText: 'Nama Lengkap',
               prefixIcon: Icon(Icons.person_outline)),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: state.phone,
+          keyboardType: TextInputType.phone,
+          textCapitalization: TextCapitalization.none,
+          decoration: const InputDecoration(
+              labelText: 'No. HP',
+              prefixIcon: Icon(Icons.phone_outlined)),
         ),
         const SizedBox(height: 16),
         TextField(

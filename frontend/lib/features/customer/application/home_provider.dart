@@ -4,7 +4,7 @@ import '../../../core/supabase_service.dart';
 import '../../../core/cache/cache_manager.dart';
 import '../../../core/cache/cache_config.dart';
 
-final homeSummaryProvider = FutureProvider<HomeSummary>((ref) async {
+final homeSummaryProvider = FutureProvider.autoDispose<HomeSummary>((ref) async {
   final sb = SupabaseService.instance;
   final userId = sb.user?.id;
   if (userId == null) return const HomeSummary(activeOrders: 0, activeCoupons: 0, activeWarranties: 0);

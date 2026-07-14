@@ -18,71 +18,50 @@ Platform marketplace dua sisi. Pelanggan tidak pernah diminta mendaftar (stealth
 
 ### Tiga Aktor
 
-| Aktor | Tabel | Login Endpoint | JWT `role` |
-|---|---|---|---|
-| Pelanggan | `users` | `POST /v1/auth/login` | `customer` |
-| Admin Toko | `store_admins` | `POST /v1/store/auth/login` | `store_admin` |
-| Admin Platform | `platform_admins` | `POST /v1/platform/login` | `platform_admin` |
+| Aktor | Tabel | Auth Method | JWT `role` |
+|------|-------|------------|------------|
+| Pelanggan | `users` | Supabase Auth (magic link/OTP) | `customer` |
+| Admin Toko | `store_admins` | Supabase Auth + RLS | `store_admin` |
+| Admin Platform | `platform_admins` | Supabase Auth + RLS | `platform_admin` |
 
-> ⚠️ TIGA ENTITAS AUTH TERPISAH. `store_admin` bukan `user`. `platform_admin` punya tabel sendiri. Login endpoint berbeda, tabel berbeda, JWT strategy berbeda, secret berbeda.
+> ⚠️ TIGA ENTITAS AUTH TERPISAH. `store_admin` bukan `user`. `platform_admin` punya tabel sendiri. Auth via Supabase Auth dengan role-based RLS.
 
 ---
 
 ## 2. Tech Stack — Versi Exact, Tidak Ada Alternatif
 
-### Backend
+### Backend (100% Serverless via Supabase)
 ```
-Node.js          20.x LTS
-TypeScript       5.x  (strict: true)
-NestJS           10.x
-Prisma           5.x
-PostgreSQL       16
-Redis            7.x (optional, graceful degradation)
-@nestjs/jwt      10.x
-@nestjs/schedule 6.x
-@nestjs/terminus 11.x
-bcrypt           cost factor 12
-class-validator  0.14.x
-helmet           7.x
-compression      1.7.x
-nestjs-pino      4.x
-@willsoto/nestjs-prometheus 6.x
-nanoid           3.x       ← untuk order number, BUKAN uuid
+Supabase          Managed PostgreSQL + Auth + Storage + Edge Functions
+Edge Functions    Deno (TypeScript) — 11 functions
+PostgreSQL        15.x
+Supabase Auth     Built-in (email/OTP, magic link)
+Supabase Storage  File uploads (payment proofs, avatars, id cards)
 ```
 
-### Install command (copy-paste sekali):
-```bash
-npm install @nestjs/jwt @nestjs/passport @nestjs/config @nestjs/throttler \
-  @nestjs/schedule @nestjs/terminus \
-  passport passport-jwt bcrypt class-validator class-transformer \
-  helmet compression \
-  nestjs-pino pino pino-http pino-pretty \
-  axios nanoid ioredis \
-  @aws-sdk/client-s3 @aws-sdk/s3-request-presigner \
-  @willsoto/nestjs-prometheus prom-client \
-  nodemailer
-
-npm install -D prisma @types/bcrypt @types/passport-jwt @types/compression @types/nodemailer @types/supertest @types/jest
-```
-
-### Flutter (pubspec.yaml — bagian dependencies)
+### Flutter (pubspec.yaml — dependencies aktual)
 ```yaml
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^2.5.1
-  go_router: ^14.2.0
-  dio: ^5.4.3+1
-  flutter_secure_storage: ^9.2.2
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.8.1
+  supabase_flutter: ^2.8.1
   image_picker: ^1.1.2
   cached_network_image: ^3.3.1
-  intl: ^0.19.0
+  intl: ^0.20.0
   shared_preferences: ^2.3.0
+  google_fonts: ^6.2.1
+  url_launcher: ^6.3.1
+  m3_expressive: ^1.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
 ```
 
 > **Catatan:** freezed, json_serializable, riverpod_generator tidak digunakan.
@@ -90,629 +69,90 @@ dev_dependencies:
 
 ---
 
-## 3. Prisma Schema Lengkap — Copy-paste ke `prisma/schema.prisma`
+## 3. Database Schema — Migrasi SQL
 
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
+Schema diimplementasikan via 21+ migrasi SQL di `supabase/migrations/`. Tidak pakai Prisma — langsung SQL mentah.
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+### Tabel Utama (12 tables)
 
-// ─── ENUMS ────────────────────────────────────────────────────────────────────
+| Table | Purpose |
+|-------|---------|
+| `users` | Pelanggan (stealth account) |
+| `store_admins` | Admin toko |
+| `platform_admins` | Admin platform |
+| `stores` | Data toko + konfigurasi |
+| `store_applications` | Pendaftaran toko baru |
+| `spareparts` | Inventaris sparepart per toko |
+| `service_orders` | Order service |
+| `order_items` | Item dalam order |
+| `service_tracking` | Riwayat status (IMMUTABLE) |
+| `payments` | Riwayat pembayaran |
+| `shipments` | Data pengiriman |
+| `reviews` | Review + rating |
+| `coupons` | Kupon reward review |
+| `disputes` | Klaim garansi/sengketa |
+| `user_sessions` | Session tracking |
+| `failed_notifications` | Log notifikasi gagal |
 
-enum AccountStatus       { active suspended deleted }
-enum DeviceType          { android ios }
-enum DeliveryMethod      { walk_in courier_pickup }
-enum OrderStatus {
-  waiting_device
-  device_received
-  diagnosing
-  waiting_approval
-  waiting_sparepart
-  repairing
-  quality_check
-  waiting_payment
-  completed
-  cancelled
-  disputed
-}
-enum PaymentStatus       { unpaid partially_paid paid refunded }
-enum PaymentMethod       { transfer_bank qris cash ewallet }
-enum PaymentType         { deposit final_payment refund }
-enum PaymentRecordStatus { pending confirmed failed refunded }
-enum SparePartStatus     { available preorder discontinued }
-enum OrderItemStatus     { pending confirmed replaced cancelled }
-enum ShipmentType        { pickup return warranty_pickup }
-enum ShipmentStatus      { scheduled picked_up in_transit delivered failed }
-enum DisputeType         { warranty_claim service_quality wrong_diagnosis other }
-enum DisputeStatus       { open store_accepted store_rejected escalated resolved closed }
-enum CreatedByType       { customer store_admin system }
-enum ApplicationStatus   { pending approved rejected }
-enum FeeBearerType       { customer store platform }
-
-// ─── USERS (Pelanggan) ────────────────────────────────────────────────────────
-
-model User {
-  id                 String        @id @default(uuid())
-  fullName           String        @map("full_name") @db.VarChar(150)
-  phoneNumber        String        @unique @map("phone_number") @db.VarChar(20)
-  passwordHash       String        @map("password_hash") @db.VarChar(255)
-  avatarUrl          String?       @map("avatar_url") @db.VarChar(255)
-  address            String?       @db.Text
-  accountStatus      AccountStatus @default(active) @map("account_status")
-  isFirstLogin       Boolean       @default(true) @map("is_first_login")
-  isCredentialSent   Boolean       @default(false) @map("is_credential_sent")
-  credentialPlainEnc String?       @map("credential_plain_enc") @db.Text
-  loginAttemptCount  Int           @default(0) @map("login_attempt_count") @db.SmallInt
-  lockedUntil        DateTime?     @map("locked_until") @db.Timestamptz
-  lastLoginAt        DateTime?     @map("last_login_at") @db.Timestamptz
-  passwordChangedAt  DateTime?     @map("password_changed_at") @db.Timestamptz
-  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-  orders             ServiceOrder[]
-  payments           Payment[]
-  reviews            Review[]
-  coupons            Coupon[]
-  disputes           Dispute[]
-  sessions           UserSession[]
-  @@map("users")
-}
-
-// ─── STORE ADMINS ─────────────────────────────────────────────────────────────
-
-model StoreAdmin {
-  id           String    @id @default(uuid())
-  storeId      String    @map("store_id")
-  fullName     String    @map("full_name") @db.VarChar(150)
-  phoneNumber  String    @map("phone_number") @db.VarChar(20)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  isActive     Boolean   @default(true) @map("is_active")
-  isFirstLogin Boolean   @default(false) @map("is_first_login")
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  store        Store     @relation(fields: [storeId], references: [id])
-  @@unique([storeId, phoneNumber])
-  @@map("store_admins")
-}
-
-// ─── STORES ───────────────────────────────────────────────────────────────────
-
-model Store {
-  id               String       @id @default(uuid())
-  storeName        String       @map("store_name") @db.VarChar(150)
-  address          String       @db.Text
-  phoneNumber      String       @map("phone_number") @db.VarChar(20)
-  operationalHours Json         @default("{}") @map("operational_hours")
-  // Shape: { "mon":"08:00-20:00", "tue":"08:00-20:00", ..., "sun":"closed" }
-  config           Json         @default("{}")
-  // Shape: { "service_fee":{"screen_replacement":50000}, "warranty_days":30,
-  //          "diagnosis_fee":20000, "low_stock_threshold":2, "deposit_required":false }
-  isActive         Boolean      @default(false) @map("is_active")
-  ratingAvg        Decimal      @default(0) @map("rating_avg") @db.Decimal(3, 2)
-  totalCompleted   Int          @default(0) @map("total_completed")
-  penaltyPoints    Int          @default(0) @map("penalty_points")
-  verifiedAt       DateTime?    @map("verified_at") @db.Timestamptz
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
-  admins           StoreAdmin[]
-  spareparts       SparePart[]
-  orders           ServiceOrder[]
-  reviews          Review[]
-  disputes         Dispute[]
-  @@map("stores")
-}
-
-// ─── STORE APPLICATIONS ───────────────────────────────────────────────────────
-
-model StoreApplication {
-  id                 String            @id @default(uuid())
-  storeName          String            @map("store_name") @db.VarChar(150)
-  applicantName      String            @map("applicant_name") @db.VarChar(150)
-  phoneNumber        String            @map("phone_number") @db.VarChar(20)
-  address            String            @db.Text
-  businessLicenseUrl String?           @map("business_license_url") @db.VarChar(255)
-  idCardUrl          String            @map("id_card_url") @db.VarChar(255)
-  status             ApplicationStatus @default(pending)
-  reviewedBy         String?           @map("reviewed_by")
-  reviewNote         String?           @map("review_note") @db.Text
-  appliedAt          DateTime          @default(now()) @map("applied_at") @db.Timestamptz
-  reviewedAt         DateTime?         @map("reviewed_at") @db.Timestamptz
-  @@map("store_applications")
-}
-
-// ─── SPAREPARTS ───────────────────────────────────────────────────────────────
-
-model SparePart {
-  id          String          @id @default(uuid())
-  storeId     String          @map("store_id")
-  brand       String          @db.VarChar(80)
-  deviceModel String          @map("device_model") @db.VarChar(100)
-  partType    String          @map("part_type") @db.VarChar(60)
-  // Nilai valid: screen_replacement | battery_replacement | charging_port | camera | other
-  partName    String          @map("part_name") @db.VarChar(150)
-  price       Decimal         @db.Decimal(12, 2)
-  qty         Int             @default(0)
-  qtyReserved Int             @default(0) @map("qty_reserved")
-  // qty_available (computed) = qty - qtyReserved — JANGAN simpan di DB
-  status      SparePartStatus @default(available)
-  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz
-  store       Store           @relation(fields: [storeId], references: [id])
-  orderItems  OrderItem[]
-  @@index([storeId])
-  @@index([brand, deviceModel, partType])
-  @@map("spareparts")
-}
-
-// ─── SERVICE ORDERS ───────────────────────────────────────────────────────────
-
-model ServiceOrder {
-  id               String        @id @default(uuid())
-  userId           String        @map("user_id")
-  storeId          String        @map("store_id")
-  orderNumber      String        @unique @map("order_number") @db.VarChar(30)
-  // Format: SG-YYYYMMDD-XXXX (generated dengan nanoid, bukan count)
-  deviceType       DeviceType    @map("device_type")
-  brand            String        @db.VarChar(80)
-  deviceModel      String        @map("device_model") @db.VarChar(100)
-  deliveryMethod   DeliveryMethod @map("delivery_method")
-  deliveryAddress  String?       @map("delivery_address") @db.Text
-  status           OrderStatus   @default(waiting_device)
-  paymentStatus    PaymentStatus @default(unpaid) @map("payment_status")
-  totalEstimasi    Decimal       @default(0) @map("total_estimasi") @db.Decimal(12, 2)
-  discountAmount   Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
-  finalPrice       Decimal?      @map("final_price") @db.Decimal(12, 2)
-  // Diisi saat admin submit diagnosis: SUM(finalItemPrice confirmed) + serviceFee
-  serviceFee       Decimal?      @map("service_fee") @db.Decimal(12, 2)
-  diagnosisNote    String?       @map("diagnosis_note") @db.Text
-  warrantyDays     Int?          @map("warranty_days")
-  // Diisi dari store.config.warranty_days saat payment dikonfirmasi
-  warrantyExpiredAt DateTime?    @map("warranty_expired_at") @db.Timestamptz
-  slaDeadline      DateTime?     @map("sla_deadline") @db.Timestamptz
-  slaWarnedAt      DateTime?     @map("sla_warned_at") @db.Timestamptz
-  slaBreachCount   Int           @default(0) @map("sla_breach_count") @db.SmallInt
-  couponId         String?       @map("coupon_id")
-  isWarrantyOrder  Boolean       @default(false) @map("is_warranty_order")
-  parentOrderId    String?       @map("parent_order_id")
-  completedAt      DateTime?     @map("completed_at") @db.Timestamptz
-  cancelledAt      DateTime?     @map("cancelled_at") @db.Timestamptz
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
-  user             User          @relation(fields: [userId], references: [id])
-  store            Store         @relation(fields: [storeId], references: [id])
-  coupon           Coupon?       @relation("OrderCoupon", fields: [couponId], references: [id])
-  items            OrderItem[]
-  tracking         ServiceTracking[]
-  payments         Payment[]
-  shipments        Shipment[]
-  review           Review?
-  dispute          Dispute?
-  @@index([userId])
-  @@index([storeId])
-  @@index([status])
-  @@map("service_orders")
-}
-
-// ─── ORDER ITEMS ──────────────────────────────────────────────────────────────
-
-model OrderItem {
-  id             String          @id @default(uuid())
-  orderId        String          @map("order_id")
-  sparepartId    String?         @map("sparepart_id")
-  serviceType    String          @map("service_type") @db.VarChar(100)
-  complaint      String          @db.Text
-  itemPrice      Decimal         @map("item_price") @db.Decimal(12, 2)
-  // Estimasi dari sparepart.price saat booking. 0 jika tidak ada sparepartId.
-  finalItemPrice Decimal?        @map("final_item_price") @db.Decimal(12, 2)
-  // Diisi admin saat submit diagnosis
-  status         OrderItemStatus @default(pending)
-  technicianNote String?         @map("technician_note") @db.Text
-  order          ServiceOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sparepart      SparePart?      @relation(fields: [sparepartId], references: [id])
-  @@map("order_items")
-}
-
-// ─── SERVICE TRACKING (IMMUTABLE) ────────────────────────────────────────────
-
-model ServiceTracking {
-  id            String        @id @default(uuid())
-  orderId       String        @map("order_id")
-  status        OrderStatus
-  note          String?       @db.Text
-  createdByType CreatedByType @map("created_by_type")
-  createdById   String        @map("created_by_id")
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  // ⚠️ IMMUTABLE — JANGAN UPDATE atau DELETE baris di tabel ini
-  order         ServiceOrder  @relation(fields: [orderId], references: [id])
-  @@map("service_tracking")
-}
-
-// ─── PAYMENTS ────────────────────────────────────────────────────────────────
-
-model Payment {
-  id            String              @id @default(uuid())
-  orderId       String              @map("order_id")
-  userId        String              @map("user_id")
-  amount        Decimal             @db.Decimal(12, 2)
-  paymentMethod PaymentMethod       @map("payment_method")
-  paymentType   PaymentType         @map("payment_type")
-  status        PaymentRecordStatus @default(pending)
-  proofUrl      String?             @map("proof_url") @db.VarChar(255)
-  confirmedBy   String?             @map("confirmed_by")
-  confirmedAt   DateTime?           @map("confirmed_at") @db.Timestamptz
-  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  order         ServiceOrder        @relation(fields: [orderId], references: [id])
-  user          User                @relation(fields: [userId], references: [id])
-  @@map("payments")
-}
-
-// ─── SHIPMENTS ───────────────────────────────────────────────────────────────
-
-model Shipment {
-  id                 String         @id @default(uuid())
-  orderId            String         @map("order_id")
-  shipmentType       ShipmentType   @map("shipment_type")
-  courierName        String?        @map("courier_name") @db.VarChar(80)
-  trackingNumber     String?        @unique @map("tracking_number") @db.VarChar(100)
-  pickupAddress      String         @map("pickup_address") @db.Text
-  destinationAddress String         @map("destination_address") @db.Text
-  status             ShipmentStatus @default(scheduled)
-  scheduledAt        DateTime?      @map("scheduled_at") @db.Timestamptz
-  deliveredAt        DateTime?      @map("delivered_at") @db.Timestamptz
-  shippingFee        Decimal        @default(0) @map("shipping_fee") @db.Decimal(12, 2)
-  feeBearer          FeeBearerType  @default(customer) @map("fee_bearer")
-  notes              String?        @db.Text
-  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  order              ServiceOrder   @relation(fields: [orderId], references: [id])
-  @@map("shipments")
-}
-
-// ─── REVIEWS ──────────────────────────────────────────────────────────────────
-
-model Review {
-  id        String       @id @default(uuid())
-  orderId   String       @unique @map("order_id")
-  userId    String       @map("user_id")
-  storeId   String       @map("store_id")
-  rating    Int          @db.SmallInt   // 1-5, validated in service layer
-  comment   String?      @db.Text
-  isPublic  Boolean      @default(true) @map("is_public")
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  order     ServiceOrder @relation(fields: [orderId], references: [id])
-  user      User         @relation(fields: [userId], references: [id])
-  store     Store        @relation(fields: [storeId], references: [id])
-  coupon    Coupon?
-  @@map("reviews")
-}
-
-// ─── COUPONS ──────────────────────────────────────────────────────────────────
-
-model Coupon {
-  id            String        @id @default(uuid())
-  userId        String        @map("user_id")
-  reviewId      String        @unique @map("review_id")
-  code          String        @unique @db.VarChar(20)
-  amount        Decimal       @default(10000) @db.Decimal(12, 2)
-  isUsed        Boolean       @default(false) @map("is_used")
-  usedAt        DateTime?     @map("used_at") @db.Timestamptz
-  usedOnOrderId String?       @map("used_on_order_id")
-  expiredAt     DateTime      @map("expired_at") @db.Timestamptz
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  user          User          @relation(fields: [userId], references: [id])
-  review        Review        @relation(fields: [reviewId], references: [id])
-  usedOnOrder   ServiceOrder? @relation("OrderCoupon", fields: [usedOnOrderId], references: [id])
-  @@map("coupons")
-}
-
-// ─── DISPUTES ────────────────────────────────────────────────────────────────
-
-model Dispute {
-  id               String        @id @default(uuid())
-  orderId          String        @unique @map("order_id")
-  // UNIQUE: satu order hanya bisa punya satu dispute aktif pada satu waktu
-  userId           String        @map("user_id")
-  storeId          String        @map("store_id")
-  disputeType      DisputeType   @map("dispute_type")
-  description      String        @db.Text
-  evidenceUrls     Json          @default("[]") @map("evidence_urls")
-  status           DisputeStatus @default(open)
-  storeResponse    String?       @map("store_response") @db.Text
-  platformDecision String?       @map("platform_decision") @db.Text
-  resolution       String?       @db.Text
-  warrantyOrderId  String?       @map("warranty_order_id")
-  resolvedAt       DateTime?     @map("resolved_at") @db.Timestamptz
-  slaDeadline      DateTime?     @map("sla_deadline") @db.Timestamptz
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  order            ServiceOrder  @relation(fields: [orderId], references: [id])
-  user             User          @relation(fields: [userId], references: [id])
-  store            Store         @relation(fields: [storeId], references: [id])
-  @@map("disputes")
-}
-
-// ─── USER SESSIONS ────────────────────────────────────────────────────────────
-
-model UserSession {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  tokenHash    String   @unique @map("token_hash") @db.VarChar(64)
-  // tokenHash = SHA-256(refreshToken) dalam hex
-  deviceInfo   Json?    @map("device_info")
-  ipAddress    String?  @map("ip_address") @db.VarChar(45)
-  isActive     Boolean  @default(true) @map("is_active")
-  expiresAt    DateTime @map("expires_at") @db.Timestamptz
-  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@index([userId, isActive])
-  @@map("user_sessions")
-}
-
-// ─── FAILED NOTIFICATIONS ────────────────────────────────────────────────────
-
-model FailedNotification {
-  id            String   @id @default(uuid())
-  recipientType String   @map("recipient_type") @db.VarChar(20)
-  recipientId   String   @map("recipient_id")
-  channel       String   @default("whatsapp") @db.VarChar(20)
-  messageType   String   @map("message_type") @db.VarChar(50)
-  payload       Json
-  attemptCount  Int      @default(0) @map("attempt_count") @db.SmallInt
-  lastError     String?  @map("last_error") @db.Text
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  @@map("failed_notifications")
-}
-```
-
-**Setelah `npx prisma migrate dev --name init`, tambahkan constraint manual:**
+### CHECK constraints (wajib ada)
 ```sql
 ALTER TABLE spareparts ADD CONSTRAINT spareparts_qty_nonneg CHECK (qty >= 0);
 ALTER TABLE spareparts ADD CONSTRAINT spareparts_qty_reserved_nonneg CHECK (qty_reserved >= 0);
 ALTER TABLE reviews ADD CONSTRAINT reviews_rating_range CHECK (rating BETWEEN 1 AND 5);
 ```
 
+> Lengkap: lihat `supabase/migrations/`.
+
 ---
 
-## 4. Semua DTOs — Copy-paste langsung
+## 4. API Contracts — Edge Function Actions
 
-### Auth DTOs
+Validation ada di masing-masing Edge Function (`supabase/functions/*/index.ts`). Format request/response mengikuti pola:
+
 ```typescript
-// src/modules/auth/dto/auth.dto.ts
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
-import { Transform } from 'class-transformer';
+// Request: JSON body dengan field 'action' + payload
+// Response: { success: true, data: {...} } | { success: false, error: { code, message } }
+```
 
+| Function | Auth | Actions |
+|----------|------|---------|
+| `guest` | None | `create-order`, `track`, `credentials` |
+| `orders` | User JWT | `orders`, `approve`, `reject`, `diagnosis`, `status` |
+| `payments` | User JWT | `create`, `confirm` |
+| `midtrans` | None | `snap-token`, `notification` |
+| `notifications` | User JWT | CRUD notifikasi in-app |
+| `disputes` | User JWT | `create`, `respond` |
+| `reviews` | User JWT | `create`, `store-list` |
+| `admin` | User JWT | CRUD store, manage users |
+| `store-applications` | None | Pendaftaran toko |
+| `cron-sla` | None | Auto-cancel SLA |
+
+### Normalize Phone (Edge Functions shared helper)
+```typescript
 export function normalizePhone(phone: string): string {
   const d = phone.replace(/\D/g, '');
   if (d.startsWith('62')) return `+${d}`;
   if (d.startsWith('0'))  return `+62${d.slice(1)}`;
   return `+62${d}`;
 }
-
-export class LoginDto {
-  @IsString() @IsNotEmpty()
-  @Transform(({ value }) => normalizePhone(value))
-  phoneNumber: string;
-
-  @IsString() @IsNotEmpty()
-  password: string;
-}
-
-export class ChangePasswordDto {
-  @IsString() @IsNotEmpty() oldPassword: string;
-  @IsString() @MinLength(8) newPassword: string;
-}
-
-export class RefreshTokenDto {
-  @IsString() @IsNotEmpty() refreshToken: string;
-}
-```
-
-### Order DTOs
-```typescript
-// src/modules/orders/dto/order.dto.ts
-import { Type, Transform } from 'class-transformer';
-import {
-  IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty,
-  IsOptional, IsUUID, MinLength, ArrayMinSize, IsNumber, Min,
-} from 'class-validator';
-import { normalizePhone } from '../../auth/dto/auth.dto';
-
-export class CreateOrderItemDto {
-  @IsEnum(['screen_replacement','battery_replacement','charging_port','camera','other'])
-  serviceType: string;
-
-  @IsString() @MinLength(10) complaint: string;
-
-  @IsOptional() @IsUUID() sparepartId?: string;
-}
-
-export class CreateOrderDto {
-  @IsEnum(['android','ios']) deviceType: string;
-  @IsString() @IsNotEmpty() brand: string;
-  @IsString() @IsNotEmpty() deviceModel: string;
-  @IsUUID() storeId: string;
-  @IsEnum(['walk_in','courier_pickup']) deliveryMethod: string;
-  @IsOptional() @IsString() deliveryAddress?: string;
-  @IsString() @IsNotEmpty() customerName: string;
-
-  @IsString()
-  @Transform(({ value }) => normalizePhone(value))
-  phoneNumber: string;
-
-  @IsOptional() @IsString() couponCode?: string;
-
-  @IsArray() @ArrayMinSize(1)
-  @ValidateNested({ each: true }) @Type(() => CreateOrderItemDto)
-  items: CreateOrderItemDto[];
-}
-
-export class DiagnosisItemDto {
-  @IsUUID() orderItemId: string;
-  @IsEnum(['confirmed','replaced','cancelled']) status: string;
-  // replacedSparepartId WAJIB jika status === 'replaced'
-  @IsOptional() @IsUUID() replacedSparepartId?: string;
-  @IsNumber() @Min(0) finalItemPrice: number;
-  @IsOptional() @IsString() technicianNote?: string;
-}
-
-export class SubmitDiagnosisDto {
-  @IsOptional() @IsString() diagnosisNote?: string;
-  @IsNumber() @Min(0) serviceFee: number;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => DiagnosisItemDto)
-  items: DiagnosisItemDto[];
-}
-
-export class UpdateOrderStatusDto {
-  // Endpoint ini HANYA untuk store_admin, TIDAK termasuk 'completed'
-  // 'completed' hanya lewat payment confirm
-  @IsEnum([
-    'device_received','diagnosing','waiting_sparepart',
-    'repairing','quality_check','waiting_payment','cancelled',
-  ])
-  status: string;
-
-  @IsOptional() @IsString() note?: string;
-}
-```
-
-### Payment DTOs
-```typescript
-export class CreatePaymentDto {
-  @IsNumber() @Min(1000) amount: number;
-  @IsEnum(['transfer_bank','qris','cash','ewallet']) paymentMethod: string;
-  @IsEnum(['deposit','final_payment']) paymentType: string;
-  @IsOptional() @IsString() proofUrl?: string;
-  // proofUrl WAJIB jika paymentMethod === 'transfer_bank', validasi di service layer
-}
-
-export class ConfirmPaymentDto {
-  @IsOptional() @IsString() note?: string;
-}
-```
-
-### Sparepart, Review, Dispute DTOs
-```typescript
-export class CreateSparepartDto {
-  @IsString() @IsNotEmpty() brand: string;
-  @IsString() @IsNotEmpty() deviceModel: string;
-  @IsEnum(['screen_replacement','battery_replacement','charging_port','camera','other'])
-  partType: string;
-  @IsString() @IsNotEmpty() partName: string;
-  @IsNumber() @Min(0) price: number;
-  @IsNumber() @Min(0) qty: number;
-  @IsOptional() @IsEnum(['available','preorder','discontinued']) status?: string;
-}
-
-export class UpdateSparepartDto {
-  @IsOptional() @IsNumber() @Min(0) price?: number;
-  @IsOptional() @IsNumber() @Min(0) qty?: number;
-  @IsOptional() @IsEnum(['available','preorder','discontinued']) status?: string;
-  @IsOptional() @IsString() partName?: string;
-}
-
-export class CreateReviewDto {
-  @IsInt() @Min(1) @Max(5) rating: number;
-  @IsOptional() @IsString() @MaxLength(500) comment?: string;
-}
-
-export class CreateDisputeDto {
-  @IsEnum(['warranty_claim','service_quality','wrong_diagnosis','other']) disputeType: string;
-  @IsString() @MinLength(20) description: string;
-  @IsOptional() @IsArray() @IsString({ each: true }) evidenceUrls?: string[];
-}
-
-export class RespondDisputeDto {
-  @IsEnum(['store_accepted','store_rejected']) decision: string;
-  @IsString() @MinLength(10) storeResponse: string;
-}
-
-export class UpdateProfileDto {
-  @IsOptional() @IsString() @MaxLength(150) fullName?: string;
-  @IsOptional() @IsString() address?: string;
-  @IsOptional() @IsString() avatarUrl?: string;
-}
 ```
 
 ---
 
-## 5. JWT Strategy — Dua Strategy Terpisah
+## 5. Auth — Supabase Auth + RLS
 
-```typescript
-// src/modules/auth/strategies/jwt-access.strategy.ts
-// Untuk customer login
-@Injectable()
-export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
-  constructor(config: ConfigService, private prisma: PrismaService) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('jwt.accessSecret'),
-    });
-  }
-  async validate(payload: JwtPayload) {
-    // Validasi session masih aktif
-    // (tidak perlu untuk access token — cukup verify signature)
-    return { id: payload.sub, role: payload.role, isFirstLogin: payload.isFirstLogin };
-  }
-}
+Auth di-handle oleh Supabase Auth. Tidak ada JWT strategy manual.
 
-// src/modules/store-auth/strategies/store-jwt-access.strategy.ts
-// Untuk store_admin login — STRATEGY TERPISAH
-@Injectable()
-export class StoreJwtAccessStrategy extends PassportStrategy(Strategy, 'store-jwt-access') {
-  constructor(config: ConfigService) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('jwt.storeAccessSecret'),
-      // Secret BERBEDA dari customer JWT
-    });
-  }
-  async validate(payload: JwtPayload) {
-    if (!payload.storeId) throw new UnauthorizedException();
-    return {
-      id: payload.sub,
-      role: payload.role,           // = 'store_admin'
-      storeId: payload.storeId,     // ← WAJIB ada
-      isFirstLogin: payload.isFirstLogin,
-    };
-  }
-}
-```
+- **Customer**: login via Supabase Auth (email link atau OTP). Password formula stealth account di BR-28.
+- **Store Admin**: login via Supabase Auth dengan `store_admin` metadata.
+- **Platform Admin**: login via Supabase Auth dengan `platform_admin` metadata.
 
-```typescript
-// Guard untuk store_admin
-@Injectable()
-export class StoreJwtAuthGuard extends AuthGuard('store-jwt-access') {
-  handleRequest(err: any, user: any): any {
-    if (err || !user) throw new TokenInvalidException();
-    return user;
-  }
-}
-```
+RLS (Row Level Security) di setiap tabel:
+- Customer hanya bisa akses data miliknya (user_id = auth.uid())
+- Store admin hanya bisa akses data storeId dari JWT-nya
+- Platform admin akses semua
 
-**generateTokens untuk store_admin — wajib include storeId:**
-```typescript
-private generateStoreTokens(adminId: string, storeId: string, isFirstLogin: boolean) {
-  const payload: JwtPayload = {
-    sub: adminId,
-    role: 'store_admin',
-    storeId,           // ← WAJIB
-    isFirstLogin,
-  };
-  return {
-    accessToken: this.jwt.sign(payload, {
-      secret: this.config.get('jwt.storeAccessSecret'),
-      expiresIn: '1h',
-    }),
-    refreshToken: this.jwt.sign(payload, {
-      secret: this.config.get('jwt.storeRefreshSecret'),
-      expiresIn: '30d',
-    }),
-  };
-}
-```
+Detail: lihat `supabase/migrations/002_rls.sql`.
 
 ---
 
@@ -964,54 +404,22 @@ function generateOrderNumber(): string {
 
 ## 10. File Upload Flow
 
-Upload file ke Cloudflare R2 menggunakan **presigned URL** (aman, tidak expose credentials ke client):
+Upload file via **Supabase Storage** (bucket `uploads`). Tidak perlu presigned URL — langsung upload via Supabase SDK.
 
 ```
-Client                    Backend               R2
-  │                          │                   │
-  ├── POST /v1/uploads/presign ──────────────────►│
-  │   { fileName, mimeType } │                   │
-  │                          │◄── presignedUrl ───┤
-  │◄── { uploadUrl, fileUrl }│                   │
-  │                          │                   │
-  ├── PUT {uploadUrl} ────────────────────────────►
-  │   (body: file binary)    │                   │
-  │                          │                   │
-  ├── [gunakan fileUrl sebagai proofUrl/avatarUrl/evidenceUrl]
-```
-
-**Endpoint presign:**
-```typescript
-// POST /v1/uploads/presign  [JWT]
-// Body: { fileName: string, mimeType: string, folder: 'payments'|'evidence'|'avatars' }
-// Response: { uploadUrl: string, fileUrl: string, expiresIn: 300 }
+Flutter → supabase.storage.from('uploads').upload(path, file)
+        → supabase.storage.from('uploads').getPublicUrl(path)
 ```
 
 **Flutter implementation:**
 ```dart
-// 1. Dapatkan presigned URL
-final presign = await dio.post('/uploads/presign', data: {
-  'fileName': file.name,
-  'mimeType': lookupMimeType(file.path) ?? 'application/octet-stream',
-  'folder': 'payments',
-});
-final uploadUrl = presign.data['data']['uploadUrl'] as String;
-final fileUrl   = presign.data['data']['fileUrl'] as String;
+// Upload langsung ke Supabase Storage
+final path = '${folder}/${userId}/${filename}';
+await sb.client.storage.from('uploads').upload(path, File(file.path));
 
-// 2. Upload langsung ke R2 (tanpa Authorization header)
-final uploadDio = Dio();
-await uploadDio.put(
-  uploadUrl,
-  data: file.openRead(),
-  options: Options(
-    headers: {
-      'Content-Type': lookupMimeType(file.path),
-      'Content-Length': await file.length(),
-    },
-  ),
-);
-
-// 3. Gunakan fileUrl sebagai proofUrl di POST /v1/orders/:id/payments
+// Dapatkan public URL
+final url = sb.client.storage.from('uploads').getPublicUrl(path);
+// Gunakan sebagai proofUrl / avatarUrl / evidenceUrl
 ```
 
 ---
@@ -1112,70 +520,43 @@ export function generatePassword(fullName: string, phoneNumber: string): string 
 
 ---
 
-## 14. Environment Variables Lengkap
+## 14. Environment Variables — Supabase Edge Functions
 
-```env
-# Database
-DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/servisgadget
+Setiap variable di-set via `supabase secrets set` (bukan `.env`).
 
-# Redis (opsional — graceful degradation)
-REDIS_HOST=localhost
-REDIS_PORT=6379
+```bash
+# Midtrans
+MIDTRANS_SNAP_URL=https://app.sandbox.midtrans.com/snap/v1/transactions
+MIDTRANS_SERVER_KEY=<midtrans-server-key>
 
-# JWT Customer
-# Generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-JWT_ACCESS_SECRET=<64-byte-hex>
-JWT_REFRESH_SECRET=<64-byte-hex-berbeda>
-JWT_ACCESS_EXPIRES_IN=1h
-JWT_REFRESH_EXPIRES_IN=30d
-
-# JWT Store Admin — SECRET HARUS BERBEDA dari customer
-JWT_STORE_ACCESS_SECRET=<64-byte-hex-ketiga>
-JWT_STORE_REFRESH_SECRET=<64-byte-hex-keempat>
-
-# JWT Platform Admin — SECRET HARUS BERBEDA dari customer & store
-JWT_PLATFORM_ADMIN_SECRET=<64-byte-hex-kelima>
+# Email (via Resend.com)
+RESEND_API_KEY=re_xxxxxxxxxx
+EMAIL_FROM=Service Me <noreply@serviceme.app>
 
 # Encryption credential
-# Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 CREDENTIAL_ENCRYPTION_KEY=<32-byte-hex>
 
-# WhatsApp (via Fonnte)
-WA_GATEWAY_URL=https://api.fonnte.com/send
-WA_GATEWAY_TOKEN=<token-dari-fonnte-dashboard>
-WA_SENDER_NUMBER=628XXXXXXXXXX
-
-# SMTP Email Fallback
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=<email@domain.com>
-SMTP_PASS=<app-password>
-STORE_EMAIL=<store-notif@domain.com>
-
-# Cloudflare R2 / S3-compatible
-STORAGE_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-STORAGE_ACCESS_KEY=<r2-access-key>
-STORAGE_SECRET_KEY=<r2-secret-key>
-STORAGE_BUCKET=servisgadget-prod
-STORAGE_PUBLIC_URL=https://files.servisgadget.id
-
-# App
-APP_URL=https://app.servisgadget.id
-NODE_ENV=development
-PORT=3000
-
-# SLA (menit)
-SLA_RECEIVE_DEVICE_MINUTES=1440
-SLA_DIAGNOSIS_MINUTES=1440
-SLA_APPROVAL_MINUTES=1440
-SLA_PAYMENT_MINUTES=2880
-SLA_CREDENTIAL_CLEAR_MINUTES=1440
-SLA_DISPUTE_RESPOND_MINUTES=1440
-
-# Rate limit
-THROTTLE_TTL_SECONDS=60
-THROTTLE_LIMIT=100
+# Supabase (otomatis dari dashboard)
+SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 ```
+
+### Flutter .env (build-time)
+```env
+SUPABASE_URL=https://eboplbemgtvmviwhdlfa.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+```
+
+### SLA (menit) — dikonfigurasi dalam Edge Function
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| SLA_RECEIVE_DEVICE | 1440 | 24 jam |
+| SLA_DIAGNOSIS | 1440 | 24 jam |
+| SLA_APPROVAL | 1440 | 24 jam |
+| SLA_PAYMENT | 2880 | 48 jam |
+| SLA_CREDENTIAL_CLEAR | 1440 | 24 jam |
+| SLA_DISPUTE_RESPOND | 1440 | 24 jam |
 
 ---
 

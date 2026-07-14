@@ -9,11 +9,13 @@ async function autoActivateGuest(userId: string, admin: any): Promise<void> {
   if (!user || user.account_status === 'active') return;
   const { data: authUser, error: authErr } = await admin.auth.admin.getUserById(userId);
   if (authErr || !authUser?.user?.email) { console.error('autoActivateGuest: cannot get auth user email'); return; }
+  const tempPw = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6).toUpperCase();
+  await admin.auth.admin.updateUserById(userId, { password: tempPw });
   await admin.from('users').update({
     account_status: 'active', is_first_login: true, updated_at: new Date().toISOString(),
   }).eq('id', userId);
   if (isEmailConfigured()) {
-    await sendActivationEmail(authUser.user.email, user.full_name, user.password_hash, admin);
+    await sendActivationEmail(authUser.user.email, user.full_name, tempPw, admin);
   }
 }
 
@@ -40,10 +42,21 @@ export default {
         const { data: store } = await admin.from('stores').select('id, config').eq('id', store_id).eq('is_active', true).single();
         if (!store) return fail('STORE_NOT_ACTIVE', 'Toko tidak aktif');
 
+        for (const i of items) {
+          if (typeof i.item_price !== 'number' || i.item_price < 0) {
+            return fail('INVALID_PRICE', 'Item price must be non-negative');
+          }
+        }
+
+        const reservedIds: string[] = [];
         for (const item of items) {
           if (item.sparepart_id) {
             const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
-            if (!reserved) return fail('STOCK_UNAVAILABLE', `Stok tidak tersedia`);
+            if (!reserved) {
+              for (const id of reservedIds) await admin.rpc('release_stock', { p_sparepart_id: id }).catch(() => {});
+              return fail('STOCK_UNAVAILABLE', `Stok tidak tersedia`);
+            }
+            reservedIds.push(item.sparepart_id);
           }
         }
 
@@ -52,11 +65,13 @@ export default {
         if (coupon_code) {
           const { data: coupon } = await admin.from('coupons')
             .select('id, amount').eq('code', coupon_code).eq('user_id', userClaims.id).eq('is_used', false).gt('expired_at', new Date().toISOString()).single();
-          if (!coupon) return fail('COUPON_INVALID', 'Kupon tidak valid');
+          if (!coupon) {
+            for (const id of reservedIds) await admin.rpc('release_stock', { p_sparepart_id: id }).catch(() => {});
+            return fail('COUPON_INVALID', 'Kupon tidak valid');
+          }
           coupon_id = coupon.id;
           discount = coupon.amount;
         }
-
         const totalEstimasi = items.reduce((sum: number, i: any) => sum + (i.item_price || 0), 0);
         const order_number = generateOrderNumber();
 
@@ -66,7 +81,10 @@ export default {
           status: 'waiting_device', total_estimasi: totalEstimasi, discount_amount: discount, coupon_id, updated_at: now,
         }).select().single();
 
-        if (orderErr) return fail('CREATE_FAILED', orderErr.message);
+        if (orderErr) {
+          for (const id of reservedIds) await admin.rpc('release_stock', { p_sparepart_id: id }).catch(() => {});
+          return fail('CREATE_FAILED', orderErr.message);
+        }
 
         await admin.from('order_items').insert(items.map((item: any) => ({
           order_id: order.id, sparepart_id: item.sparepart_id || null,

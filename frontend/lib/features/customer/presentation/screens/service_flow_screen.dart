@@ -78,6 +78,12 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         },
       ];
 
+      if (_state.selectedStoreId == null || _state.selectedBrand == null || _state.selectedModel == null) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lengkapi data perangkat dan toko terlebih dahulu')));
+        setState(() => _state.loading = false);
+        return;
+      }
+
       final body = {
         'store_id': _state.selectedStoreId!,
         'device_type': _state.deviceType,
@@ -98,11 +104,12 @@ class _ServiceFlowScreenState extends ConsumerState<ServiceFlowScreen> {
         final data = Map<String, dynamic>.from(resultMap ?? {});
         context.go('/booking-success/${data['order_number']}', extra: data);
       } else {
+        final phone = _state.phone.text.trim().isNotEmpty ? _state.phone.text.trim() : _state.email.text.trim();
         final result = await ref.read(orderRepositoryProvider).createOrder(
           CreateOrderRequest(
             storeId: _state.selectedStoreId!,
             fullName: _state.name.text.trim(),
-            phoneNumber: _state.email.text.trim(),
+            phoneNumber: phone,
             deviceType: _state.deviceType,
             brand: _state.selectedBrand!,
             deviceModel: _state.selectedModel!,
