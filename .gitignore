@@ -16,6 +16,10 @@ data.md
 *.keystore
 key.properties
 
+# Firebase config (contains API keys)
+google-services.json
+frontend/android/app/google-services.json
+
 # Build artifacts
 frontend/android/build/
 frontend/build/
