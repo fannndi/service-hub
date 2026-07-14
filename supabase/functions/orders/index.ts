@@ -1,5 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { assertValidTransition, VALID_TRANSITIONS, ok, fail } from '../_shared/helpers.ts'
+import { assertValidTransition, VALID_TRANSITIONS, ok, fail, requireUser } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendActivationEmail, isEmailConfigured } from '../_shared/email.ts'
 import { generateOrderNumber } from '../_shared/crypto.ts'
@@ -20,13 +20,12 @@ async function autoActivateGuest(userId: string, admin: any): Promise<void> {
 }
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
+  fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
 
     try {
-      const { userClaims, supabaseAdmin: admin, supabase: sb } = ctx;
-      if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
+      const { supabaseAdmin: admin, supabase: sb } = ctx; const userClaims = await requireUser(req, admin);
 
       const role = userClaims.userMetadata?.role as string;
       const body = await req.json();

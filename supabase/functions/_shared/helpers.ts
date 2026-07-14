@@ -33,3 +33,19 @@ export function fail(code: string, message: string, status = 400): Response {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
+
+// Manual JWT verification via Supabase Auth API (works with both ES256 and HS256)
+export async function requireUser(req: Request, admin: any): Promise<Record<string, any>> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) throw new Error('UNAUTHORIZED: Missing auth header');
+  const token = authHeader.slice(7);
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error || !user) throw new Error('UNAUTHORIZED: Invalid token');
+  return {
+    id: user.id,
+    email: user.email,
+    role: (user.user_metadata?.role || user.app_metadata?.role) as string,
+    userMetadata: user.user_metadata,
+    storeId: user.user_metadata?.store_id as string,
+  };
+}

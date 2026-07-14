@@ -1,5 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { ok, fail } from '../_shared/helpers.ts'
+import { ok, fail, requireUser } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
@@ -15,12 +15,11 @@ interface SendBody {
 }
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
+  fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
 
     try {
-      const { userClaims, supabaseAdmin: admin } = ctx;
-      if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
+      const { supabaseAdmin: admin } = ctx; const userClaims = await requireUser(req, admin);
 
       const body = await req.json();
       const action = body.action as string | undefined;

@@ -1,17 +1,16 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { ok, fail } from '../_shared/helpers.ts'
+import { ok, fail, requireUser } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx) => {
+  fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
 
     try {
-      const { userClaims, supabaseAdmin: admin } = ctx;
-      if (!userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
-      const role = (userClaims.user_metadata?.role || userClaims.userMetadata?.role) as string;
+      const { supabaseAdmin: admin } = ctx; const userClaims = await requireUser(req, admin);
+      const role = userClaims.role as string;
       if (role !== 'platform_admin') return fail('FORBIDDEN', `Only platform admin. Got role: ${role}`, 403);
 
       const body = await req.json();
@@ -146,6 +145,12 @@ export default {
         if (authErr) { await admin.from('stores').delete().eq('id', store.id); return fail('AUTH_FAILED', authErr.message); }
         await admin.from('store_admins').insert({ id: authUser.user.id, store_id: store.id, full_name: admin_name, phone_number: admin_phone, password_hash: 'supabase-managed', is_first_login: true });
         return ok({ store_id: store.id, admin_id: authUser.user.id });
+      }
+
+      // ─── LIST STORES ───
+      if (action === 'stores') {
+        const { data } = await admin.from('stores').select('*, admins:store_admins(id, full_name, phone_number, is_active)').order('created_at', { ascending: false });
+        return ok(data || []);
       }
 
       // ─── DELETE ACCOUNT ───

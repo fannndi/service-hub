@@ -1,20 +1,18 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { ok, fail } from '../_shared/helpers.ts'
+import { ok, fail, requireUser } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { generateCouponCode } from '../_shared/crypto.ts'
 
 export default {
-  fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx: any) => {
+  fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx: any) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
     if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
 
     try {
-      if (!ctx?.userClaims) return fail('UNAUTHORIZED', 'Unauthorized', 401);
-      const admin = ctx.supabaseAdmin;
-      const userId = ctx.userClaims.id;
+      const admin = ctx.supabaseAdmin; const userClaims = await requireUser(req, admin);
+      const userId = userClaims.id;
       const body = await req.json();
-      const url = new URL(req.url);
-      const action = url.pathname.split('/').pop();
+      const action = body.action;
 
       if (action === 'create') {
         const { orderId, rating, comment } = body;
