@@ -20,6 +20,9 @@ key.properties
 google-services.json
 frontend/android/app/google-services.json
 
+# Supabase CLI temp files
+supabase/.temp/
+
 # Build artifacts
 frontend/android/build/
 frontend/build/
