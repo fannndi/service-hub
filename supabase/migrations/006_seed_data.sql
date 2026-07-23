@@ -90,81 +90,97 @@ ON CONFLICT DO NOTHING;
 DO $$
 DECLARE
   uid UUID;
+  v_email TEXT;
+  v_phone TEXT;
 BEGIN
   -- Store Admin 1 - TechFix Center
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '628123456781@store.servisgadget.com', '628123456781', 
-    jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000001', 'full_name', 'Admin TechFix'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
-  VALUES (uid, 'a0000001-0000-0000-0000-000000000001', 'Admin TechFix', '628123456781', 'supabase-managed', true)
-  ON CONFLICT (id, store_id) DO NOTHING;
+  v_email := '628123456781@store.servisgadget.com'; v_phone := '628123456781';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000001', 'full_name', 'Admin TechFix'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
+    VALUES (uid, 'a0000001-0000-0000-0000-000000000001', 'Admin TechFix', v_phone, 'supabase-managed', true)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Store Admin 2 - GadgetCare Plus
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '628123456782@store.servisgadget.com', '628123456782',
-    jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000002', 'full_name', 'Admin GadgetCare'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
-  VALUES (uid, 'a0000001-0000-0000-0000-000000000002', 'Admin GadgetCare', '628123456782', 'supabase-managed', true)
-  ON CONFLICT (id, store_id) DO NOTHING;
+  v_email := '628123456782@store.servisgadget.com'; v_phone := '628123456782';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000002', 'full_name', 'Admin GadgetCare'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
+    VALUES (uid, 'a0000001-0000-0000-0000-000000000002', 'Admin GadgetCare', v_phone, 'supabase-managed', true)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Store Admin 3 - AppleOnly Service
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '628123456783@store.servisgadget.com', '628123456783',
-    jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000003', 'full_name', 'Admin AppleOnly'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
-  VALUES (uid, 'a0000001-0000-0000-0000-000000000003', 'Admin AppleOnly', '628123456783', 'supabase-managed', true)
-  ON CONFLICT (id, store_id) DO NOTHING;
+  v_email := '628123456783@store.servisgadget.com'; v_phone := '628123456783';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000003', 'full_name', 'Admin AppleOnly'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
+    VALUES (uid, 'a0000001-0000-0000-0000-000000000003', 'Admin AppleOnly', v_phone, 'supabase-managed', true)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Store Admin 4 - Android Masters
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '628123456784@store.servisgadget.com', '628123456784',
-    jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000004', 'full_name', 'Admin Android'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
-  VALUES (uid, 'a0000001-0000-0000-0000-000000000004', 'Admin Android', '628123456784', 'supabase-managed', true)
-  ON CONFLICT (id, store_id) DO NOTHING;
+  v_email := '628123456784@store.servisgadget.com'; v_phone := '628123456784';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000004', 'full_name', 'Admin Android'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
+    VALUES (uid, 'a0000001-0000-0000-0000-000000000004', 'Admin Android', v_phone, 'supabase-managed', true)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Store Admin 5 - FixPedia
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '628123456785@store.servisgadget.com', '628123456785',
-    jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000005', 'full_name', 'Admin FixPedia'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
-  VALUES (uid, 'a0000001-0000-0000-0000-000000000005', 'Admin FixPedia', '628123456785', 'supabase-managed', true)
-  ON CONFLICT (id, store_id) DO NOTHING;
+  v_email := '628123456785@store.servisgadget.com'; v_phone := '628123456785';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'store_admin', 'store_id', 'a0000001-0000-0000-0000-000000000005', 'full_name', 'Admin FixPedia'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.store_admins (id, store_id, full_name, phone_number, password_hash, is_active)
+    VALUES (uid, 'a0000001-0000-0000-0000-000000000005', 'Admin FixPedia', v_phone, 'supabase-managed', true)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Test Customer 1
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '081234567890@customer.servisgadget.com', '081234567890',
-    jsonb_build_object('role', 'customer', 'phone', '081234567890', 'full_name', 'Budi Santoso'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.users (id, full_name, phone_number, password_hash, account_status, is_first_login)
-  VALUES (uid, 'Budi Santoso', '081234567890', 'supabase-managed', 'active', false)
-  ON CONFLICT (id) DO NOTHING;
+  v_email := '081234567890@customer.servisgadget.com'; v_phone := '081234567890';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'customer', 'phone', v_phone, 'full_name', 'Budi Santoso'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.users (id, full_name, phone_number, password_hash, account_status, is_first_login)
+    VALUES (uid, 'Budi Santoso', v_phone, 'supabase-managed', 'active', false)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
   -- Test Customer 2
-  uid := gen_random_uuid();
-  INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
-  VALUES (uid, '081234567891@customer.servisgadget.com', '081234567891',
-    jsonb_build_object('role', 'customer', 'phone', '081234567891', 'full_name', 'Siti Rahma'),
-    crypt('test123', gen_salt('bf', 10)), now(), now(), now())
-  ON CONFLICT (email) DO NOTHING;
-  INSERT INTO public.users (id, full_name, phone_number, password_hash, account_status, is_first_login)
-  VALUES (uid, 'Siti Rahma', '081234567891', 'supabase-managed', 'active', false)
-  ON CONFLICT (id) DO NOTHING;
+  v_email := '081234567891@customer.servisgadget.com'; v_phone := '081234567891';
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = v_email) THEN
+    uid := gen_random_uuid();
+    INSERT INTO auth.users (id, email, phone, raw_user_meta_data, encrypted_password, email_confirmed_at, created_at, updated_at)
+    VALUES (uid, v_email, v_phone,
+      jsonb_build_object('role', 'customer', 'phone', v_phone, 'full_name', 'Siti Rahma'),
+      crypt('test123', gen_salt('bf', 10)), now(), now(), now());
+    INSERT INTO public.users (id, full_name, phone_number, password_hash, account_status, is_first_login)
+    VALUES (uid, 'Siti Rahma', v_phone, 'supabase-managed', 'active', false)
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 END $$;

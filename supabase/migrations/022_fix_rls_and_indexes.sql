@@ -6,12 +6,12 @@
 DROP POLICY IF EXISTS customer_order_items_insert ON order_items;
 CREATE POLICY customer_order_items_insert ON order_items
   FOR INSERT TO authenticated
-  WITH CHECK (order_id IN (SELECT id FROM service_orders WHERE user_id::text = auth.uid()::text));
+  WITH CHECK (order_id::text IN (SELECT id::text FROM service_orders WHERE user_id::text = auth.uid()::text));
 
 DROP POLICY IF EXISTS store_admin_order_items_insert ON order_items;
 CREATE POLICY store_admin_order_items_insert ON order_items
   FOR INSERT TO authenticated
-  WITH CHECK (order_id IN (SELECT id FROM service_orders WHERE store_id IN (SELECT store_id::text FROM store_admins WHERE id::text = auth.uid()::text)));
+  WITH CHECK (order_id::text IN (SELECT id::text FROM service_orders WHERE store_id::text IN (SELECT store_id::text FROM store_admins WHERE id::text = auth.uid()::text)));
 
 -- ─── 2. MISSING SELECT POLICY: reviews (store_admin) ───
 
@@ -54,12 +54,12 @@ ALTER TABLE store_applications ENABLE ROW LEVEL SECURITY;
 
 -- ─── 5. MISSING CHECK CONSTRAINTS ───
 
-ALTER TABLE payments ADD CONSTRAINT IF NOT EXISTS payments_amount_pos CHECK (amount > 0);
-ALTER TABLE spareparts ADD CONSTRAINT IF NOT EXISTS spareparts_price_pos CHECK (price > 0);
-ALTER TABLE stores ADD CONSTRAINT IF NOT EXISTS stores_rating_range CHECK (rating_avg >= 0 AND rating_avg <= 5);
-ALTER TABLE stores ADD CONSTRAINT IF NOT EXISTS stores_penalty_points_nonneg CHECK (penalty_points >= 0);
-ALTER TABLE stores ADD CONSTRAINT IF NOT EXISTS stores_total_completed_nonneg CHECK (total_completed >= 0);
-ALTER TABLE service_orders ADD CONSTRAINT IF NOT EXISTS sla_breach_count_nonneg CHECK (sla_breach_count >= 0);
+ALTER TABLE payments ADD CONSTRAINT payments_amount_pos CHECK (amount > 0);
+ALTER TABLE spareparts ADD CONSTRAINT spareparts_price_pos CHECK (price > 0);
+ALTER TABLE stores ADD CONSTRAINT stores_rating_range CHECK (rating_avg >= 0 AND rating_avg <= 5);
+ALTER TABLE stores ADD CONSTRAINT stores_penalty_points_nonneg CHECK (penalty_points >= 0);
+ALTER TABLE stores ADD CONSTRAINT stores_total_completed_nonneg CHECK (total_completed >= 0);
+ALTER TABLE service_orders ADD CONSTRAINT sla_breach_count_nonneg CHECK (sla_breach_count >= 0);
 
 -- ─── 6. MISSING INDEXES ───
 
@@ -72,5 +72,5 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
 
 -- ─── 7. MISSING UNIQUE CONSTRAINTS ───
 
-ALTER TABLE store_applications ADD CONSTRAINT IF NOT EXISTS store_applications_phone_unique UNIQUE (phone_number);
-ALTER TABLE stores ADD CONSTRAINT IF NOT EXISTS stores_phone_unique UNIQUE (phone_number);
+ALTER TABLE store_applications ADD CONSTRAINT store_applications_phone_unique UNIQUE (phone_number);
+ALTER TABLE stores ADD CONSTRAINT stores_phone_unique UNIQUE (phone_number);

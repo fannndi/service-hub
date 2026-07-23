@@ -27,13 +27,13 @@ ALTER TABLE shipments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY shipments_owner_select ON shipments
   FOR SELECT TO authenticated
   USING (
-    order_id IN (SELECT id FROM service_orders WHERE user_id = auth.uid())
+    order_id::text IN (SELECT id::text FROM service_orders WHERE user_id::text = auth.uid()::text)
   );
 CREATE POLICY shipments_store_admin_select ON shipments
   FOR SELECT TO authenticated
   USING (
-    order_id IN (SELECT id FROM service_orders WHERE store_id IN (
-      SELECT store_id FROM store_admins WHERE id = auth.uid()
+    order_id::text IN (SELECT id::text FROM service_orders WHERE store_id::text IN (
+      SELECT store_id::text FROM store_admins WHERE id::text = auth.uid()::text
     ))
   );
 
@@ -52,8 +52,8 @@ ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY user_sessions_owner ON user_sessions
   FOR ALL TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (user_id::text = auth.uid()::text)
+  WITH CHECK (user_id::text = auth.uid()::text);
 
 -- 3. Add credential_plain_enc column to users
 ALTER TABLE users ADD COLUMN IF NOT EXISTS credential_plain_enc TEXT;

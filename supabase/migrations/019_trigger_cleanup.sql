@@ -2,7 +2,7 @@
 -- Definitively fix handle_new_user trigger and clean up migration artifacts
 
 -- 1. Drop old orphaned trigger versions (no-op if they don't exist)
-DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
 -- 2. Recreate the definitive version with email + upsert
 CREATE OR REPLACE FUNCTION public.handle_new_user()
