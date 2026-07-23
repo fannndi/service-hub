@@ -152,7 +152,7 @@ export default {
         if (!order) return fail('ORDER_NOT_FOUND', 'Pesanan tidak ditemukan', 404);
         assertValidTransition(order.status, 'waiting_approval');
 
-        const finalPrice = items.reduce((sum: number, i: any) => sum + i.final_item_price, 0) + (service_fee || 0);
+        const finalPrice = items.reduce((sum: number, i: any) => sum + (Number(i.final_item_price) || 0), 0) + (service_fee || 0);
 
         for (const item of items) {
           const oldItem = order.order_items.find((oi: any) => oi.id === item.order_item_id);

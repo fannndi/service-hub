@@ -1,4 +1,5 @@
 -- 007_cron.sql — pg_cron jobs (ganti NestJS @Cron)
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS credential_plain_enc TEXT;
 -- Requires pg_cron extension (enabled by default on Supabase)
 -- https://supabase.com/docs/guides/platform/cron
 

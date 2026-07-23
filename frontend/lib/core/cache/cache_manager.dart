@@ -12,7 +12,8 @@ class CacheManager {
   final _memoryCache = <String, _MemoryEntry>{};
 
   Future<void> set<T>(String key, T data, {Duration? ttl}) async {
-    _memoryCache[key] = _MemoryEntry(data: data, cachedAt: DateTime.now());
+    _memoryCache[key] =
+        _MemoryEntry(data: data, cachedAt: DateTime.now(), ttl: ttl);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -22,12 +23,15 @@ class CacheManager {
         'ttlSeconds': (ttl ?? CacheConfig.stores).inSeconds,
       };
       await prefs.setString('cache_$key', jsonEncode(entry));
-    } catch (e) { debugPrint('CacheManager.set error: $e'); }
+    } catch (e) {
+      debugPrint('CacheManager.set error: $e');
+    }
   }
 
   T? get<T>(String key) {
     final mem = _memoryCache[key];
-    if (mem != null && !mem.isExpired(CacheConfig.stores)) return mem.data as T;
+    if (mem != null && !mem.isExpired(mem.ttl ?? CacheConfig.stores))
+      return mem.data as T;
 
     return null;
   }
@@ -64,7 +68,9 @@ class CacheManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cache_$key');
-    } catch (e) { debugPrint('CacheManager.invalidate error: $e'); }
+    } catch (e) {
+      debugPrint('CacheManager.invalidate error: $e');
+    }
   }
 
   Future<void> clear() async {
@@ -75,7 +81,9 @@ class CacheManager {
       for (final key in keys) {
         await prefs.remove(key);
       }
-    } catch (e) { debugPrint('CacheManager.clear error: $e'); }
+    } catch (e) {
+      debugPrint('CacheManager.clear error: $e');
+    }
   }
 
   dynamic _toJsonSafe(dynamic value) {
@@ -92,8 +100,10 @@ class CacheManager {
 class _MemoryEntry {
   final dynamic data;
   final DateTime cachedAt;
+  final Duration? ttl;
 
-  _MemoryEntry({required this.data, required this.cachedAt});
+  _MemoryEntry({required this.data, required this.cachedAt, this.ttl});
 
-  bool isExpired(Duration ttl) => DateTime.now().difference(cachedAt) > ttl;
+  bool isExpired(Duration defaultTtl) =>
+      DateTime.now().difference(cachedAt) > (ttl ?? defaultTtl);
 }

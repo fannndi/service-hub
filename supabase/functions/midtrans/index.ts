@@ -80,24 +80,27 @@ async function processNotification(body: Record<string, unknown>, admin: any) {
 
   const now = new Date().toISOString();
 
-  const { error: e1 } = await admin.from('payments').insert({
+  const { data: paymentRec, error: e1 } = await admin.from('payments').insert({
     order_id: order.id, user_id: order.user_id, amount: Number(grossAmount),
     payment_method: 'midtrans', payment_type: 'final_payment',
     status: recordStatus, confirmed_at: recordStatus === 'confirmed' ? now : null,
     midtrans_order_id: orderId, midtrans_transaction_id: transactionId,
     midtrans_payment_type: paymentType,
-  });
+  }).select('id').single();
   if (e1) return fail('DB_ERROR', e1.message);
+  const paymentId = paymentRec.id;
 
   if (recordStatus === 'confirmed') {
     assertValidTransition(order.status, 'completed');
     const { error: e2 } = await admin.from('service_orders').update({ status: 'completed', payment_status: 'paid', completed_at: now, updated_at: now }).eq('id', order.id);
-    if (e2) return fail('DB_ERROR', e2.message);
     const { error: e3 } = await admin.from('service_tracking').insert({
       order_id: order.id, status: 'completed', created_by_type: 'system', created_by_id: 'midtrans',
       note: 'Pembayaran via Midtrans (' + paymentType + ')',
     });
-    if (e3) return fail('DB_ERROR', e3.message);
+    if (e2 || e3) {
+      await admin.from('payments').delete().eq('id', paymentId);
+      return fail('DB_ERROR', (e2 || e3)!.message);
+    }
 
     const { data: store } = await admin.from('stores').select('config').eq('id', order.store_id).single();
     const warrantyDays = (store?.config as Record<string, any>)?.['warranty_days'] ?? 30;

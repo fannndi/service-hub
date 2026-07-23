@@ -15,6 +15,7 @@ export default {
       const action = body.action;
 
       if (action === 'create') {
+        // NOTE: orderId inconsistent with DB column order_id — kept for frontend API contract
         const { orderId, rating, comment } = body;
         if (!orderId || !rating) return fail('INVALID_INPUT', 'orderId dan rating wajib');
 

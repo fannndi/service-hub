@@ -14,7 +14,6 @@ Platform dua sisi: customer booking servis gadget, store admin mengelola perbaik
 | Backend | Supabase (Edge Functions + Auth + PostgreSQL + Storage) |
 | Auth | Supabase Auth — email-based, 3 roles |
 | Payments | Midtrans Snap (sandbox) via Edge Function webhook |
-| Email | Resend.com (transactional — confirmation, activation, notifications) |
 | Push | Firebase Cloud Messaging |
 | Crash | Firebase Crashlytics |
 | Font | Google Fonts |
@@ -65,7 +64,6 @@ Platform dua sisi: customer booking servis gadget, store admin mengelola perbaik
 │  │  helpers.ts — state machine + responses                   │
 │  │  cors.ts    — CORS headers                                │
 │  │  crypto.ts  — order number + password + coupon generation │
-│  │  email.ts   — Resend.com integration                      │
 │  └────────────────────────────────────┘                      │
 └──────────────────────────────────────────────────────────────┘
         │                              │
@@ -81,7 +79,7 @@ Platform dua sisi: customer booking servis gadget, store admin mengelola perbaik
 ### Key Design Decisions
 
 - **RLS over app-level auth**: Flutter reads DB directly via Supabase client with RLS policies. Edge Functions use service_role for admin operations.
-- **Guest booking flow**: Customer books without account → auto-creates suspended user → store "device_received" triggers auto-activation → email sends credentials.
+- **Guest booking flow**: Customer books without account → auto-creates suspended user → store "device_received" triggers auto-activation → credentials sent via notification.
 - **Idempotent payments**: Midtrans webhook dedup by `midtrans_transaction_id` unique constraint.
 - **SLA enforcement**: `cron-sla` Edge Function checks stalled orders and auto-cancels past deadline.
 
@@ -142,7 +140,6 @@ Login, dashboard, store management, user management, notifications.
 | `disputes` | Warranty claims | dispute_type, status, evidence_urls (JSONB) |
 | `notifications` | In-app notifications | role, type, title, message, is_read |
 | `platform_admins` | Super admin accounts | username (unique) |
-| `failed_notifications` | Email send failure log | payload (JSONB), attempt_count |
 
 ### RLS
 
@@ -215,12 +212,10 @@ Supabase Auth native — no custom auth backend. Role stored in `user_metadata.r
 ```
 User opens app → fills booking form → Edge Function `guest` (create-order)
   → Auto-create Supabase Auth user (suspended)
-  → Order saved with status `waiting_device`
-  → Email sent with temp password
+  → Order saved with status \`waiting_device\`
 
-Store receives device → updates status to `device_received`
-  → Edge Function `orders` auto-activates user
-  → Email sent with activation credentials
+Store receives device → updates status to \`device_received\`
+  → Edge Function \`orders\` auto-activates user
 
 User can now login with their email + password
 ```
@@ -237,10 +232,8 @@ User can now login with their email + password
 | `SUPABASE_ANON_KEY` | Yes | Supabase anon/publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Admin operations in Edge Functions |
 | `MIDTRANS_SERVER_KEY` | Yes | Midtrans server key (for webhook verification) |
-| `MIDTRANS_CLIENT_KEY` | Yes | Midtrans client key |
-| `RESEND_API_KEY` | No | Resend.com API key (transactional email) |
-| `EMAIL_FROM` | No | Sender address (default: onboarding@resend.dev) |
-| `CRON_SECRET` | No | Protects cron-sla endpoint |
+| \`MIDTRANS_CLIENT_KEY\` | Yes | Midtrans client key |
+| \`CRON_SECRET\` | No | Protects cron-sla endpoint |
 | `SEED_ADMIN_PASSWORD` | No | Seed admin initial password |
 | `SEED_ADMIN_SECRET` | No | Protects seed-admin endpoint |
 
@@ -261,7 +254,6 @@ flutter build apk --release \
 - Flutter 3.4+ / Dart 3
 - Supabase CLI
 - Midtrans account (sandbox)
-- Resend.com account (optional, for email)
 
 ### 1. Clone & Link
 
@@ -292,8 +284,6 @@ npx supabase functions deploy \
 ```bash
 npx supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
 npx supabase secrets set MIDTRANS_CLIENT_KEY=Mid-client-xxx
-npx supabase secrets set RESEND_API_KEY=re_xxx
-npx supabase secrets set EMAIL_FROM="Service Me <noreply@serviceme.app>"
 npx supabase secrets set CRON_SECRET=your-cron-secret
 npx supabase secrets set SEED_ADMIN_PASSWORD=admin123
 ```
@@ -324,7 +314,7 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`
 ```bash
 npx supabase db push
 npx supabase functions deploy guest orders payments midtrans disputes reviews notifications admin store-applications cron-sla
-npx supabase secrets set MIDTRANS_SERVER_KEY=xxx RESEND_API_KEY=re_xxx
+npx supabase secrets set MIDTRANS_SERVER_KEY=xxx
 ```
 
 Update `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Flutter build args.

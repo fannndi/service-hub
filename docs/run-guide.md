@@ -73,8 +73,7 @@ supabase functions deploy admin cron-sla disputes guest midtrans ^
 
 # Set secrets
 supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
-supabase secrets set RESEND_API_KEY=re_xxx
-supabase secrets set EMAIL_FROM="Service Me <noreply@serviceme.app>"
+
 ```
 
 ## 7. Test Edge Functions (curl / PowerShell)

@@ -1,5 +1,5 @@
 import { withSupabase } from 'npm:@supabase/server'
-import { ok, fail, requireUser } from '../_shared/helpers.ts'
+import { ok, fail, requireUser, assertValidTransition } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendNotificationEmail, isEmailConfigured } from '../_shared/email.ts'
 
@@ -49,11 +49,7 @@ export default {
 
         await admin.from('payments').update({ status: 'confirmed', confirmed_by: userClaims.id, confirmed_at: new Date().toISOString() }).eq('id', payment_id);
 
-        const { count: totalPayments } = await admin.from('payments').select('*', { count: 'exact', head: true }).eq('order_id', order_id);
-        const { count: confirmedPayments } = await admin.from('payments').select('*', { count: 'exact', head: true }).eq('order_id', order_id).eq('status', 'confirmed');
-
-        await admin.from('service_orders').update({ payment_status: confirmedPayments === totalPayments ? 'paid' : 'partially_paid', updated_at: now }).eq('id', order_id);
-        // H5: Set order to completed after payment confirmation
+        assertValidTransition(order.status, 'completed');
         await admin.from('service_orders').update({
           status: 'completed', payment_status: 'paid', completed_at: new Date().toISOString(), updated_at: now,
         }).eq('id', order_id);

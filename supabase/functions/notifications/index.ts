@@ -17,6 +17,7 @@ interface SendBody {
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
+    if (req.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 'POST only', 405);
 
     try {
       const { supabaseAdmin: admin } = ctx; const userClaims = await requireUser(req, admin);
@@ -29,6 +30,7 @@ export default {
         if (role !== 'platform_admin') return fail('FORBIDDEN', 'Forbidden', 403);
         const { target_role, title, message } = body as BroadcastBody;
         if (!target_role || !title || !message) return fail('INVALID_INPUT', 'target_role, title, message required');
+        if (!['customer', 'store_admin'].includes(target_role)) return fail('INVALID_INPUT', 'Invalid target_role');
 
         // H1: Batch insert per-user so each recipient sees broadcast
         const table = target_role === 'customer' ? 'users' : 'store_admins';

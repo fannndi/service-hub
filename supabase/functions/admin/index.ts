@@ -31,10 +31,13 @@ export default {
         if (!app) return fail('NOT_FOUND', 'Aplikasi tidak ditemukan');
 
         const now = new Date().toISOString();
-        const { data: store } = await admin.from('stores').insert({
+        const { data: store, error: storeErr } = await admin.from('stores').insert({
           store_name: app.store_name, address: app.address, phone_number: app.phone_number, is_active: true,
           config: { warranty_days: 30 }, updated_at: now,
         }).select('id').single();
+        if (storeErr || !store) {
+          return fail('INSERT_FAILED', storeErr?.message || 'Failed to create store');
+        }
 
         const adminPhone = app.admin_phone || app.phone_number;
         const email = `${adminPhone}@store.servisgadget.com`;

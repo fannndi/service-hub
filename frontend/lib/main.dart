@@ -27,18 +27,27 @@ Future<void> main() async {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authRefresh = _AuthRefresh();
+  ref.onDispose(authRefresh.dispose);
   return GoRouter(
     initialLocation: SupabaseConfig.isConfigured ? '/welcome' : '/splash',
-    refreshListenable: _AuthRefresh(),
+    refreshListenable: authRefresh,
     redirect: (context, state) {
       final user = SupabaseService.instance.user;
       final role = SupabaseService.instance.role;
       final meta = user?.userMetadata;
       final isFirstLogin = meta?['is_first_login'] as bool? ?? false;
       final loc = state.matchedLocation;
-      final publicRoutes = {'/welcome', '/login', '/store-login', '/store-register', '/settings'};
+      final publicRoutes = {
+        '/welcome',
+        '/login',
+        '/store-login',
+        '/store-register',
+        '/settings'
+      };
 
-      if (loc.startsWith('/guest/') || loc.startsWith('/booking-success/')) return null;
+      if (loc.startsWith('/guest/') || loc.startsWith('/booking-success/'))
+        return null;
       if (loc == '/splash') return null;
 
       // Logged-in users redirected away from public entry points
@@ -50,26 +59,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (loc.startsWith('/admin/')) {
-        if (role != 'platform_admin' && loc != '/admin/login') return '/admin/login';
-        if (role == 'platform_admin' && loc == '/admin/login') return '/admin/dashboard';
+        if (role != 'platform_admin' && loc != '/admin/login')
+          return '/admin/login';
+        if (role == 'platform_admin' && loc == '/admin/login')
+          return '/admin/dashboard';
         return null;
       }
 
       if (loc.startsWith('/store/')) {
-        if (role != 'store_admin' && loc != '/store-login') return '/store-login';
-        if (role == 'store_admin' && isFirstLogin && loc != '/store/change-password') return '/store/change-password';
-        if (role == 'store_admin' && loc == '/store-login') return '/store/dashboard';
+        if (role != 'store_admin' && loc != '/store-login')
+          return '/store-login';
+        if (role == 'store_admin' &&
+            isFirstLogin &&
+            loc != '/store/change-password') return '/store/change-password';
+        if (role == 'store_admin' && loc == '/store-login')
+          return '/store/dashboard';
         return null;
       }
 
       if (role == 'store_admin') {
-        if (isFirstLogin && loc != '/store/change-password') return '/store/change-password';
-        if (loc == '/store-login' || publicRoutes.contains(loc)) return '/store/dashboard';
+        if (isFirstLogin && loc != '/store/change-password')
+          return '/store/change-password';
+        if (loc == '/store-login' || publicRoutes.contains(loc))
+          return '/store/dashboard';
         return null;
       }
 
       if (role == 'customer') {
-        if (isFirstLogin && loc != '/change-password') return '/change-password';
+        if (isFirstLogin && loc != '/change-password')
+          return '/change-password';
         if (publicRoutes.contains(loc)) return '/home';
         return null;
       }
@@ -94,7 +112,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 class _AuthRefresh extends ChangeNotifier {
   late final StreamSubscription _sub;
   _AuthRefresh() {
-    _sub = SupabaseService.instance.onAuthStateChange.listen((_) => notifyListeners());
+    _sub = SupabaseService.instance.onAuthStateChange
+        .listen((_) => notifyListeners());
   }
 
   @override
@@ -181,7 +200,9 @@ class _InitSplashState extends ConsumerState<_InitSplash> {
               Text(
                 _status,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: _status.contains('✓') ? scheme.primary : scheme.onSurfaceVariant,
+                  color: _status.contains('✓')
+                      ? scheme.primary
+                      : scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -221,22 +242,26 @@ class ServisGadgetApp extends ConsumerWidget {
       supportedLocales: const [Locale('id'), Locale('en')],
       builder: (context, widget) {
         ErrorWidget.builder = (details) => Material(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
-                  const SizedBox(height: 16),
-                  Text('Terjadi kesalahan', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(details.exceptionAsString(), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
-                ],
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 48, color: Theme.of(context).colorScheme.error),
+                      const SizedBox(height: 16),
+                      Text('Terjadi kesalahan',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Text(details.exceptionAsString(),
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-        );
+            );
         return widget!;
       },
       localizationsDelegates: const [

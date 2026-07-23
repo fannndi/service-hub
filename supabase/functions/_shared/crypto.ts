@@ -5,7 +5,8 @@ const COUPON_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export function secureRandom(chars: string, length: number): string {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
-  return Array.from(array, (b) => chars[b % chars.length]).join('');
+  const maxValid = Math.floor(256 / chars.length) * chars.length;
+  return Array.from(array, (b) => b < maxValid ? chars[b % chars.length] : chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
 export function generatePassword(length = 12): string {

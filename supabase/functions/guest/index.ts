@@ -38,6 +38,17 @@ export default {
         tempPassword = generatePassword();
         const now = new Date().toISOString();
 
+        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data: rateUser } = await admin.from('users').select('id').eq('email', customerEmail).maybeSingle();
+        if (rateUser) {
+          const { count } = await admin.from('service_orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', rateUser.id).gte('created_at', fiveMinAgo);
+          if (count && count >= 5) {
+            return fail('RATE_LIMITED', 'Too many orders. Try again later.', 429);
+          }
+        }
+
         const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
         const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
         const signUpRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
@@ -58,14 +69,6 @@ export default {
         await admin.from('users').update({
           account_status: 'suspended', is_first_login: true, is_credential_sent: false, updated_at: now,
         }).eq('id', userId);
-
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { count } = await admin.from('service_orders')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId).gte('created_at', fiveMinAgo);
-        if (count && count >= 5) {
-          return fail('RATE_LIMITED', 'Too many orders. Try again later.', 429);
-        }
 
         const { data: store } = await admin.from('stores').select('id, phone_number').eq('id', store_id).eq('is_active', true).single();
         if (!store) return fail('STORE_NOT_ACTIVE', 'Store not active');

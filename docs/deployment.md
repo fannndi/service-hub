@@ -7,7 +7,7 @@
 - Node.js 18+
 - Supabase project (free tier)
 - Midtrans account (sandbox for dev, production for live)
-- Resend.com account (verified domain)
+
 
 ---
 
@@ -61,9 +61,7 @@ Catatan: Fungsi `guest`, `cron-sla`, dan `seed-admin` menggunakan `--no-verify-j
 # Midtrans
 supabase secrets set MIDTRANS_SERVER_KEY=Mid-server-xxx
 
-# Resend.com email
-supabase secrets set RESEND_API_KEY=re_xxx
-supabase secrets set EMAIL_FROM="Service Hub <noreply@servicehub.app>"
+
 ```
 
 Semua secret ini diakses di Edge Functions via `Deno.env.get()`.

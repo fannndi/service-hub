@@ -2,6 +2,21 @@ import { withSupabase } from 'npm:@supabase/server'
 import { ok, fail } from '../_shared/helpers.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 
+const RATE_LIMIT_WINDOW = 10 * 60 * 1000;
+const RATE_LIMIT_MAX = 10;
+const ipRequests = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipRequests.get(ip);
+  if (!entry || now > entry.resetAt) {
+    ipRequests.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
 export default {
   fetch: withSupabase({ auth: 'none' }, async (req: Request, ctx) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeaders } });
@@ -9,6 +24,9 @@ export default {
 
     try {
       const { supabaseAdmin: admin } = ctx;
+      const ip = req.headers.get('x-forwarded-for') || 'unknown';
+      if (!checkRateLimit(ip)) return fail('RATE_LIMITED', 'Too many requests', 429);
+
       const body = await req.json();
       const { store_name, address, phone_number, admin_name, admin_phone } = body;
 

@@ -67,21 +67,24 @@ export default {
         await admin.from('disputes').update({ status: newStatus, store_response, warranty_order_id: warrantyOrder.id, resolved_at: new Date().toISOString() }).eq('id', dispute_id);
         await admin.from('service_tracking').insert({ order_id: dispute.order_id, status: 'disputed', note: `Klaim diterima. Order garansi: ${orderNumber}`, created_by_type: 'store_admin', created_by_id: userClaims.id });
 
-        for (const item of parentOrder.order_items) {
-
-          const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
-          if (!reserved) {
-            throw new Error('STOCK_UNAVAILABLE: Insufficient stock to reserve');
+        try {
+          for (const item of parentOrder.order_items) {
+            const { data: reserved } = await admin.rpc('reserve_stock', { p_sparepart_id: item.sparepart_id, p_qty: 1 });
+            if (!reserved) {
+              throw new Error('STOCK_UNAVAILABLE: Insufficient stock to reserve');
+            }
+            await admin.from('order_items').insert({
+              order_id: warrantyOrder.id,
+              sparepart_id: item.sparepart_id,
+              service_type: item.service_type,
+              complaint: item.complaint,
+              item_price: item.item_price || 0,
+              status: 'pending',
+            });
           }
-
-          await admin.from('order_items').insert({
-            order_id: warrantyOrder.id,
-            sparepart_id: item.sparepart_id,
-            service_type: item.service_type,
-            complaint: item.complaint,
-            item_price: item.item_price || 0,
-            status: 'pending',
-          });
+        } catch (wErr) {
+          await admin.from('order_items').delete().eq('order_id', warrantyOrder.id);
+          throw wErr;
         }
 
         await admin.from('service_orders').update({ status: 'completed', completed_at: new Date().toISOString(), updated_at: now }).eq('id', dispute.order_id);
